@@ -1,0 +1,82 @@
+[
+  {
+    "id": "Q1",
+    "question": "What does ERR-4032 mean?",
+    "known_answer": "Billing profile migration is incomplete because a required field was not carried over from the legacy platform.",
+    "expected_article_id": "HC-BILL-002",
+    "expected_section": "Error Codes",
+    "answer_evidence": "ERR-4032 row",
+    "table_dependent": true,
+    "required_evidence_terms": ["ERR-4032", "required field", "legacy platform"]
+  },
+  {
+    "id": "Q2",
+    "question": "What does ERR-5010 mean?",
+    "known_answer": "The invoice account is locked because of a prior unresolved dispute.",
+    "expected_article_id": "HC-BILL-002",
+    "expected_section": "Error Codes",
+    "answer_evidence": "ERR-5010 row",
+    "table_dependent": true,
+    "required_evidence_terms": ["ERR-5010", "invoice account", "locked", "dispute"]
+  },
+  {
+    "id": "Q3",
+    "question": "How do I fix ERR-4040?",
+    "known_answer": "Add a new payment method and set it as default before retrying migration.",
+    "expected_article_id": "HC-BILL-002",
+    "expected_section": "Error Codes",
+    "answer_evidence": "ERR-4040 row",
+    "table_dependent": true,
+    "required_evidence_terms": ["ERR-4040", "payment method", "default", "retrying"]
+  },
+  {
+    "id": "Q4",
+    "question": "How do I fix ERR-6030?",
+    "known_answer": "Ask an Account Owner or Billing Administrator to submit the rollback request.",
+    "expected_article_id": "HC-BILL-006",
+    "expected_section": "Rollback-Related Error Codes",
+    "answer_evidence": "ERR-6030 row",
+    "table_dependent": true,
+    "required_evidence_terms": ["ERR-6030", "Account Owner", "Billing Administrator"]
+  },
+  {
+    "id": "Q5",
+    "question": "How do I request a migration rollback?",
+    "known_answer": "Go to the Billing Overview page, select 'Request rollback' under Migration Status, and provide a reason for the request.",
+    "expected_article_id": "HC-BILL-006",
+    "expected_section": "How to Request a Rollback",
+    "answer_evidence": "How to Request a Rollback steps",
+    "table_dependent": false,
+    "required_evidence_terms": ["Billing Overview", "Request rollback", "Migration Status"]
+  },
+  {
+    "id": "Q6",
+    "question": "What happens to auto-pay during a billing migration?",
+    "known_answer": "Auto-pay is paused automatically during migration and does not resume until the account owner confirms the new default payment method.",
+    "expected_article_id": "HC-BILL-003",
+    "expected_section": "Auto-Pay Behavior After Migration",
+    "answer_evidence": "Auto-Pay Behavior After Migration paragraph",
+    "table_dependent": false,
+    "required_evidence_terms": ["auto-pay", "paused", "default payment method"]
+  },
+  {
+    "id": "Q7",
+    "question": "Which account roles can confirm a billing migration?",
+    "known_answer": "Only the Account Owner and Billing Administrator roles can confirm migration; Finance Viewer and Member cannot.",
+    "expected_article_id": "HC-BILL-005",
+    "expected_section": "Role Permission Table",
+    "answer_evidence": "Role Permission Table rows",
+    "table_dependent": true,
+    "required_evidence_terms": ["Account Owner", "Billing Administrator", "confirm migration"]
+  },
+  {
+    "id": "Q8",
+    "question": "Can a completed billing migration be rolled back?",
+    "known_answer": "No, once a migration reaches completed status it cannot be rolled back because invoice numbering and tax records have already switched to the new platform's format.",
+    "expected_article_id": "HC-BILL-006",
+    "expected_section": "When a Rollback Is Possible",
+    "answer_evidence": "When a Rollback Is Possible paragraph",
+    "table_dependent": false,
+    "required_evidence_terms": ["completed", "cannot be rolled back", "invoice numbering"]
+  }
+]
