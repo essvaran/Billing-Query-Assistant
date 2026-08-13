@@ -1,0 +1,610 @@
+[
+  {
+    "question_id": "Q1",
+    "question": "What does ERR-4032 mean?",
+    "results": [
+      {
+        "rank": 1,
+        "chunk_id": "HC-BILL-002--error-codes--err-4032",
+        "article_id": "HC-BILL-002",
+        "source_file": "article_02.md",
+        "section": "Error Codes",
+        "product_area": "billing-migration",
+        "score": 0.7078,
+        "text": "Article: Billing Migration Error Codes and Fixes\nSection: Error Codes\n\nError code: ERR-4032\nCause: Billing profile migration is incomplete because a required field was not carried over from the legacy platform\nFix: Reconnect the billing profile and retry the migration from the Billing Overview page"
+      },
+      {
+        "rank": 2,
+        "chunk_id": "HC-BILL-001--appendix-c-migration-error-code-quick-reference--err-4032",
+        "article_id": "HC-BILL-001",
+        "source_file": "article_01.md",
+        "section": "Appendix C: Migration Error Code Quick Reference",
+        "product_area": "billing-migration",
+        "score": 0.6747,
+        "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Appendix C: Migration Error Code Quick Reference\n\nCode: ERR-4032\nSeries: Core\nBlocking: Yes\nOne-line description: Required field missing from profile"
+      },
+      {
+        "rank": 3,
+        "chunk_id": "HC-BILL-002--error-codes--err-5010",
+        "article_id": "HC-BILL-002",
+        "source_file": "article_02.md",
+        "section": "Error Codes",
+        "product_area": "billing-migration",
+        "score": 0.6669,
+        "text": "Article: Billing Migration Error Codes and Fixes\nSection: Error Codes\n\nError code: ERR-5010\nCause: The invoice account is locked because of a prior unresolved dispute\nFix: Ask an account administrator to resolve the dispute, then unlock the invoice account"
+      },
+      {
+        "rank": 4,
+        "chunk_id": "HC-BILL-002--subscription-and-entitlement-error-codes-sub-series--sub-4002",
+        "article_id": "HC-BILL-002",
+        "source_file": "article_02.md",
+        "section": "Subscription and Entitlement Error Codes (SUB-Series)",
+        "product_area": "billing-migration",
+        "score": 0.6646,
+        "text": "Article: Billing Migration Error Codes and Fixes\nSection: Subscription and Entitlement Error Codes (SUB-Series)\n\nError code: SUB-4002\nBlocking: Yes\nCause: Subscription is in a \"payment failed\" state from a failed renewal charge\nFix: Resolve the failed payment in Billing > Subscriptions before retrying"
+      },
+      {
+        "rank": 5,
+        "chunk_id": "HC-BILL-002--error-code-ranges-reference--err-5xxx",
+        "article_id": "HC-BILL-002",
+        "source_file": "article_02.md",
+        "section": "Error Code Ranges Reference",
+        "product_area": "billing-migration",
+        "score": 0.6644,
+        "text": "Article: Billing Migration Error Codes and Fixes\nSection: Error Code Ranges Reference\n\nRange: ERR-5xxx\nSeries: Core migration\nCategory: Account state restrictions\nTypical blocking behavior: Non-blocking (restricted state)"
+      },
+      {
+        "rank": 6,
+        "chunk_id": "HC-BILL-002--account-and-profile-error-codes-acc-series--acc-5002",
+        "article_id": "HC-BILL-002",
+        "source_file": "article_02.md",
+        "section": "Account and Profile Error Codes (ACC-Series)",
+        "product_area": "billing-migration",
+        "score": 0.6614,
+        "text": "Article: Billing Migration Error Codes and Fixes\nSection: Account and Profile Error Codes (ACC-Series)\n\nError code: ACC-5002\nBlocking: Yes\nCause: Account is flagged for deletion and cannot be migrated\nFix: Contact trust and safety team; migration is suspended during deletion review"
+      },
+      {
+        "rank": 7,
+        "chunk_id": "HC-BILL-001--appendix-c-migration-error-code-quick-reference--err-5010",
+        "article_id": "HC-BILL-001",
+        "source_file": "article_01.md",
+        "section": "Appendix C: Migration Error Code Quick Reference",
+        "product_area": "billing-migration",
+        "score": 0.6609,
+        "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Appendix C: Migration Error Code Quick Reference\n\nCode: ERR-5010\nSeries: Core\nBlocking: No\nOne-line description: Invoice account locked (dispute)"
+      }
+    ]
+  },
+  {
+    "question_id": "Q2",
+    "question": "What does ERR-5010 mean?",
+    "results": [
+      {
+        "rank": 1,
+        "chunk_id": "HC-BILL-002--error-codes--err-5010",
+        "article_id": "HC-BILL-002",
+        "source_file": "article_02.md",
+        "section": "Error Codes",
+        "product_area": "billing-migration",
+        "score": 0.7481,
+        "text": "Article: Billing Migration Error Codes and Fixes\nSection: Error Codes\n\nError code: ERR-5010\nCause: The invoice account is locked because of a prior unresolved dispute\nFix: Ask an account administrator to resolve the dispute, then unlock the invoice account"
+      },
+      {
+        "rank": 2,
+        "chunk_id": "HC-BILL-002--account-and-profile-error-codes-acc-series--acc-5010",
+        "article_id": "HC-BILL-002",
+        "source_file": "article_02.md",
+        "section": "Account and Profile Error Codes (ACC-Series)",
+        "product_area": "billing-migration",
+        "score": 0.7401,
+        "text": "Article: Billing Migration Error Codes and Fixes\nSection: Account and Profile Error Codes (ACC-Series)\n\nError code: ACC-5010\nBlocking: No\nCause: Phone number on account is in an invalid format for the new platform\nFix: Update the phone number in Account Settings > Contact Information"
+      },
+      {
+        "rank": 3,
+        "chunk_id": "HC-BILL-002--error-codes--err-5020",
+        "article_id": "HC-BILL-002",
+        "source_file": "article_02.md",
+        "section": "Error Codes",
+        "product_area": "billing-migration",
+        "score": 0.7027,
+        "text": "Article: Billing Migration Error Codes and Fixes\nSection: Error Codes\n\nError code: ERR-5020\nCause: Tax identification data could not be transferred because it was stored in an unsupported legacy format\nFix: Re-enter tax identification information manually on the new billing platform"
+      },
+      {
+        "rank": 4,
+        "chunk_id": "HC-BILL-001--appendix-c-migration-error-code-quick-reference--err-5010",
+        "article_id": "HC-BILL-001",
+        "source_file": "article_01.md",
+        "section": "Appendix C: Migration Error Code Quick Reference",
+        "product_area": "billing-migration",
+        "score": 0.6992,
+        "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Appendix C: Migration Error Code Quick Reference\n\nCode: ERR-5010\nSeries: Core\nBlocking: No\nOne-line description: Invoice account locked (dispute)"
+      },
+      {
+        "rank": 5,
+        "chunk_id": "HC-BILL-002--error-code-ranges-reference--err-5xxx",
+        "article_id": "HC-BILL-002",
+        "source_file": "article_02.md",
+        "section": "Error Code Ranges Reference",
+        "product_area": "billing-migration",
+        "score": 0.6863,
+        "text": "Article: Billing Migration Error Codes and Fixes\nSection: Error Code Ranges Reference\n\nRange: ERR-5xxx\nSeries: Core migration\nCategory: Account state restrictions\nTypical blocking behavior: Non-blocking (restricted state)"
+      },
+      {
+        "rank": 6,
+        "chunk_id": "HC-BILL-002--subscription-and-entitlement-error-codes-sub-series--sub-4010",
+        "article_id": "HC-BILL-002",
+        "source_file": "article_02.md",
+        "section": "Subscription and Entitlement Error Codes (SUB-Series)",
+        "product_area": "billing-migration",
+        "score": 0.6785,
+        "text": "Article: Billing Migration Error Codes and Fixes\nSection: Subscription and Entitlement Error Codes (SUB-Series)\n\nError code: SUB-4010\nBlocking: No\nCause: Trial subscription converted to paid but trial flag not cleared in legacy\nFix: No action required; the trial flag is cleared during migration"
+      },
+      {
+        "rank": 7,
+        "chunk_id": "HC-BILL-002--tax-error-codes-tax-series--tax-3003",
+        "article_id": "HC-BILL-002",
+        "source_file": "article_02.md",
+        "section": "Tax Error Codes (TAX-Series)",
+        "product_area": "billing-migration",
+        "score": 0.6783,
+        "text": "Article: Billing Migration Error Codes and Fixes\nSection: Tax Error Codes (TAX-Series)\n\nError code: TAX-3003\nBlocking: No\nCause: Tax exemption certificate format not accepted by new platform (only PDF accepted)\nFix: Convert the certificate to PDF and re-upload"
+      }
+    ]
+  },
+  {
+    "question_id": "Q3",
+    "question": "How do I fix ERR-4040?",
+    "results": [
+      {
+        "rank": 1,
+        "chunk_id": "HC-BILL-002--error-codes--err-4040",
+        "article_id": "HC-BILL-002",
+        "source_file": "article_02.md",
+        "section": "Error Codes",
+        "product_area": "billing-migration",
+        "score": 0.7572,
+        "text": "Article: Billing Migration Error Codes and Fixes\nSection: Error Codes\n\nError code: ERR-4040\nCause: The legacy payment method on file could not be re-verified with the card network\nFix: Add a new payment method and set it as default before retrying migration"
+      },
+      {
+        "rank": 2,
+        "chunk_id": "HC-BILL-003--payment-method-errors-during-migration--err-4040",
+        "article_id": "HC-BILL-003",
+        "source_file": "article_03.md",
+        "section": "Payment Method Errors During Migration",
+        "product_area": "billing-migration",
+        "score": 0.7252,
+        "text": "Article: Invoice and Payment Method Migration\nSection: Payment Method Errors During Migration\n\nError code: ERR-4040\nCause: The legacy payment method on file could not be re-verified with the card network\nFix: Add a new payment method and set it as default before retrying migration"
+      },
+      {
+        "rank": 3,
+        "chunk_id": "HC-BILL-001--appendix-c-migration-error-code-quick-reference--err-4040",
+        "article_id": "HC-BILL-001",
+        "source_file": "article_01.md",
+        "section": "Appendix C: Migration Error Code Quick Reference",
+        "product_area": "billing-migration",
+        "score": 0.6974,
+        "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Appendix C: Migration Error Code Quick Reference\n\nCode: ERR-4040\nSeries: Core\nBlocking: Yes\nOne-line description: Payment method re-verification failed"
+      },
+      {
+        "rank": 4,
+        "chunk_id": "HC-BILL-002--error-codes--err-5020",
+        "article_id": "HC-BILL-002",
+        "source_file": "article_02.md",
+        "section": "Error Codes",
+        "product_area": "billing-migration",
+        "score": 0.6855,
+        "text": "Article: Billing Migration Error Codes and Fixes\nSection: Error Codes\n\nError code: ERR-5020\nCause: Tax identification data could not be transferred because it was stored in an unsupported legacy format\nFix: Re-enter tax identification information manually on the new billing platform"
+      },
+      {
+        "rank": 5,
+        "chunk_id": "HC-BILL-002--error-codes--err-4032",
+        "article_id": "HC-BILL-002",
+        "source_file": "article_02.md",
+        "section": "Error Codes",
+        "product_area": "billing-migration",
+        "score": 0.6824,
+        "text": "Article: Billing Migration Error Codes and Fixes\nSection: Error Codes\n\nError code: ERR-4032\nCause: Billing profile migration is incomplete because a required field was not carried over from the legacy platform\nFix: Reconnect the billing profile and retry the migration from the Billing Overview page"
+      },
+      {
+        "rank": 6,
+        "chunk_id": "HC-BILL-006--rollback-related-error-codes--err-6001",
+        "article_id": "HC-BILL-006",
+        "source_file": "article_06.md",
+        "section": "Rollback-Related Error Codes",
+        "product_area": "billing-migration",
+        "score": 0.6782,
+        "text": "Article: Migration Rollback and Support Escalation\nSection: Rollback-Related Error Codes\n\nError code: ERR-6001\nCause: Rollback was requested after the migration already reached completed status\nFix: Rollback is not available; contact billing support for a manual correction instead"
+      },
+      {
+        "rank": 7,
+        "chunk_id": "HC-BILL-006--rollback-related-error-codes--err-6015",
+        "article_id": "HC-BILL-006",
+        "source_file": "article_06.md",
+        "section": "Rollback-Related Error Codes",
+        "product_area": "billing-migration",
+        "score": 0.6772,
+        "text": "Article: Migration Rollback and Support Escalation\nSection: Rollback-Related Error Codes\n\nError code: ERR-6015\nCause: Rollback failed because the legacy billing profile was already archived\nFix: Contact billing support to restore the archived legacy profile before retrying rollback"
+      }
+    ]
+  },
+  {
+    "question_id": "Q4",
+    "question": "How do I fix ERR-6030?",
+    "results": [
+      {
+        "rank": 1,
+        "chunk_id": "HC-BILL-006--rollback-related-error-codes--err-6030",
+        "article_id": "HC-BILL-006",
+        "source_file": "article_06.md",
+        "section": "Rollback-Related Error Codes",
+        "product_area": "billing-migration",
+        "score": 0.732,
+        "text": "Article: Migration Rollback and Support Escalation\nSection: Rollback-Related Error Codes\n\nError code: ERR-6030\nCause: Rollback was requested by a user without the Billing Administrator role\nFix: Ask an Account Owner or Billing Administrator to submit the rollback request"
+      },
+      {
+        "rank": 2,
+        "chunk_id": "HC-BILL-006--rollback-related-error-codes--err-6015",
+        "article_id": "HC-BILL-006",
+        "source_file": "article_06.md",
+        "section": "Rollback-Related Error Codes",
+        "product_area": "billing-migration",
+        "score": 0.7097,
+        "text": "Article: Migration Rollback and Support Escalation\nSection: Rollback-Related Error Codes\n\nError code: ERR-6015\nCause: Rollback failed because the legacy billing profile was already archived\nFix: Contact billing support to restore the archived legacy profile before retrying rollback"
+      },
+      {
+        "rank": 3,
+        "chunk_id": "HC-BILL-002--error-codes--err-5020",
+        "article_id": "HC-BILL-002",
+        "source_file": "article_02.md",
+        "section": "Error Codes",
+        "product_area": "billing-migration",
+        "score": 0.7059,
+        "text": "Article: Billing Migration Error Codes and Fixes\nSection: Error Codes\n\nError code: ERR-5020\nCause: Tax identification data could not be transferred because it was stored in an unsupported legacy format\nFix: Re-enter tax identification information manually on the new billing platform"
+      },
+      {
+        "rank": 4,
+        "chunk_id": "HC-BILL-002--error-codes--err-4040",
+        "article_id": "HC-BILL-002",
+        "source_file": "article_02.md",
+        "section": "Error Codes",
+        "product_area": "billing-migration",
+        "score": 0.6979,
+        "text": "Article: Billing Migration Error Codes and Fixes\nSection: Error Codes\n\nError code: ERR-4040\nCause: The legacy payment method on file could not be re-verified with the card network\nFix: Add a new payment method and set it as default before retrying migration"
+      },
+      {
+        "rank": 5,
+        "chunk_id": "HC-BILL-002--network-and-connectivity-error-codes-net-series--net-7001",
+        "article_id": "HC-BILL-002",
+        "source_file": "article_02.md",
+        "section": "Network and Connectivity Error Codes (NET-Series)",
+        "product_area": "billing-migration",
+        "score": 0.6976,
+        "text": "Article: Billing Migration Error Codes and Fixes\nSection: Network and Connectivity Error Codes (NET-Series)\n\nError code: NET-7001\nCause: Connection to legacy platform API timed out during read\nRetry recommended: Yes"
+      },
+      {
+        "rank": 6,
+        "chunk_id": "HC-BILL-002--error-codes--err-5010",
+        "article_id": "HC-BILL-002",
+        "source_file": "article_02.md",
+        "section": "Error Codes",
+        "product_area": "billing-migration",
+        "score": 0.6954,
+        "text": "Article: Billing Migration Error Codes and Fixes\nSection: Error Codes\n\nError code: ERR-5010\nCause: The invoice account is locked because of a prior unresolved dispute\nFix: Ask an account administrator to resolve the dispute, then unlock the invoice account"
+      },
+      {
+        "rank": 7,
+        "chunk_id": "HC-BILL-006--rollback-related-error-codes--err-6001",
+        "article_id": "HC-BILL-006",
+        "source_file": "article_06.md",
+        "section": "Rollback-Related Error Codes",
+        "product_area": "billing-migration",
+        "score": 0.6926,
+        "text": "Article: Migration Rollback and Support Escalation\nSection: Rollback-Related Error Codes\n\nError code: ERR-6001\nCause: Rollback was requested after the migration already reached completed status\nFix: Rollback is not available; contact billing support for a manual correction instead"
+      }
+    ]
+  },
+  {
+    "question_id": "Q5",
+    "question": "How do I request a migration rollback?",
+    "results": [
+      {
+        "rank": 1,
+        "chunk_id": "HC-BILL-006--how-to-request-a-rollback--prose-001",
+        "article_id": "HC-BILL-006",
+        "source_file": "article_06.md",
+        "section": "How to Request a Rollback",
+        "product_area": "billing-migration",
+        "score": 0.8414,
+        "text": "Article: Migration Rollback and Support Escalation\nSection: How to Request a Rollback\n\n1. Go to the Billing Overview page.\n2. Select \"Request rollback\" under Migration Status.\n3. Provide a reason for the rollback request.\n\nRollback requests are processed within 4 business hours while migration is\nstill in the queued or in-progress stage."
+      },
+      {
+        "rank": 2,
+        "chunk_id": "HC-BILL-006--rollback-related-error-codes--err-6001",
+        "article_id": "HC-BILL-006",
+        "source_file": "article_06.md",
+        "section": "Rollback-Related Error Codes",
+        "product_area": "billing-migration",
+        "score": 0.7717,
+        "text": "Article: Migration Rollback and Support Escalation\nSection: Rollback-Related Error Codes\n\nError code: ERR-6001\nCause: Rollback was requested after the migration already reached completed status\nFix: Rollback is not available; contact billing support for a manual correction instead"
+      },
+      {
+        "rank": 3,
+        "chunk_id": "HC-BILL-006--rollback-related-error-codes--err-6030",
+        "article_id": "HC-BILL-006",
+        "source_file": "article_06.md",
+        "section": "Rollback-Related Error Codes",
+        "product_area": "billing-migration",
+        "score": 0.7669,
+        "text": "Article: Migration Rollback and Support Escalation\nSection: Rollback-Related Error Codes\n\nError code: ERR-6030\nCause: Rollback was requested by a user without the Billing Administrator role\nFix: Ask an Account Owner or Billing Administrator to submit the rollback request"
+      },
+      {
+        "rank": 4,
+        "chunk_id": "HC-BILL-001--audit-log-and-compliance-records--billing-migration-rollback-requested",
+        "article_id": "HC-BILL-001",
+        "source_file": "article_01.md",
+        "section": "Audit Log and Compliance Records",
+        "product_area": "billing-migration",
+        "score": 0.755,
+        "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Audit Log and Compliance Records\n\nEvent type: billing.migration.rollback_requested\nDescription: Rollback request submitted"
+      },
+      {
+        "rank": 5,
+        "chunk_id": "HC-BILL-006--when-a-rollback-is-possible--prose-001",
+        "article_id": "HC-BILL-006",
+        "source_file": "article_06.md",
+        "section": "When a Rollback Is Possible",
+        "product_area": "billing-migration",
+        "score": 0.7385,
+        "text": "Article: Migration Rollback and Support Escalation\nSection: When a Rollback Is Possible\n\nA billing profile migration can be rolled back to the legacy platform only if\nthe migration has not yet reached the **completed** stage. Once a migration\nreaches completed status, it cannot be rolled back, because invoice numbering\nand tax records have already switched to the new platform's format."
+      },
+      {
+        "rank": 6,
+        "chunk_id": "HC-BILL-006--rollback-related-error-codes--err-6015",
+        "article_id": "HC-BILL-006",
+        "source_file": "article_06.md",
+        "section": "Rollback-Related Error Codes",
+        "product_area": "billing-migration",
+        "score": 0.7346,
+        "text": "Article: Migration Rollback and Support Escalation\nSection: Rollback-Related Error Codes\n\nError code: ERR-6015\nCause: Rollback failed because the legacy billing profile was already archived\nFix: Contact billing support to restore the archived legacy profile before retrying rollback"
+      },
+      {
+        "rank": 7,
+        "chunk_id": "HC-BILL-006--escalating-to-support--prose-001",
+        "article_id": "HC-BILL-006",
+        "source_file": "article_06.md",
+        "section": "Escalating to Support",
+        "product_area": "billing-migration",
+        "score": 0.7244,
+        "text": "Article: Migration Rollback and Support Escalation\nSection: Escalating to Support\n\nEscalate to billing support when:\n\n- The same migration error code recurs after two retry attempts.\n- A rollback request fails with ERR-6015.\n- Migration has been stuck in the queued stage for more than 72 hours.\n\nWhen escalating, include the account ID, the exact error code, and the\nmigration stage shown on the Billing Overview page. Support cannot look up\nyour account without the account ID."
+      }
+    ]
+  },
+  {
+    "question_id": "Q6",
+    "question": "What happens to auto-pay during a billing migration?",
+    "results": [
+      {
+        "rank": 1,
+        "chunk_id": "HC-BILL-003--auto-pay-behavior-after-migration--prose-001",
+        "article_id": "HC-BILL-003",
+        "source_file": "article_03.md",
+        "section": "Auto-Pay Behavior After Migration",
+        "product_area": "billing-migration",
+        "score": 0.8521,
+        "text": "Article: Invoice and Payment Method Migration\nSection: Auto-Pay Behavior After Migration\n\nAuto-pay is paused automatically during migration and does not resume until\nthe account owner confirms the new default payment method. This is\nintentional, to prevent a charge attempt against a payment method that failed\nre-verification."
+      },
+      {
+        "rank": 2,
+        "chunk_id": "HC-BILL-001--recurring-billing-and-auto-pay-impact--prose-001",
+        "article_id": "HC-BILL-001",
+        "source_file": "article_01.md",
+        "section": "Recurring Billing and Auto-Pay Impact",
+        "product_area": "billing-migration",
+        "score": 0.8389,
+        "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Recurring Billing and Auto-Pay Impact\n\nAuto-pay is paused automatically during migration and does not resume until\nthe account owner confirms the new default payment method. If a billing cycle\nfalls during the migration window, the invoice is generated but payment is\ndeferred. Once migration completes and auto-pay resumes, any deferred\ninvoices are paid immediately using the default payment method. If the\ndeferred period spans more than one billing cycle, each deferred invoice is\npaid separately in chronological order.\n\nA grace period of 7 days applies during the migration window. Late payment\nfees are not charged for invoices that become due during the in progress phase,\nprovided payment is made within 7 days of migration completing.\n\n---"
+      },
+      {
+        "rank": 3,
+        "chunk_id": "HC-BILL-003--what-gets-migrated--prose-001",
+        "article_id": "HC-BILL-003",
+        "source_file": "article_03.md",
+        "section": "What Gets Migrated",
+        "product_area": "billing-migration",
+        "score": 0.8136,
+        "text": "Article: Invoice and Payment Method Migration\nSection: What Gets Migrated\n\nWhen a billing profile migrates to the new billing platform, the following\ninvoice and payment data moves with it:\n\n- All invoice PDFs issued in the last 24 months.\n- Saved payment methods that passed re-verification.\n- Auto-pay settings, including the auto-pay payment method.\n- Billing address and tax identification information.\n\nInvoices older than 24 months are archived but not migrated. Archived\ninvoices remain downloadable from the legacy billing portal for 12 months\nafter migration."
+      },
+      {
+        "rank": 4,
+        "chunk_id": "HC-BILL-001--what-is-billing-profile-migration--prose-001",
+        "article_id": "HC-BILL-001",
+        "source_file": "article_01.md",
+        "section": "What Is Billing Profile Migration?",
+        "product_area": "billing-migration",
+        "score": 0.7986,
+        "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: What Is Billing Profile Migration?\n\nBilling profile migration moves your billing profile \u2014 payment methods, invoice\nhistory, tax information, and subscription entitlements \u2014 from the legacy\nbilling platform to the new billing platform. Migration happens automatically\nfor most accounts, but some accounts require the account owner to confirm the\nmigration before it completes.\n\nMigration runs in three stages: **queued**, **in progress**, and\n**completed**. You can check your current stage on the Billing Overview page\nunder Account Settings."
+      },
+      {
+        "rank": 5,
+        "chunk_id": "HC-BILL-005--adding-a-billing-administrator-during-migration--prose-001",
+        "article_id": "HC-BILL-005",
+        "source_file": "article_05.md",
+        "section": "Adding a Billing Administrator During Migration",
+        "product_area": "account-administration",
+        "score": 0.7837,
+        "text": "Article: Admin Roles and Permissions During Migration\nSection: Adding a Billing Administrator During Migration\n\nBilling Administrator role changes made while a migration is in progress take\neffect immediately and do not restart or interrupt the migration. This is\ndifferent from role changes to auto-pay settings, which are paused until\nmigration completes."
+      },
+      {
+        "rank": 6,
+        "chunk_id": "HC-BILL-001--data-categories-that-migrate--prose-001",
+        "article_id": "HC-BILL-001",
+        "source_file": "article_01.md",
+        "section": "Data Categories That Migrate",
+        "product_area": "billing-migration",
+        "score": 0.7821,
+        "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Data Categories That Migrate\n\nThe following data is included in the migration and will be present in full on\nthe new billing platform after migration completes.\n\n### Payment Methods\n\nAll payment methods are migrated, including:\n\n- Credit and debit cards (Visa, Mastercard, Amex, Discover).\n- ACH/direct debit bank accounts.\n- Purchase orders with valid PO numbers.\n- Pre-paid balances and wallet credits.\n- Promotional credits applied before migration.\n\n**Important:** Payment method tokens are re-tokenized during migration. If\nyour application stores the raw token returned by the legacy billing API, those\ntokens will be invalidated. Retrieve new tokens from the new billing API after\nmigration completes. See the API migration guide for the token rotation\nendpoint.\n\n### Invoice History\n\nAll invoices are migrated. The original invoice number, date, line items,\ntax amounts, applied discounts, and payment status are preserved exactly.\nInvoices are migrated as read-only records; they cannot be edited after\nmigration because the legacy platform's approval audit trail is not migrated.\n\n### Tax Information\n\nTax identification numbers (TIN, VAT, GST, ABN, and equivalent) are migrated.\nIf a tax exemption certificate was approved on the legacy platform and has not\nexpired, it is migrated with its original approval date and expiry.\n\n### Subscription Entitlements\n\nActive subscriptions and their associated seat counts, feature entitlements,\nand renewal dates migrate exactly. The renewal date does not change as a\nresult of migration. Subscriptions that were canceled but still within a\npaid period also migrate and retain their end date.\n\n### Billing Contacts and Notification Preferences\n\nAll billing contact email addresses, their roles (primary, secondary,\nread-only), and their notification preferences (invoice emails, payment\nfailure alerts, migration updates) migrate. If a billing contact email\naddress has bounced more than three times on the legacy platform, that contact\nis marked inactive on the new platform and you will be asked to re-verify it.\n\n---"
+      },
+      {
+        "rank": 7,
+        "chunk_id": "HC-BILL-001--frequently-asked-questions--prose-001",
+        "article_id": "HC-BILL-001",
+        "source_file": "article_01.md",
+        "section": "Frequently Asked Questions",
+        "product_area": "billing-migration",
+        "score": 0.7777,
+        "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Frequently Asked Questions\n\n**Will migration affect my current subscription or pricing?**\nNo. Subscription terms, pricing, seat counts, and renewal dates are preserved\nexactly. Migration is a platform transfer, not a contract change.\n\n**Do I need to re-enter my payment information?**\nMost payment methods are migrated automatically. You may be asked to re-verify\na payment method if the token exchange cannot be confirmed during migration. A\nre-verification prompt will appear on the Billing Overview page.\n\n**Will my invoice number reset after migration?**\nNo. Invoice numbers continue from where the legacy platform left off. If your\nlast legacy invoice was INV-2024-08742, your next invoice will be\nINV-2024-08743.\n\n**What happens if I receive an invoice during the migration window?**\nInvoices generated during the in progress phase are deferred. Payment is\ncollected automatically within 24 hours of migration completing. A 7-day\ngrace period applies; late fees are not charged during this window.\n\n**Can I opt out of migration?**\nNo. Migration to the new billing platform is mandatory for all accounts.\nHowever, the timing of your migration window can be adjusted in limited\ncircumstances. Contact billing support at least 14 days before your scheduled\nwindow to request a reschedule.\n\n**What happens to my tax exemption certificates?**\nApproved certificates are migrated. If a certificate expires within 30 days\nof your migration date, you will receive a renewal prompt. Billing continues\nto apply the exemption until the certificate expires.\n\n**How do I know when migration is complete?**\nYou will receive an email to all billing contacts when migration completes. A\ngreen confirmation banner also appears on the Billing Overview page.\n\n**Can migration be reversed after it completes?**\nNo. Once migration reaches completed status, it cannot be rolled back.\nInvoice numbering and tax records have already switched to the new platform's\nformat, and reversing them would create compliance issues.\n\n**Why does my Billing Overview page show incomplete data during migration?**\nThe Billing Overview page reads from the new platform as soon as migration\nstarts. While data is still being transferred, some fields may show as empty\nor stale. This is expected. The page returns to normal once migration completes.\n\n**Are there any downtime windows during migration?**\nNo planned downtime. Write operations to billing endpoints are blocked during\nthe in progress phase (returning 503 responses), but the platform remains\naccessible and all read operations are available.\n\n**What if I update my payment method right before migration starts?**\nUpdates made less than 1 hour before the in progress phase may not be captured\nbefore the profile snapshot is taken. If you need to update a payment method,\ndo so at least 2 hours before your scheduled migration window.\n\n**How do multi-account organizations handle a failure in one child account?**\nA failure in one child account does not block other child accounts or the\nprimary account from completing migration. The failed child account retries\nindependently once the error is resolved.\n\n**Will my API keys stop working immediately after migration?**\nLegacy API keys continue to work against the legacy API endpoint for 90 days\nafter migration. After 90 days, the legacy endpoint is retired and only new\nAPI keys on the new endpoint will work.\n\n**Can I generate a new invoice manually during migration?**\nNo. Manual invoice generation is blocked during the in progress phase. Once\nmigration completes, you can generate invoices normally.\n\n**Does migration affect my SSO login?**\nNo. SSO configuration is managed by the identity platform, which is separate\nfrom billing. Login is not affected.\n\n**What is the difference between a queued and a stuck migration?**\nQueued is the normal waiting state before migration begins. Stuck is an\ninformal term for a migration that has been in queued status for longer than\nexpected \u2014 usually because a prerequisite is not met. If your migration has\nbeen queued for more than 24 hours, check the Billing Overview page for a\nyellow \"Action required\" banner.\n\n**Do I need to do anything for my recurring billing after migration?**\nAuto-pay resumes automatically after migration. No action is required unless\nthe account owner is prompted to confirm the default payment method.\n\n**Will I lose my promotional discount after migration?**\nNo. Promotional pricing, including grandfathered legacy pricing, is preserved\nthrough migration.\n\n**How are invoice PDFs handled after the legacy portal is decommissioned?**\nAll invoice PDFs, including those generated on the legacy platform, are\naccessible from the new platform's invoice list. The legacy portal remains\navailable for 90 days as a backup access method.\n\n**What should I do if I see a billing discrepancy after migration?**\nSubmit a billing dispute from Billing > Invoices > [Invoice] > Dispute. Include\nthe invoice number and a description of the discrepancy. The billing support\nteam will investigate and respond within 5 business days.\n\n---"
+      }
+    ]
+  },
+  {
+    "question_id": "Q7",
+    "question": "Which account roles can confirm a billing migration?",
+    "results": [
+      {
+        "rank": 1,
+        "chunk_id": "HC-BILL-005--who-can-initiate-or-confirm-migration--prose-001",
+        "article_id": "HC-BILL-005",
+        "source_file": "article_05.md",
+        "section": "Who Can Initiate or Confirm Migration",
+        "product_area": "account-administration",
+        "score": 0.8333,
+        "text": "Article: Admin Roles and Permissions During Migration\nSection: Who Can Initiate or Confirm Migration\n\nOnly users with the **Billing Administrator** role can confirm a migration\nthat requires manual action. The **Account Owner** role can always confirm\nmigration, even if they do not also hold the Billing Administrator role.\n\nStandard **Member** roles cannot see the migration banner and cannot confirm\nmigration, even if they have access to billing history."
+      },
+      {
+        "rank": 2,
+        "chunk_id": "HC-BILL-005--multiple-billing-contacts--prose-001",
+        "article_id": "HC-BILL-005",
+        "source_file": "article_05.md",
+        "section": "Multiple Billing Contacts",
+        "product_area": "account-administration",
+        "score": 0.8271,
+        "text": "Article: Admin Roles and Permissions During Migration\nSection: Multiple Billing Contacts\n\nIf an account has more than one billing contact, migration requires\nconfirmation from only one Billing Administrator or the Account Owner \u2014 not\nall contacts. Once confirmed, the migration proceeds for the entire account,\nand all billing contacts receive a completion notification."
+      },
+      {
+        "rank": 3,
+        "chunk_id": "HC-BILL-001--change-management-recommendations--complete-post-migration-verification-checklist",
+        "article_id": "HC-BILL-001",
+        "source_file": "article_01.md",
+        "section": "Change Management Recommendations",
+        "product_area": "billing-migration",
+        "score": 0.7962,
+        "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Change Management Recommendations\n\nTask: Complete Post-Migration Verification Checklist\nOwner: Billing Administrator\nNotes: See the checklist section in this article"
+      },
+      {
+        "rank": 4,
+        "chunk_id": "HC-BILL-001--what-is-billing-profile-migration--prose-001",
+        "article_id": "HC-BILL-001",
+        "source_file": "article_01.md",
+        "section": "What Is Billing Profile Migration?",
+        "product_area": "billing-migration",
+        "score": 0.7949,
+        "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: What Is Billing Profile Migration?\n\nBilling profile migration moves your billing profile \u2014 payment methods, invoice\nhistory, tax information, and subscription entitlements \u2014 from the legacy\nbilling platform to the new billing platform. Migration happens automatically\nfor most accounts, but some accounts require the account owner to confirm the\nmigration before it completes.\n\nMigration runs in three stages: **queued**, **in progress**, and\n**completed**. You can check your current stage on the Billing Overview page\nunder Account Settings."
+      },
+      {
+        "rank": 5,
+        "chunk_id": "HC-BILL-001--who-needs-to-take-action--prose-001",
+        "article_id": "HC-BILL-001",
+        "source_file": "article_01.md",
+        "section": "Who Needs to Take Action",
+        "product_area": "billing-migration",
+        "score": 0.7822,
+        "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Who Needs to Take Action\n\nMost accounts migrate with no action required. You only need to take action if\nyour account uses any of the following:\n\n- A payment method added before 2024 that was never re-verified.\n- More than one billing contact on the account.\n- A custom invoice template.\n\nIf any of these apply, you will see a banner labeled \"Action required before\nmigration\" on the Billing Overview page."
+      },
+      {
+        "rank": 6,
+        "chunk_id": "HC-BILL-001--billing-contacts-and-notification-settings--account-owner",
+        "article_id": "HC-BILL-001",
+        "source_file": "article_01.md",
+        "section": "Billing Contacts and Notification Settings",
+        "product_area": "billing-migration",
+        "score": 0.781,
+        "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Billing Contacts and Notification Settings\n\nRole: Account Owner\nCan view invoices: Yes\nCan pay invoices: Yes\nCan change payment methods: Yes\nCan change billing settings: Yes\nReceives all billing emails: Yes"
+      },
+      {
+        "rank": 7,
+        "chunk_id": "HC-BILL-005--role-permission-table--billing-administrator",
+        "article_id": "HC-BILL-005",
+        "source_file": "article_05.md",
+        "section": "Role Permission Table",
+        "product_area": "account-administration",
+        "score": 0.7789,
+        "text": "Article: Admin Roles and Permissions During Migration\nSection: Role Permission Table\n\nRole: Billing Administrator\nCan view migration status: Yes\nCan confirm migration: Yes\nCan retry after an error: Yes"
+      }
+    ]
+  },
+  {
+    "question_id": "Q8",
+    "question": "Can a completed billing migration be rolled back?",
+    "results": [
+      {
+        "rank": 1,
+        "chunk_id": "HC-BILL-006--when-a-rollback-is-possible--prose-001",
+        "article_id": "HC-BILL-006",
+        "source_file": "article_06.md",
+        "section": "When a Rollback Is Possible",
+        "product_area": "billing-migration",
+        "score": 0.8425,
+        "text": "Article: Migration Rollback and Support Escalation\nSection: When a Rollback Is Possible\n\nA billing profile migration can be rolled back to the legacy platform only if\nthe migration has not yet reached the **completed** stage. Once a migration\nreaches completed status, it cannot be rolled back, because invoice numbering\nand tax records have already switched to the new platform's format."
+      },
+      {
+        "rank": 2,
+        "chunk_id": "HC-BILL-001--audit-log-and-compliance-records--billing-migration-rollback-completed",
+        "article_id": "HC-BILL-001",
+        "source_file": "article_01.md",
+        "section": "Audit Log and Compliance Records",
+        "product_area": "billing-migration",
+        "score": 0.7981,
+        "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Audit Log and Compliance Records\n\nEvent type: billing.migration.rollback_completed\nDescription: Rollback to legacy platform completed"
+      },
+      {
+        "rank": 3,
+        "chunk_id": "HC-BILL-006--how-to-request-a-rollback--prose-001",
+        "article_id": "HC-BILL-006",
+        "source_file": "article_06.md",
+        "section": "How to Request a Rollback",
+        "product_area": "billing-migration",
+        "score": 0.779,
+        "text": "Article: Migration Rollback and Support Escalation\nSection: How to Request a Rollback\n\n1. Go to the Billing Overview page.\n2. Select \"Request rollback\" under Migration Status.\n3. Provide a reason for the rollback request.\n\nRollback requests are processed within 4 business hours while migration is\nstill in the queued or in-progress stage."
+      },
+      {
+        "rank": 4,
+        "chunk_id": "HC-BILL-001--related-articles--prose-001",
+        "article_id": "HC-BILL-001",
+        "source_file": "article_01.md",
+        "section": "Related Articles",
+        "product_area": "billing-migration",
+        "score": 0.7723,
+        "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Related Articles\n\nSee \"Billing Migration Error Codes and Fixes\" for troubleshooting specific\nerror codes, and \"Migration Rollback and Support Escalation\" if migration\nfails and needs to be reversed.\n\n---"
+      },
+      {
+        "rank": 5,
+        "chunk_id": "HC-BILL-001--audit-log-and-compliance-records--billing-migration-rollback-requested",
+        "article_id": "HC-BILL-001",
+        "source_file": "article_01.md",
+        "section": "Audit Log and Compliance Records",
+        "product_area": "billing-migration",
+        "score": 0.769,
+        "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Audit Log and Compliance Records\n\nEvent type: billing.migration.rollback_requested\nDescription: Rollback request submitted"
+      },
+      {
+        "rank": 6,
+        "chunk_id": "HC-BILL-002--retrying-after-a-fix--prose-001",
+        "article_id": "HC-BILL-002",
+        "source_file": "article_02.md",
+        "section": "Retrying After a Fix",
+        "product_area": "billing-migration",
+        "score": 0.7672,
+        "text": "Article: Billing Migration Error Codes and Fixes\nSection: Retrying After a Fix\n\nAfter applying a fix, retry migration from the Billing Overview page. Retries\ndo not create a new migration record; the existing migration record is\nupdated in place, so migration history remains accurate for support purposes."
+      },
+      {
+        "rank": 7,
+        "chunk_id": "HC-BILL-001--recurring-billing-and-auto-pay-impact--prose-001",
+        "article_id": "HC-BILL-001",
+        "source_file": "article_01.md",
+        "section": "Recurring Billing and Auto-Pay Impact",
+        "product_area": "billing-migration",
+        "score": 0.7649,
+        "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Recurring Billing and Auto-Pay Impact\n\nAuto-pay is paused automatically during migration and does not resume until\nthe account owner confirms the new default payment method. If a billing cycle\nfalls during the migration window, the invoice is generated but payment is\ndeferred. Once migration completes and auto-pay resumes, any deferred\ninvoices are paid immediately using the default payment method. If the\ndeferred period spans more than one billing cycle, each deferred invoice is\npaid separately in chronological order.\n\nA grace period of 7 days applies during the migration window. Late payment\nfees are not charged for invoices that become due during the in progress phase,\nprovided payment is made within 7 days of migration completing.\n\n---"
+      }
+    ]
+  }
+]

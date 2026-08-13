@@ -1,0 +1,149 @@
+{
+  "query": "Who can view migration status?",
+  "product_area_filter": "billing-migration",
+  "unfiltered_results": [
+    {
+      "rank": 1,
+      "chunk_id": "HC-BILL-005--role-permission-table--billing-administrator",
+      "article_id": "HC-BILL-005",
+      "source_file": "article_05.md",
+      "section": "Role Permission Table",
+      "product_area": "account-administration",
+      "score": 0.7504,
+      "text": "Article: Admin Roles and Permissions During Migration\nSection: Role Permission Table\n\nRole: Billing Administrator\nCan view migration status: Yes\nCan confirm migration: Yes\nCan retry after an error: Yes"
+    },
+    {
+      "rank": 2,
+      "chunk_id": "HC-BILL-005--role-permission-table--finance-viewer",
+      "article_id": "HC-BILL-005",
+      "source_file": "article_05.md",
+      "section": "Role Permission Table",
+      "product_area": "account-administration",
+      "score": 0.7504,
+      "text": "Article: Admin Roles and Permissions During Migration\nSection: Role Permission Table\n\nRole: Finance Viewer\nCan view migration status: Yes\nCan confirm migration: No\nCan retry after an error: No"
+    },
+    {
+      "rank": 3,
+      "chunk_id": "HC-BILL-005--role-permission-table--member",
+      "article_id": "HC-BILL-005",
+      "source_file": "article_05.md",
+      "section": "Role Permission Table",
+      "product_area": "account-administration",
+      "score": 0.7461,
+      "text": "Article: Admin Roles and Permissions During Migration\nSection: Role Permission Table\n\nRole: Member\nCan view migration status: No\nCan confirm migration: No\nCan retry after an error: No"
+    },
+    {
+      "rank": 4,
+      "chunk_id": "HC-BILL-005--role-permission-table--account-owner",
+      "article_id": "HC-BILL-005",
+      "source_file": "article_05.md",
+      "section": "Role Permission Table",
+      "product_area": "account-administration",
+      "score": 0.7425,
+      "text": "Article: Admin Roles and Permissions During Migration\nSection: Role Permission Table\n\nRole: Account Owner\nCan view migration status: Yes\nCan confirm migration: Yes\nCan retry after an error: Yes"
+    },
+    {
+      "rank": 5,
+      "chunk_id": "HC-BILL-005--who-can-initiate-or-confirm-migration--prose-001",
+      "article_id": "HC-BILL-005",
+      "source_file": "article_05.md",
+      "section": "Who Can Initiate or Confirm Migration",
+      "product_area": "account-administration",
+      "score": 0.7207,
+      "text": "Article: Admin Roles and Permissions During Migration\nSection: Who Can Initiate or Confirm Migration\n\nOnly users with the **Billing Administrator** role can confirm a migration\nthat requires manual action. The **Account Owner** role can always confirm\nmigration, even if they do not also hold the Billing Administrator role.\n\nStandard **Member** roles cannot see the migration banner and cannot confirm\nmigration, even if they have access to billing history."
+    },
+    {
+      "rank": 6,
+      "chunk_id": "HC-BILL-001--operations-restricted-during-migration--view-subscription-status",
+      "article_id": "HC-BILL-001",
+      "source_file": "article_01.md",
+      "section": "Operations Restricted During Migration",
+      "product_area": "billing-migration",
+      "score": 0.7183,
+      "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Operations Restricted During Migration\n\nOperation: View subscription status\nRestriction level: Available\nReason: Status reads are safe"
+    },
+    {
+      "rank": 7,
+      "chunk_id": "HC-BILL-001--change-management-recommendations--monitor-migration-status",
+      "article_id": "HC-BILL-001",
+      "source_file": "article_01.md",
+      "section": "Change Management Recommendations",
+      "product_area": "billing-migration",
+      "score": 0.7114,
+      "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Change Management Recommendations\n\nTask: Monitor migration status\nOwner: Billing Administrator\nNotes: Check Billing Overview every hour during in progress phase"
+    }
+  ],
+  "filtered_results": [
+    {
+      "rank": 1,
+      "chunk_id": "HC-BILL-001--operations-restricted-during-migration--view-subscription-status",
+      "article_id": "HC-BILL-001",
+      "source_file": "article_01.md",
+      "section": "Operations Restricted During Migration",
+      "product_area": "billing-migration",
+      "score": 0.7183,
+      "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Operations Restricted During Migration\n\nOperation: View subscription status\nRestriction level: Available\nReason: Status reads are safe"
+    },
+    {
+      "rank": 2,
+      "chunk_id": "HC-BILL-001--change-management-recommendations--monitor-migration-status",
+      "article_id": "HC-BILL-001",
+      "source_file": "article_01.md",
+      "section": "Change Management Recommendations",
+      "product_area": "billing-migration",
+      "score": 0.7114,
+      "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Change Management Recommendations\n\nTask: Monitor migration status\nOwner: Billing Administrator\nNotes: Check Billing Overview every hour during in progress phase"
+    },
+    {
+      "rank": 3,
+      "chunk_id": "HC-BILL-001--migration-status-notifications--migration-starting",
+      "article_id": "HC-BILL-001",
+      "source_file": "article_01.md",
+      "section": "Migration Status Notifications",
+      "product_area": "billing-migration",
+      "score": 0.7113,
+      "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Migration Status Notifications\n\nNotification: Migration starting\nSent when: 1 hour before in progress\nRecipients: Account Owner, Billing Administrator"
+    },
+    {
+      "rank": 4,
+      "chunk_id": "HC-BILL-001--billing-contacts-and-notification-settings--migration-status-updates",
+      "article_id": "HC-BILL-001",
+      "source_file": "article_01.md",
+      "section": "Billing Contacts and Notification Settings",
+      "product_area": "billing-migration",
+      "score": 0.7092,
+      "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Billing Contacts and Notification Settings\n\nCategory: Migration status updates\nDefault state: On during migration window, auto-disabled after\nHow to adjust: Billing > Notifications"
+    },
+    {
+      "rank": 5,
+      "chunk_id": "HC-BILL-001--migration-status-notifications--migration-scheduled",
+      "article_id": "HC-BILL-001",
+      "source_file": "article_01.md",
+      "section": "Migration Status Notifications",
+      "product_area": "billing-migration",
+      "score": 0.7071,
+      "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Migration Status Notifications\n\nNotification: Migration scheduled\nSent when: 7 days before window\nRecipients: Account Owner, Billing Administrator"
+    },
+    {
+      "rank": 6,
+      "chunk_id": "HC-BILL-001--operations-restricted-during-migration--prose-001",
+      "article_id": "HC-BILL-001",
+      "source_file": "article_01.md",
+      "section": "Operations Restricted During Migration",
+      "product_area": "billing-migration",
+      "score": 0.7048,
+      "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Operations Restricted During Migration\n\nThe following operations are not available while migration status is **in\nprogress**. Attempting these operations will return a `503 Migration in\nProgress` error or a UI message asking you to try again later.\n\n---"
+    },
+    {
+      "rank": 7,
+      "chunk_id": "HC-BILL-001--migration-status-notifications--prose-001",
+      "article_id": "HC-BILL-001",
+      "source_file": "article_01.md",
+      "section": "Migration Status Notifications",
+      "product_area": "billing-migration",
+      "score": 0.7035,
+      "text": "Article: Billing Profile Migration \u2014 Complete Implementation Guide\nSection: Migration Status Notifications\n\n### Email Notifications Sent Automatically\n\n### In-App Banners\n\nDuring the migration window, banners appear in the Billing Overview page:\n\n- **Blue banner:** Migration is queued or in progress.\n- **Green banner:** Migration completed successfully.\n- **Red banner:** Migration failed. Includes the error code and a link to the\n  remediation article.\n- **Yellow banner:** Action required to unblock migration.\n\n---"
+    }
+  ],
+  "top1_changed": true
+}

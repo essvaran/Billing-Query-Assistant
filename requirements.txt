@@ -9,3 +9,6 @@ torch
 python-dotenv
 pyyaml
 pytest
+requests
+python-docx
+PyPDF2

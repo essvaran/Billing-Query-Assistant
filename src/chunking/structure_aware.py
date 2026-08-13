@@ -57,6 +57,7 @@ def structure_aware_chunk_article(article: Article) -> list[Chunk]:
     title = _extract_title(article.content)
     sections = _split_sections(article.content)
     chunks = []
+    seen_chunk_ids: set[str] = set()
 
     for section_title, section_body in sections:
         prose_blocks = []
@@ -81,12 +82,21 @@ def structure_aware_chunk_article(article: Article) -> list[Chunk]:
                     )
 
                     identifier_source = row[0] if row else f"row-{table_row_index:03d}"
-                    content_identifier = slugify(identifier_source) or f"row-{table_row_index:03d}"
+                    base_identifier = slugify(identifier_source) or f"row-{table_row_index:03d}"
                     table_row_index += 1
 
                     chunk_id = make_chunk_id(
-                        article.metadata["article_id"], section_title, content_identifier
+                        article.metadata["article_id"], section_title, base_identifier
                     )
+                    # Deduplicate: append row index when the same base identifier
+                    # appears more than once (e.g. a table with repeated first-column values)
+                    if chunk_id in seen_chunk_ids:
+                        chunk_id = make_chunk_id(
+                            article.metadata["article_id"],
+                            section_title,
+                            f"{base_identifier}-{table_row_index:03d}",
+                        )
+                    seen_chunk_ids.add(chunk_id)
                     metadata = {
                         **article.metadata,
                         "chunk_id": chunk_id,

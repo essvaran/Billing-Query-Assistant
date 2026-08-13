@@ -1,0 +1,7 @@
+This project's history was authored directly as a series of commits rather
+than reconstructed after the fact; see `git log` for the equivalent of a
+code diff, or run:
+
+  git diff <first-commit>..HEAD
+
+to regenerate this file against the initial scaffold commit.

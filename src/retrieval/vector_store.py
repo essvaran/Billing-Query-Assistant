@@ -28,7 +28,9 @@ def build_collection(collection_name: str, chunks: list[Chunk]) -> None:
         c.name for c in client.list_collections()
     ] else None
 
-    collection = client.create_collection(collection_name)
+    collection = client.create_collection(
+        collection_name, metadata={"hnsw:space": "cosine"}
+    )
     embeddings = get_embeddings()
 
     texts = [chunk.page_content for chunk in chunks]

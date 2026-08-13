@@ -1,0 +1,97 @@
+{
+  "per_question": [
+    {
+      "question_id": "Q1",
+      "question": "What does ERR-4032 mean?",
+      "table_dependent": true,
+      "baseline_rank": 1,
+      "baseline_hit_at_5": true,
+      "structure_rank": 1,
+      "structure_hit_at_5": true,
+      "semantic_rank": 1,
+      "semantic_hit_at_5": true
+    },
+    {
+      "question_id": "Q2",
+      "question": "What does ERR-5010 mean?",
+      "table_dependent": true,
+      "baseline_rank": 4,
+      "baseline_hit_at_5": true,
+      "structure_rank": 1,
+      "structure_hit_at_5": true,
+      "semantic_rank": 1,
+      "semantic_hit_at_5": true
+    },
+    {
+      "question_id": "Q3",
+      "question": "How do I fix ERR-4040?",
+      "table_dependent": true,
+      "baseline_rank": 2,
+      "baseline_hit_at_5": true,
+      "structure_rank": 1,
+      "structure_hit_at_5": true,
+      "semantic_rank": 2,
+      "semantic_hit_at_5": true
+    },
+    {
+      "question_id": "Q4",
+      "question": "How do I fix ERR-6030?",
+      "table_dependent": true,
+      "baseline_rank": null,
+      "baseline_hit_at_5": false,
+      "structure_rank": 1,
+      "structure_hit_at_5": true,
+      "semantic_rank": 5,
+      "semantic_hit_at_5": true
+    },
+    {
+      "question_id": "Q5",
+      "question": "How do I request a migration rollback?",
+      "table_dependent": false,
+      "baseline_rank": 1,
+      "baseline_hit_at_5": true,
+      "structure_rank": 1,
+      "structure_hit_at_5": true,
+      "semantic_rank": 1,
+      "semantic_hit_at_5": true
+    },
+    {
+      "question_id": "Q6",
+      "question": "What happens to auto-pay during a billing migration?",
+      "table_dependent": false,
+      "baseline_rank": 1,
+      "baseline_hit_at_5": true,
+      "structure_rank": 1,
+      "structure_hit_at_5": true,
+      "semantic_rank": 1,
+      "semantic_hit_at_5": true
+    },
+    {
+      "question_id": "Q7",
+      "question": "Which account roles can confirm a billing migration?",
+      "table_dependent": true,
+      "baseline_rank": 1,
+      "baseline_hit_at_5": true,
+      "structure_rank": 1,
+      "structure_hit_at_5": true,
+      "semantic_rank": 1,
+      "semantic_hit_at_5": true
+    },
+    {
+      "question_id": "Q8",
+      "question": "Can a completed billing migration be rolled back?",
+      "table_dependent": false,
+      "baseline_rank": 1,
+      "baseline_hit_at_5": true,
+      "structure_rank": 1,
+      "structure_hit_at_5": true,
+      "semantic_rank": 1,
+      "semantic_hit_at_5": true
+    }
+  ],
+  "summary": {
+    "baseline_hit_at_5": "7/8",
+    "structure_aware_hit_at_5": "8/8",
+    "semantic_hit_at_5": "8/8"
+  }
+}
