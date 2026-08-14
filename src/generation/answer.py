@@ -1,7 +1,7 @@
 import time
 from dataclasses import dataclass, field
 
-from src.config import STRUCTURE_AWARE_COLLECTION, TOP_K
+from src.config import DEFAULT_COLLECTION, TOP_K
 from src.generation.citations import extract_citations, validate_citations
 from src.generation.llm_client import ask_llm
 from src.generation.prompts import SYSTEM_PROMPT, build_user_prompt
@@ -23,7 +23,7 @@ class Answer:
 
 def answer_question(
     question: str,
-    collection_name: str = STRUCTURE_AWARE_COLLECTION,
+    collection_name: str = DEFAULT_COLLECTION,
     k: int = TOP_K,
     where: dict | None = None,
 ) -> Answer:

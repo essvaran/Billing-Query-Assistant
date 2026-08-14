@@ -11,4 +11,6 @@ pyyaml
 pytest
 requests
 python-docx
-PyPDF2
+pypdf
+openpyxl
+xlrd

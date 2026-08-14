@@ -40,7 +40,7 @@ REFUSAL_QUESTIONS = [
 # while baseline retrieves the full table (rank 3). The full table may carry more context.
 BONUS_QUESTION = "How do I fix ERR-6030?"
 
-RESULTS_MD = PROJECT_ROOT / "results.md"
+RESULTS_MD = PROJECT_ROOT / "evaluation" / "results.md"
 
 
 def _load_questions() -> dict:

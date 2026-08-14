@@ -1,8 +1,29 @@
+# ── Python ────────────────────────────────────────────────────────────────────
 .venv/
 __pycache__/
 *.pyc
-.env
-chroma_db/
+*.pyo
 .pytest_cache/
+
+# ── Environment ───────────────────────────────────────────────────────────────
+.env
+!.env.example
+
+# ── Data / generated ──────────────────────────────────────────────────────────
+chroma_db/
+evaluation/generation_transcripts.json
+
+# ── Frontend ──────────────────────────────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# ── Editors & OS ──────────────────────────────────────────────────────────────
 .vscode/
 .idea/
+.DS_Store
+Thumbs.db
+
+# ── Logs & temp ───────────────────────────────────────────────────────────────
+*.log
+*.patch

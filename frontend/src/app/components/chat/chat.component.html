@@ -1,0 +1,90 @@
+<div class="chat-shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon">⚡</span>
+      <span class="logo-text">Billing Support</span>
+    </div>
+    <p class="sidebar-hint">Ask anything about billing migrations, errors, or account roles.</p>
+  </aside>
+
+  <!-- Main area -->
+  <div class="main">
+
+    <!-- Messages -->
+    <div class="messages-area">
+
+      <div *ngIf="messages.length === 0" class="empty-state">
+        <div class="empty-icon">💬</div>
+        <h2>How can I help you today?</h2>
+        <p>Ask a billing question — e.g. <em>"What does ERR-4032 mean?"</em></p>
+      </div>
+
+      <div *ngFor="let msg of messages; let i = index" class="message-row" [class.user-row]="msg.role === 'user'">
+
+        <div class="bubble" [class.user-bubble]="msg.role === 'user'" [class.assistant-bubble]="msg.role === 'assistant'">
+          <p class="bubble-text">{{ msg.text }}</p>
+
+          <!-- Retrieved chunks (assistant only) -->
+          <ng-container *ngIf="msg.role === 'assistant' && msg.response">
+            <div class="meta-bar">
+              <span class="timing">
+                ⏱ Retrieval {{ msg.response.retrieval_ms }} ms &nbsp;|&nbsp;
+                Generation {{ msg.response.generation_ms }} ms &nbsp;|&nbsp;
+                Total {{ msg.response.total_ms }} ms
+              </span>
+              <button class="chunks-toggle" (click)="toggleChunks(i)">
+                {{ isExpanded(i) ? 'Hide' : 'Show' }} {{ msg.response.chunks.length }} sources
+              </button>
+            </div>
+
+            <div class="chunks-panel" *ngIf="isExpanded(i)">
+              <div class="chunk-card" *ngFor="let chunk of msg.response.chunks">
+                <div class="chunk-header">
+                  <span class="chunk-rank">#{{ chunk.rank }}</span>
+                  <span class="chunk-id">{{ chunk.chunk_id }}</span>
+                  <span class="chunk-score">score {{ chunk.score }}</span>
+                </div>
+                <div class="chunk-meta" *ngIf="chunk.section">
+                  <span>{{ chunk.article_id }} › {{ chunk.section }}</span>
+                </div>
+                <p class="chunk-text">{{ chunk.text }}</p>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+
+      </div>
+
+      <!-- Typing indicator -->
+      <div class="message-row" *ngIf="loading">
+        <div class="bubble assistant-bubble typing">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <div #messagesEnd></div>
+    </div>
+
+    <!-- Input bar -->
+    <div class="input-bar">
+      <textarea
+        [(ngModel)]="inputText"
+        (keydown)="onKeydown($event)"
+        [disabled]="loading"
+        placeholder="Ask a billing question…"
+        rows="1"
+        class="input-field"
+      ></textarea>
+      <button
+        class="send-btn"
+        (click)="sendMessage()"
+        [disabled]="loading || !inputText.trim()"
+      >
+        ↑
+      </button>
+    </div>
+
+  </div>
+</div>
