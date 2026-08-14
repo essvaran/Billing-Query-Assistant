@@ -19,6 +19,7 @@ class Answer:
     citations_valid: bool
     retrieval_ms: float = field(default=0.0)
     generation_ms: float = field(default=0.0)
+    retriever: str = field(default="dense")
 
 
 def answer_question(
@@ -26,9 +27,20 @@ def answer_question(
     collection_name: str = DEFAULT_COLLECTION,
     k: int = TOP_K,
     where: dict | None = None,
+    use_hybrid: bool = False,
 ) -> Answer:
+    retriever_label = "hybrid-bm25-rrf" if use_hybrid else "dense"
+
     t0 = time.perf_counter()
-    retrieved_chunks = search(collection_name, question, k=k, where=where)
+    if use_hybrid:
+        from src.retrieval.hybrid_search import hybrid_search
+        raw_chunks = hybrid_search(collection_name, question, top_n=k)
+        # normalise rrf_score -> score so downstream code is uniform
+        retrieved_chunks = [
+            {**c, "score": c.get("rrf_score", 0.0)} for c in raw_chunks
+        ]
+    else:
+        retrieved_chunks = search(collection_name, question, k=k, where=where)
     retrieval_ms = (time.perf_counter() - t0) * 1000
 
     retrieved_ids = {chunk["chunk_id"] for chunk in retrieved_chunks}
@@ -43,6 +55,7 @@ def answer_question(
             citations_valid=False,
             retrieval_ms=retrieval_ms,
             generation_ms=0.0,
+            retriever=retriever_label,
         )
 
     user_prompt = build_user_prompt(question, retrieved_chunks)
@@ -61,6 +74,7 @@ def answer_question(
             citations_valid=False,
             retrieval_ms=retrieval_ms,
             generation_ms=generation_ms,
+            retriever=retriever_label,
         )
 
     citations = extract_citations(raw_answer)
@@ -77,4 +91,5 @@ def answer_question(
         citations_valid=citations_valid,
         retrieval_ms=retrieval_ms,
         generation_ms=generation_ms,
+        retriever=retriever_label,
     )

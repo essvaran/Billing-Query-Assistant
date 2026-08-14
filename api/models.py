@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 class AskRequest(BaseModel):
     question: str
+    use_hybrid: bool = False
 
 
 class ChunkResult(BaseModel):
@@ -21,3 +22,4 @@ class AskResponse(BaseModel):
     generation_ms: float
     total_ms: float
     citations_valid: bool
+    retriever: str

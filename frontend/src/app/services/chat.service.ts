@@ -18,6 +18,7 @@ export interface AskResponse {
   generation_ms: number;
   total_ms: number;
   citations_valid: boolean;
+  retriever: string;
 }
 
 export interface Message {
@@ -32,7 +33,7 @@ export class ChatService {
 
   constructor(private http: HttpClient) {}
 
-  ask(question: string): Observable<AskResponse> {
-    return this.http.post<AskResponse>(this.apiUrl, { question });
+  ask(question: string, useHybrid: boolean = false): Observable<AskResponse> {
+    return this.http.post<AskResponse>(this.apiUrl, { question, use_hybrid: useHybrid });
   }
 }

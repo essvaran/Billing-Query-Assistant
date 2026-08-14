@@ -26,7 +26,7 @@ def ask(request: AskRequest) -> AskResponse:
         raise HTTPException(status_code=400, detail="Question must not be empty.")
 
     try:
-        result = answer_question(request.question)
+        result = answer_question(request.question, use_hybrid=request.use_hybrid)
     except LLMRequestError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
@@ -49,4 +49,5 @@ def ask(request: AskRequest) -> AskResponse:
         generation_ms=round(result.generation_ms, 1),
         total_ms=round(result.retrieval_ms + result.generation_ms, 1),
         citations_valid=result.citations_valid,
+        retriever=result.retriever,
     )

@@ -7,6 +7,52 @@
       <span class="logo-text">Billing Support</span>
     </div>
     <p class="sidebar-hint">Ask anything about billing migrations, errors, or account roles.</p>
+
+    <!-- Retrieval mode toggle -->
+    <div class="retrieval-section" [class.hybrid-active]="hybridMode">
+      <span class="retrieval-label">Retrieval mode</span>
+      <div class="toggle-row">
+        <span class="mode-name" [class.active]="!hybridMode">Dense</span>
+        <label class="toggle-switch">
+          <input type="checkbox" [(ngModel)]="hybridMode" />
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </label>
+        <span class="mode-name" [class.active]="hybridMode">BM25 + RRF</span>
+      </div>
+      <p class="mode-desc">
+        <ng-container *ngIf="!hybridMode">Vector similarity — cosine distance on embeddings</ng-container>
+        <ng-container *ngIf="hybridMode">Dense top-25 + BM25 top-25, fused by RRF (k=60)</ng-container>
+      </p>
+      <div class="mode-badge" [class.hybrid-badge]="hybridMode">
+        {{ hybridMode ? 'BM25 + RRF ON' : 'Dense only' }}
+      </div>
+    </div>
+
+    <!-- Question bank -->
+    <div class="qbank">
+      <span class="qbank-title">Golden Set</span>
+      <div class="qbank-group" *ngFor="let group of questionGroups">
+        <button class="qbank-header" (click)="toggleGroup(group.label)">
+          <span class="qbank-arrow" [class.open]="isGroupOpen(group.label)">›</span>
+          <span class="qbank-group-label">{{ group.label }}</span>
+          <span class="qbank-count">{{ group.questions.length }}</span>
+        </button>
+        <div class="qbank-list" *ngIf="isGroupOpen(group.label)">
+          <button
+            class="qbank-item"
+            *ngFor="let q of group.questions"
+            (click)="useQuestion(q.text)"
+            [class.nic-item]="q.notInCorpus"
+            title="Click to load into input"
+          >
+            <span class="qid">{{ q.id }}</span>
+            <span class="qtext">{{ q.text }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </aside>
 
   <!-- Main area -->
@@ -23,20 +69,49 @@
 
       <div *ngFor="let msg of messages; let i = index" class="message-row" [class.user-row]="msg.role === 'user'">
 
-        <div class="bubble" [class.user-bubble]="msg.role === 'user'" [class.assistant-bubble]="msg.role === 'assistant'">
+        <div class="bubble"
+          [class.user-bubble]="msg.role === 'user'"
+          [class.assistant-bubble]="msg.role === 'assistant'"
+          [class.dense-bubble]="msg.role === 'assistant' && msg.response?.retriever !== 'hybrid-bm25-rrf'"
+          [class.hybrid-bubble]="msg.role === 'assistant' && msg.response?.retriever === 'hybrid-bm25-rrf'"
+        >
           <p class="bubble-text">{{ msg.text }}</p>
 
           <!-- Retrieved chunks (assistant only) -->
           <ng-container *ngIf="msg.role === 'assistant' && msg.response">
+
+            <!-- Metrics panel -->
             <div class="meta-bar">
-              <span class="timing">
-                ⏱ Retrieval {{ msg.response.retrieval_ms }} ms &nbsp;|&nbsp;
-                Generation {{ msg.response.generation_ms }} ms &nbsp;|&nbsp;
-                Total {{ msg.response.total_ms }} ms
-              </span>
+              <div class="meta-pills">
+                <span class="pill retriever-pill" [class.hybrid-pill]="msg.response.retriever === 'hybrid-bm25-rrf'">
+                  {{ msg.response.retriever === 'hybrid-bm25-rrf' ? '⚡ BM25 + RRF' : '● Dense' }}
+                </span>
+                <span class="pill" [class.valid-pill]="msg.response.citations_valid" [class.invalid-pill]="!msg.response.citations_valid">
+                  {{ msg.response.citations_valid ? 'Citations OK' : 'No valid citation' }}
+                </span>
+                <span class="pill neutral-pill">{{ msg.response.chunks.length }} sources</span>
+              </div>
               <button class="chunks-toggle" (click)="toggleChunks(i)">
-                {{ isExpanded(i) ? 'Hide' : 'Show' }} {{ msg.response.chunks.length }} sources
+                {{ isExpanded(i) ? 'Hide sources' : 'Show sources' }}
               </button>
+            </div>
+
+            <!-- Timing row -->
+            <div class="timing-row">
+              <div class="timing-cell">
+                <span class="timing-label">Retrieval</span>
+                <span class="timing-value">{{ msg.response.retrieval_ms }} ms</span>
+              </div>
+              <div class="timing-divider"></div>
+              <div class="timing-cell">
+                <span class="timing-label">Generation</span>
+                <span class="timing-value">{{ msg.response.generation_ms }} ms</span>
+              </div>
+              <div class="timing-divider"></div>
+              <div class="timing-cell">
+                <span class="timing-label">Total (p50)</span>
+                <span class="timing-value total-timing">{{ msg.response.total_ms }} ms</span>
+              </div>
             </div>
 
             <div class="chunks-panel" *ngIf="isExpanded(i)">
@@ -44,7 +119,7 @@
                 <div class="chunk-header">
                   <span class="chunk-rank">#{{ chunk.rank }}</span>
                   <span class="chunk-id">{{ chunk.chunk_id }}</span>
-                  <span class="chunk-score">score {{ chunk.score }}</span>
+                  <span class="chunk-score">{{ scoreLabel(msg.response.retriever) }} {{ chunk.score | number:'1.4-4' }}</span>
                 </div>
                 <div class="chunk-meta" *ngIf="chunk.section">
                   <span>{{ chunk.article_id }} › {{ chunk.section }}</span>
@@ -70,6 +145,7 @@
     <!-- Input bar -->
     <div class="input-bar">
       <textarea
+        #inputField
         [(ngModel)]="inputText"
         (keydown)="onKeydown($event)"
         [disabled]="loading"

@@ -1,0 +1,367 @@
+{
+  "retriever": "hybrid BM25+RRF (baseline collection, rrf_k=60, dense_k=25, bm25_k=25, top_n=3)",
+  "hit_rate_at_3": "11/12",
+  "p50_latency_ms": 40.6,
+  "per_question": [
+    {
+      "id": "Q1",
+      "question": "What does ERR-4032 mean?",
+      "exact_token": true,
+      "known_chunk_id": "HC-BILL-002--error-codes--err-4032",
+      "hit_at_3": true,
+      "hit_rank": 2,
+      "latency_p50_ms": 42.4,
+      "outcome": "still-passing",
+      "top_3": [
+        {
+          "rank": 1,
+          "chunk_id": "HC-BILL-001--baseline--0108",
+          "rrf_score": 0.031258,
+          "text_preview": "| Code | Series | Blocking | One-line description |\n|---|---|---|---|\n| ERR-4032 | Core | Yes | Required field missing from profile |\n| ERR-4040 | Core | Yes | Payment method re-verification failed |\n"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "HC-BILL-002--baseline--0002",
+          "rrf_score": 0.031099,
+          "text_preview": "| Error code | Cause | Fix |\n|---|---|---|\n| ERR-4032 | Billing profile migration is incomplete because a required field was not carried over from the legacy platform | Reconnect the billing profile a"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "HC-BILL-002--baseline--0043",
+          "rrf_score": 0.030777,
+          "text_preview": "### Trigger a Retry\n\n```\nPOST /v2/accounts/{account_id}/migration/retry\n\nResponse:\n{\n  \"migration_id\": \"mig_01HVXK3QZ...\",\n  \"status\": \"queued\",\n  \"retry_count\": 1\n}\n```\n\nRetries are rate-limited to 1"
+        }
+      ]
+    },
+    {
+      "id": "Q2",
+      "question": "What does ERR-5010 mean?",
+      "exact_token": true,
+      "known_chunk_id": "HC-BILL-002--error-codes--err-5010",
+      "hit_at_3": true,
+      "hit_rank": 1,
+      "latency_p50_ms": 37.6,
+      "outcome": "fixed",
+      "top_3": [
+        {
+          "rank": 1,
+          "chunk_id": "HC-BILL-001--baseline--0108",
+          "rrf_score": 0.031498,
+          "text_preview": "| Code | Series | Blocking | One-line description |\n|---|---|---|---|\n| ERR-4032 | Core | Yes | Required field missing from profile |\n| ERR-4040 | Core | Yes | Payment method re-verification failed |\n"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "HC-BILL-002--baseline--0026",
+          "rrf_score": 0.03009,
+          "text_preview": "| Error code | Blocking | Cause | Fix |\n|---|---|---|---|\n| DAT-6001 | Yes | Checksum mismatch: data written to new platform does not match data read from legacy | Retry migration; the migration engin"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "HC-BILL-002--baseline--0002",
+          "rrf_score": 0.029877,
+          "text_preview": "| Error code | Cause | Fix |\n|---|---|---|\n| ERR-4032 | Billing profile migration is incomplete because a required field was not carried over from the legacy platform | Reconnect the billing profile a"
+        }
+      ]
+    },
+    {
+      "id": "Q3",
+      "question": "How do I fix ERR-4040?",
+      "exact_token": true,
+      "known_chunk_id": "HC-BILL-002--error-codes--err-4040",
+      "hit_at_3": true,
+      "hit_rank": 1,
+      "latency_p50_ms": 40.3,
+      "outcome": "still-passing",
+      "top_3": [
+        {
+          "rank": 1,
+          "chunk_id": "HC-BILL-003--baseline--0002",
+          "rrf_score": 0.031754,
+          "text_preview": "## Payment Method Errors During Migration\n\n| Error code | Cause | Fix |\n|---|---|---|\n| ERR-4040 | The legacy payment method on file could not be re-verified with the card network | Add a new payment "
+        },
+        {
+          "rank": 2,
+          "chunk_id": "HC-BILL-002--baseline--0002",
+          "rrf_score": 0.030798,
+          "text_preview": "| Error code | Cause | Fix |\n|---|---|---|\n| ERR-4032 | Billing profile migration is incomplete because a required field was not carried over from the legacy platform | Reconnect the billing profile a"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "HC-BILL-006--baseline--0002",
+          "rrf_score": 0.028778,
+          "text_preview": "## Rollback-Related Error Codes\n\n| Error code | Cause | Fix |\n|---|---|---|\n| ERR-6001 | Rollback was requested after the migration already reached completed status | Rollback is not available; contac"
+        }
+      ]
+    },
+    {
+      "id": "Q4",
+      "question": "How do I fix ERR-6030?",
+      "exact_token": true,
+      "known_chunk_id": "HC-BILL-006--rollback-related-error-codes--err-6030",
+      "hit_at_3": true,
+      "hit_rank": 1,
+      "latency_p50_ms": 40.1,
+      "outcome": "fixed",
+      "top_3": [
+        {
+          "rank": 1,
+          "chunk_id": "HC-BILL-006--baseline--0002",
+          "rrf_score": 0.031099,
+          "text_preview": "## Rollback-Related Error Codes\n\n| Error code | Cause | Fix |\n|---|---|---|\n| ERR-6001 | Rollback was requested after the migration already reached completed status | Rollback is not available; contac"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "HC-BILL-002--baseline--0026",
+          "rrf_score": 0.029828,
+          "text_preview": "| Error code | Blocking | Cause | Fix |\n|---|---|---|---|\n| DAT-6001 | Yes | Checksum mismatch: data written to new platform does not match data read from legacy | Retry migration; the migration engin"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "HC-BILL-002--baseline--0010",
+          "rrf_score": 0.02904,
+          "text_preview": "| Error code | Blocking | Cause | Fix |\n|---|---|---|---|\n| INV-2001 | Yes | Invoice record in an inconsistent state (debit and credit do not balance) | Contact billing support; do not retry until the"
+        }
+      ]
+    },
+    {
+      "id": "Q5",
+      "question": "How do I request a migration rollback?",
+      "exact_token": false,
+      "known_chunk_id": "HC-BILL-006--how-to-request-a-rollback--prose-001",
+      "hit_at_3": true,
+      "hit_rank": 1,
+      "latency_p50_ms": 40.1,
+      "outcome": "still-passing",
+      "top_3": [
+        {
+          "rank": 1,
+          "chunk_id": "HC-BILL-006--baseline--0002",
+          "rrf_score": 0.032787,
+          "text_preview": "## Rollback-Related Error Codes\n\n| Error code | Cause | Fix |\n|---|---|---|\n| ERR-6001 | Rollback was requested after the migration already reached completed status | Rollback is not available; contac"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "HC-BILL-006--baseline--0003",
+          "rrf_score": 0.032002,
+          "text_preview": "Rollback requests are processed within 4 business hours while migration is\nstill in the queued or in-progress stage.\n\n## Escalating to Support\n\nEscalate to billing support when:\n\n- The same migration "
+        },
+        {
+          "rank": 3,
+          "chunk_id": "HC-BILL-006--baseline--0001",
+          "rrf_score": 0.030579,
+          "text_preview": "# Migration Rollback and Support Escalation\n\n## When a Rollback Is Possible\n\nA billing profile migration can be rolled back to the legacy platform only if\nthe migration has not yet reached the **compl"
+        }
+      ]
+    },
+    {
+      "id": "Q6",
+      "question": "What happens to auto-pay during a billing migration?",
+      "exact_token": false,
+      "known_chunk_id": "HC-BILL-003--auto-pay-behavior-after-migration--prose-001",
+      "hit_at_3": true,
+      "hit_rank": 2,
+      "latency_p50_ms": 43.9,
+      "outcome": "still-passing",
+      "top_3": [
+        {
+          "rank": 1,
+          "chunk_id": "HC-BILL-003--baseline--0001",
+          "rrf_score": 0.032018,
+          "text_preview": "# Invoice and Payment Method Migration\n\n## What Gets Migrated\n\nWhen a billing profile migrates to the new billing platform, the following\ninvoice and payment data moves with it:\n\n- All invoice PDFs is"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "HC-BILL-001--baseline--0046",
+          "rrf_score": 0.031514,
+          "text_preview": "This order ensures that credits with the earliest expiry are used first to\nprevent unexpected expiration.\n\n---\n\n## Recurring Billing and Auto-Pay Impact\n\nAuto-pay is paused automatically during migrat"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "HC-BILL-003--baseline--0003",
+          "rrf_score": 0.031099,
+          "text_preview": "## Auto-Pay Behavior After Migration\n\nAuto-pay is paused automatically during migration and does not resume until\nthe account owner confirms the new default payment method. This is\nintentional, to pre"
+        }
+      ]
+    },
+    {
+      "id": "Q7",
+      "question": "Which account roles can confirm a billing migration?",
+      "exact_token": false,
+      "known_chunk_id": "HC-BILL-005--role-permission-table--account-owner",
+      "hit_at_3": true,
+      "hit_rank": 1,
+      "latency_p50_ms": 44.8,
+      "outcome": "still-passing",
+      "top_3": [
+        {
+          "rank": 1,
+          "chunk_id": "HC-BILL-005--baseline--0001",
+          "rrf_score": 0.032787,
+          "text_preview": "# Admin Roles and Permissions During Migration\n\n## Who Can Initiate or Confirm Migration\n\nOnly users with the **Billing Administrator** role can confirm a migration\nthat requires manual action. The **"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "HC-BILL-005--baseline--0002",
+          "rrf_score": 0.032002,
+          "text_preview": "## Adding a Billing Administrator During Migration\n\nBilling Administrator role changes made while a migration is in progress take\neffect immediately and do not restart or interrupt the migration. This"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "HC-BILL-001--baseline--0001",
+          "rrf_score": 0.031498,
+          "text_preview": "# Billing Profile Migration \u2014 Complete Implementation Guide\n\n## What Is Billing Profile Migration?\n\nBilling profile migration moves your billing profile \u2014 payment methods, invoice\nhistory, tax informa"
+        }
+      ]
+    },
+    {
+      "id": "Q8",
+      "question": "Can a completed billing migration be rolled back?",
+      "exact_token": false,
+      "known_chunk_id": "HC-BILL-006--when-a-rollback-is-possible--prose-001",
+      "hit_at_3": true,
+      "hit_rank": 1,
+      "latency_p50_ms": 40.1,
+      "outcome": "still-passing",
+      "top_3": [
+        {
+          "rank": 1,
+          "chunk_id": "HC-BILL-006--baseline--0001",
+          "rrf_score": 0.032787,
+          "text_preview": "# Migration Rollback and Support Escalation\n\n## When a Rollback Is Possible\n\nA billing profile migration can be rolled back to the legacy platform only if\nthe migration has not yet reached the **compl"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "HC-BILL-006--baseline--0002",
+          "rrf_score": 0.029031,
+          "text_preview": "## Rollback-Related Error Codes\n\n| Error code | Cause | Fix |\n|---|---|---|\n| ERR-6001 | Rollback was requested after the migration already reached completed status | Rollback is not available; contac"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "HC-BILL-001--baseline--0076",
+          "rrf_score": 0.028787,
+          "text_preview": "**General resolution steps:**\n\n1. Note the error code displayed on the Billing Overview page.\n2. Look up the error code in the \"Billing Migration Error Codes and Fixes\"\n   article.\n3. Apply the fix de"
+        }
+      ]
+    },
+    {
+      "id": "Q9",
+      "question": "What causes PAY-1001?",
+      "exact_token": true,
+      "known_chunk_id": "HC-BILL-002--payment-method-error-codes-pay-series--pay-1001",
+      "hit_at_3": true,
+      "hit_rank": 1,
+      "latency_p50_ms": 43.1,
+      "outcome": "still-passing",
+      "top_3": [
+        {
+          "rank": 1,
+          "chunk_id": "HC-BILL-002--baseline--0006",
+          "rrf_score": 0.031498,
+          "text_preview": "| Error code | Cause | Fix |\n|---|---|---|\n| PAY-1001 | Default payment method expired before migration completed | Update the card expiry or add a new card and set it as default |\n| PAY-1002 | Card i"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "HC-BILL-001--baseline--0108",
+          "rrf_score": 0.031319,
+          "text_preview": "| Code | Series | Blocking | One-line description |\n|---|---|---|---|\n| ERR-4032 | Core | Yes | Required field missing from profile |\n| ERR-4040 | Core | Yes | Payment method re-verification failed |\n"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "HC-BILL-002--baseline--0049",
+          "rrf_score": 0.031258,
+          "text_preview": "**Can I prevent error codes from appearing?**\nMost error codes can be avoided by completing the Pre-Migration Checklist in\nthe \"Billing Profile Migration Overview\" article before migration begins.\nCom"
+        }
+      ]
+    },
+    {
+      "id": "Q10",
+      "question": "What does PLAN-ENT-V1 map to on the new platform?",
+      "exact_token": true,
+      "known_chunk_id": "HC-BILL-001--subscription-and-entitlement-migration--plan-ent-v1",
+      "hit_at_3": false,
+      "hit_rank": null,
+      "latency_p50_ms": 39.6,
+      "outcome": "still-broken",
+      "top_3": [
+        {
+          "rank": 1,
+          "chunk_id": "HC-BILL-002--baseline--0036",
+          "rrf_score": 0.029762,
+          "text_preview": "| SYNC-9005 | No | Tax platform integration (Avalara, TaxJar) API key is no longer valid | Re-enter the tax platform API key in Billing > Integrations > Tax |\n| SYNC-9006 | No | Expense management int"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "HC-BILL-002--baseline--0018",
+          "rrf_score": 0.028485,
+          "text_preview": "| Error code | Blocking | Cause | Fix |\n|---|---|---|---|\n| SUB-4001 | Yes | Legacy plan ID has no mapping to a new platform plan | Contact billing support; a plan migration specialist will assign the"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "HC-BILL-001--baseline--0102",
+          "rrf_score": 0.028372,
+          "text_preview": "**What credit card networks are supported on the new platform?**\nVisa, Mastercard, American Express, Discover, Diners Club, UnionPay, and JCB\nare all supported. The legacy platform did not support Uni"
+        }
+      ]
+    },
+    {
+      "id": "Q11",
+      "question": "What does ERR-4155 mean?",
+      "exact_token": true,
+      "known_chunk_id": "HC-BILL-002--error-codes--err-4155",
+      "hit_at_3": true,
+      "hit_rank": 1,
+      "latency_p50_ms": 39.8,
+      "outcome": "still-passing",
+      "top_3": [
+        {
+          "rank": 1,
+          "chunk_id": "HC-BILL-002--baseline--0002",
+          "rrf_score": 0.031514,
+          "text_preview": "| Error code | Cause | Fix |\n|---|---|---|\n| ERR-4032 | Billing profile migration is incomplete because a required field was not carried over from the legacy platform | Reconnect the billing profile a"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "HC-BILL-001--baseline--0108",
+          "rrf_score": 0.031025,
+          "text_preview": "| Code | Series | Blocking | One-line description |\n|---|---|---|---|\n| ERR-4032 | Core | Yes | Required field missing from profile |\n| ERR-4040 | Core | Yes | Payment method re-verification failed |\n"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "HC-BILL-002--baseline--0026",
+          "rrf_score": 0.028219,
+          "text_preview": "| Error code | Blocking | Cause | Fix |\n|---|---|---|---|\n| DAT-6001 | Yes | Checksum mismatch: data written to new platform does not match data read from legacy | Retry migration; the migration engin"
+        }
+      ]
+    },
+    {
+      "id": "Q12",
+      "question": "What causes SYNC-9001?",
+      "exact_token": true,
+      "known_chunk_id": "HC-BILL-002--platform-synchronization-error-codes-sync-series--sync-9001",
+      "hit_at_3": true,
+      "hit_rank": 1,
+      "latency_p50_ms": 39.6,
+      "outcome": "still-passing",
+      "top_3": [
+        {
+          "rank": 1,
+          "chunk_id": "HC-BILL-002--baseline--0035",
+          "rrf_score": 0.032266,
+          "text_preview": "| Error code | Blocking | Cause | Fix |\n|---|---|---|---|\n| SYNC-9001 | No | Accounting connector (QuickBooks, Xero, NetSuite) lost authentication during migration | Re-authenticate the accounting con"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "HC-BILL-001--baseline--0110",
+          "rrf_score": 0.031545,
+          "text_preview": "| ROLE-8001 | Role | No | Custom role cannot be mapped |\n| ROLE-8003 | Role | Yes | No Account Owner assigned |\n| SYNC-9001 | Sync | No | Accounting connector lost auth |"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "HC-BILL-002--baseline--0034",
+          "rrf_score": 0.016129,
+          "text_preview": "## Platform Synchronization Error Codes (SYNC-Series)\n\nSYNC-series errors indicate that the migration engine could not synchronize\ndata between the billing platform and an integrated system (identity "
+        }
+      ]
+    }
+  ]
+}
