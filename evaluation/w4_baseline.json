@@ -1,7 +1,7 @@
 {
   "retriever": "dense-only (baseline collection, cosine, k=3)",
   "hit_rate_at_3": "9/12",
-  "p50_latency_ms": 37.1,
+  "p50_latency_ms": 37.9,
   "per_question": [
     {
       "id": "Q1",
@@ -10,7 +10,7 @@
       "known_chunk_id": "HC-BILL-002--error-codes--err-4032",
       "hit_at_3": true,
       "hit_rank": 1,
-      "latency_p50_ms": 36.7,
+      "latency_p50_ms": 42.0,
       "top_3": [
         {
           "rank": 1,
@@ -39,7 +39,7 @@
       "known_chunk_id": "HC-BILL-002--error-codes--err-5010",
       "hit_at_3": false,
       "hit_rank": null,
-      "latency_p50_ms": 38.0,
+      "latency_p50_ms": 36.2,
       "top_3": [
         {
           "rank": 1,
@@ -68,7 +68,7 @@
       "known_chunk_id": "HC-BILL-002--error-codes--err-4040",
       "hit_at_3": true,
       "hit_rank": 2,
-      "latency_p50_ms": 42.4,
+      "latency_p50_ms": 42.0,
       "top_3": [
         {
           "rank": 1,
@@ -97,7 +97,7 @@
       "known_chunk_id": "HC-BILL-006--rollback-related-error-codes--err-6030",
       "hit_at_3": false,
       "hit_rank": null,
-      "latency_p50_ms": 35.5,
+      "latency_p50_ms": 37.3,
       "top_3": [
         {
           "rank": 1,
@@ -126,7 +126,7 @@
       "known_chunk_id": "HC-BILL-006--how-to-request-a-rollback--prose-001",
       "hit_at_3": true,
       "hit_rank": 1,
-      "latency_p50_ms": 36.5,
+      "latency_p50_ms": 36.4,
       "top_3": [
         {
           "rank": 1,
@@ -155,7 +155,7 @@
       "known_chunk_id": "HC-BILL-003--auto-pay-behavior-after-migration--prose-001",
       "hit_at_3": true,
       "hit_rank": 1,
-      "latency_p50_ms": 40.9,
+      "latency_p50_ms": 43.5,
       "top_3": [
         {
           "rank": 1,
@@ -184,7 +184,7 @@
       "known_chunk_id": "HC-BILL-005--role-permission-table--account-owner",
       "hit_at_3": true,
       "hit_rank": 1,
-      "latency_p50_ms": 36.2,
+      "latency_p50_ms": 37.4,
       "top_3": [
         {
           "rank": 1,
@@ -213,7 +213,7 @@
       "known_chunk_id": "HC-BILL-006--when-a-rollback-is-possible--prose-001",
       "hit_at_3": true,
       "hit_rank": 1,
-      "latency_p50_ms": 37.3,
+      "latency_p50_ms": 35.9,
       "top_3": [
         {
           "rank": 1,
@@ -242,7 +242,7 @@
       "known_chunk_id": "HC-BILL-002--payment-method-error-codes-pay-series--pay-1001",
       "hit_at_3": true,
       "hit_rank": 3,
-      "latency_p50_ms": 35.9,
+      "latency_p50_ms": 45.6,
       "top_3": [
         {
           "rank": 1,
@@ -271,7 +271,7 @@
       "known_chunk_id": "HC-BILL-001--subscription-and-entitlement-migration--plan-ent-v1",
       "hit_at_3": false,
       "hit_rank": null,
-      "latency_p50_ms": 40.9,
+      "latency_p50_ms": 38.7,
       "top_3": [
         {
           "rank": 1,
@@ -295,59 +295,59 @@
     },
     {
       "id": "Q11",
-      "question": "What does ERR-4155 mean?",
-      "exact_token": true,
-      "known_chunk_id": "HC-BILL-002--error-codes--err-4155",
+      "question": "Can I get a refund if my billing migration fails?",
+      "exact_token": false,
+      "known_chunk_id": null,
       "hit_at_3": true,
-      "hit_rank": 2,
-      "latency_p50_ms": 35.7,
+      "hit_rank": 1,
+      "latency_p50_ms": 38.9,
       "top_3": [
         {
           "rank": 1,
-          "chunk_id": "HC-BILL-002--baseline--0045",
-          "score": 0.681,
-          "text_preview": "| Version | Change | Error code | Description |\n|---|---|---|---|\n| 2026-05 | Added | PAY-1014 | 3DS re-authentication requirement for corporate cards |\n| 2026-05 | Added | PAY-1015 | Minimum wallet b"
+          "chunk_id": "HC-BILL-001--baseline--0076",
+          "score": 0.8354,
+          "text_preview": "**General resolution steps:**\n\n1. Note the error code displayed on the Billing Overview page.\n2. Look up the error code in the \"Billing Migration Error Codes and Fixes\"\n   article.\n3. Apply the fix de"
         },
         {
           "rank": 2,
-          "chunk_id": "HC-BILL-002--baseline--0002",
-          "score": 0.6417,
-          "text_preview": "| Error code | Cause | Fix |\n|---|---|---|\n| ERR-4032 | Billing profile migration is incomplete because a required field was not carried over from the legacy platform | Reconnect the billing profile a"
+          "chunk_id": "HC-BILL-002--baseline--0041",
+          "score": 0.7915,
+          "text_preview": "### Step 4: Retry\n\nRetry migration from Billing > Overview > Resume Migration. You do not need\nto re-read these instructions on each retry; the migration engine picks up\nfrom the last successful check"
         },
         {
           "rank": 3,
-          "chunk_id": "HC-BILL-002--baseline--0022",
-          "score": 0.6349,
-          "text_preview": "| Error code | Blocking | Cause | Fix |\n|---|---|---|---|\n| ACC-5001 | Yes | Account owner email address is not verified | Verify the account owner email before retrying migration |\n| ACC-5002 | Yes |"
+          "chunk_id": "HC-BILL-002--baseline--0002",
+          "score": 0.788,
+          "text_preview": "| Error code | Cause | Fix |\n|---|---|---|\n| ERR-4032 | Billing profile migration is incomplete because a required field was not carried over from the legacy platform | Reconnect the billing profile a"
         }
       ]
     },
     {
       "id": "Q12",
-      "question": "What causes SYNC-9001?",
-      "exact_token": true,
-      "known_chunk_id": "HC-BILL-002--platform-synchronization-error-codes-sync-series--sync-9001",
+      "question": "What is the processing fee for international credit card payments?",
+      "exact_token": false,
+      "known_chunk_id": null,
       "hit_at_3": true,
       "hit_rank": 1,
-      "latency_p50_ms": 37.3,
+      "latency_p50_ms": 37.4,
       "top_3": [
         {
           "rank": 1,
-          "chunk_id": "HC-BILL-002--baseline--0035",
-          "score": 0.7051,
-          "text_preview": "| Error code | Blocking | Cause | Fix |\n|---|---|---|---|\n| SYNC-9001 | No | Accounting connector (QuickBooks, Xero, NetSuite) lost authentication during migration | Re-authenticate the accounting con"
+          "chunk_id": "HC-BILL-002--baseline--0007",
+          "score": 0.644,
+          "text_preview": "| PAY-1006 | Multiple payment methods share the same card number (likely duplicates) | Remove duplicate payment methods, keeping only the most recent |\n| PAY-1007 | Payment method tokenization service"
         },
         {
           "rank": 2,
-          "chunk_id": "HC-BILL-002--baseline--0034",
-          "score": 0.6747,
-          "text_preview": "## Platform Synchronization Error Codes (SYNC-Series)\n\nSYNC-series errors indicate that the migration engine could not synchronize\ndata between the billing platform and an integrated system (identity "
+          "chunk_id": "HC-BILL-002--baseline--0008",
+          "score": 0.6425,
+          "text_preview": "| PAY-1011 | Payment method linked to a different account during migration deduplication | Remove the shared payment method and add it fresh to this account |\n| PAY-1012 | SEPA direct debit mandate ha"
         },
         {
           "rank": 3,
-          "chunk_id": "HC-BILL-002--baseline--0039",
-          "score": 0.668,
-          "text_preview": "| ROLE-8xxx | Roles | Permission and role mapping | Non-blocking |\n| SYNC-9xxx | Sync | Integration synchronization | Non-blocking |"
+          "chunk_id": "HC-BILL-001--baseline--0059",
+          "score": 0.639,
+          "text_preview": "**What happens if I receive an invoice during the migration window?**\nInvoices generated during the in progress phase are deferred. Payment is\ncollected automatically within 24 hours of migration comp"
         }
       ]
     }

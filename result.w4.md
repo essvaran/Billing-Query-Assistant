@@ -5,6 +5,14 @@
 **Single change applied:** BM25 + Reciprocal Rank Fusion (k=60)
 **Metric:** hit-rate@3 (does any of the top-3 retrieved chunks contain ALL required evidence terms?)
 
+> **Post-submission update (model change):** After these results were recorded, Groq deprecated
+> all llama/gemma models on this account. The active LLM is now `openai/gpt-oss-120b`.
+> This model outputs Unicode non-breaking hyphens (U+2011) inside citation brackets instead of
+> ASCII hyphens, which broke citation validation. A normalisation fix was applied in
+> `src/generation/citations.py` (`_normalise()` translates Unicode lookalikes before regex
+> matching). Retrieval hit-rate numbers below are unaffected — they measure chunk retrieval
+> only, not generation. Latency numbers were re-measured after the model change.
+
 ---
 
 ## 1. Golden Set — 12 Questions with Known-Correct Chunk IDs
@@ -26,7 +34,6 @@ by Q1–Q8.
 | Q8 | Can a completed billing migration be rolled back? | — | HC-BILL-006--when-a-rollback-is-possible--prose-001 |
 | Q9 | What causes PAY-1001? | PAY-1001 | HC-BILL-002--payment-method-error-codes-pay-series--pay-1001 |
 | Q10 | What does PLAN-ENT-V1 map to on the new platform? | PLAN-ENT-V1 | HC-BILL-001--subscription-and-entitlement-migration--plan-ent-v1 |
-| Q10 | What does PLAN-ENT-V1 map to on the new platform? | PLAN-ENT-V1 | HC-BILL-001--subscription-and-entitlement-migration--plan-ent-v1 |
 | Q11 | Can I get a refund if my billing migration fails? | — | *(Not-In-Corpus)* |
 | Q12 | What is the processing fee for international credit card payments? | — | *(Not-In-Corpus)* |
 
@@ -45,22 +52,26 @@ Measured with `scripts/run_w4_baseline.py`, 5 timing repeats per query.
 
 | ID | Question | Hit@3 | Rank | Latency p50 |
 |---|---|---|---|---|
-| Q1 | What does ERR-4032 mean? | **YES** | 1 | 36.7 ms |
-| Q2 | What does ERR-5010 mean? | **NO** | — | 38.0 ms |
-| Q3 | How do I fix ERR-4040? | **YES** | 2 | 42.4 ms |
-| Q4 | How do I fix ERR-6030? | **NO** | — | 35.5 ms |
-| Q5 | How do I request a migration rollback? | **YES** | 1 | 36.5 ms |
-| Q6 | What happens to auto-pay during a billing migration? | **YES** | 1 | 40.9 ms |
-| Q7 | Which account roles can confirm a billing migration? | **YES** | 1 | 36.2 ms |
-| Q8 | Can a completed billing migration be rolled back? | **YES** | 1 | 37.3 ms |
-| Q9 | What causes PAY-1001? | **YES** | 3 | 35.9 ms |
-| Q10 | What does PLAN-ENT-V1 map to on the new platform? | **NO** | — | 40.9 ms |
-| Q11 | Can I get a refund if my billing migration fails? | NIC — refusal ✓ | — | — |
-| Q12 | What is the processing fee for international credit card payments? | NIC — refusal ✓ | — | — |
+| Q1 | What does ERR-4032 mean? | **YES** | 1 | 42.0 ms |
+| Q2 | What does ERR-5010 mean? | **NO** | — | 36.2 ms |
+| Q3 | How do I fix ERR-4040? | **YES** | 2 | 42.0 ms |
+| Q4 | How do I fix ERR-6030? | **NO** | — | 37.3 ms |
+| Q5 | How do I request a migration rollback? | **YES** | 1 | 36.4 ms |
+| Q6 | What happens to auto-pay during a billing migration? | **YES** | 1 | 43.5 ms |
+| Q7 | Which account roles can confirm a billing migration? | **YES** | 1 | 37.4 ms |
+| Q8 | Can a completed billing migration be rolled back? | **YES** | 1 | 35.9 ms |
+| Q9 | What causes PAY-1001? | **YES** | 3 | 45.6 ms |
+| Q10 | What does PLAN-ENT-V1 map to on the new platform? | **NO** | — | 38.7 ms |
+| Q11 | Can I get a refund if my billing migration fails? | NIC — excluded | — | — |
+| Q12 | What is the processing fee for international credit card payments? | NIC — excluded | — | — |
 
 **Baseline hit-rate@3 (in-corpus Q1–Q10): 7 / 10 (70%)**
-**NIC refusal accuracy: 2 / 2 (100%) — model correctly declined both**
-**Baseline p50 latency: 37.1 ms**
+**NIC questions (Q11–Q12): excluded from hit-rate; evaluated separately for refusal correctness**
+**Baseline p50 latency: 37.9 ms**
+
+> **Note on evaluation scripts:** `evidence_present()` uses `all(terms)` which returns `True` for an
+> empty list. Q11 and Q12 have `required_evidence_terms: []`, so the scripts report them as HIT.
+> This is a script bug — they are correctly excluded here and treated as a separate refusal-accuracy check.
 
 ---
 
@@ -193,22 +204,22 @@ Measured with `scripts/run_w4_hybrid.py`, 5 timing repeats per query.
 
 | ID | Question | Hit@3 | Rank | Latency p50 | Outcome |
 |---|---|---|---|---|---|
-| Q1 | What does ERR-4032 mean? | **YES** | 2 | 42.4 ms | still-passing |
-| Q2 | What does ERR-5010 mean? | **YES** | 1 | 37.6 ms | **fixed** |
-| Q3 | How do I fix ERR-4040? | **YES** | 1 | 40.3 ms | still-passing |
-| Q4 | How do I fix ERR-6030? | **YES** | 1 | 40.1 ms | **fixed** |
-| Q5 | How do I request a migration rollback? | **YES** | 1 | 40.1 ms | still-passing |
-| Q6 | What happens to auto-pay during a billing migration? | **YES** | 2 | 43.9 ms | still-passing |
-| Q7 | Which account roles can confirm a billing migration? | **YES** | 1 | 44.8 ms | still-passing |
-| Q8 | Can a completed billing migration be rolled back? | **YES** | 1 | 40.1 ms | still-passing |
-| Q9 | What causes PAY-1001? | **YES** | 1 | 43.1 ms | still-passing |
-| Q10 | What does PLAN-ENT-V1 map to on the new platform? | **NO** | — | 39.6 ms | still-broken |
-| Q11 | Can I get a refund if my billing migration fails? | NIC — refusal ✓ | — | — | n/a |
-| Q12 | What is the processing fee for international credit card payments? | NIC — refusal ✓ | — | — | n/a |
+| Q1 | What does ERR-4032 mean? | **YES** | 2 | 38.1 ms | still-passing |
+| Q2 | What does ERR-5010 mean? | **YES** | 1 | 39.2 ms | **fixed** |
+| Q3 | How do I fix ERR-4040? | **YES** | 1 | 40.4 ms | still-passing |
+| Q4 | How do I fix ERR-6030? | **YES** | 1 | 38.7 ms | **fixed** |
+| Q5 | How do I request a migration rollback? | **YES** | 1 | 39.4 ms | still-passing |
+| Q6 | What happens to auto-pay during a billing migration? | **YES** | 2 | 43.0 ms | still-passing |
+| Q7 | Which account roles can confirm a billing migration? | **YES** | 1 | 39.9 ms | still-passing |
+| Q8 | Can a completed billing migration be rolled back? | **YES** | 1 | 39.7 ms | still-passing |
+| Q9 | What causes PAY-1001? | **YES** | 1 | 37.6 ms | still-passing |
+| Q10 | What does PLAN-ENT-V1 map to on the new platform? | **NO** | — | 42.3 ms | still-broken |
+| Q11 | Can I get a refund if my billing migration fails? | NIC — excluded | — | — | n/a |
+| Q12 | What is the processing fee for international credit card payments? | NIC — excluded | — | — | n/a |
 
 **Hybrid hit-rate@3 (in-corpus Q1–Q10): 9 / 10 (90%)**
-**NIC refusal accuracy: 2 / 2 (100%)**
-**Hybrid p50 latency: 40.6 ms**
+**NIC questions (Q11–Q12): excluded from hit-rate; evaluated separately for refusal correctness**
+**Hybrid p50 latency: 40.0 ms**
 
 ---
 
@@ -218,7 +229,7 @@ Measured with `scripts/run_w4_hybrid.py`, 5 timing repeats per query.
 |---|---|---|---|
 | hit-rate@3 (in-corpus, Q1–Q10) | 7/10 (70.0%) | 9/10 (90.0%) | +2 questions, +20 pp |
 | NIC refusal accuracy (Q11–Q12) | 2/2 (100%) | 2/2 (100%) | no change |
-| p50 latency | 37.1 ms | 40.6 ms | +3.5 ms (+9.4%) |
+| p50 latency | 37.9 ms | 40.0 ms | +2.1 ms (+5.5%) |
 
 ---
 
