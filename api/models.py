@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from typing import Optional
+
+from pydantic import BaseModel, ConfigDict
 
 
 class AskRequest(BaseModel):
@@ -23,3 +25,70 @@ class AskResponse(BaseModel):
     total_ms: float
     citations_valid: bool
     retriever: str
+
+
+class TraceChunk(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    chunk_id: str
+    document_id: Optional[str] = None
+    score: float = 0.0
+    rank: int = 0
+
+
+class TraceRecord(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    trace_id: str
+    timestamp: str
+    question: str
+    original_query: Optional[str] = None
+    rewritten_query: Optional[str] = None
+    prompt_version: str = "v1"
+    model: str = ""
+    temperature: float = 0.0
+    retriever: str = ""
+    top_k: int = 0
+    collection: str = ""
+    retrieved_chunks: list[TraceChunk] = []
+    raw_output: str = ""
+    final_answer: str = ""
+    citations: list[str] = []
+    citations_valid: bool = False
+    retrieval_ms: float = 0.0
+    generation_ms: float = 0.0
+    total_ms: float = 0.0
+    input_tokens: int = 0
+    output_tokens: int = 0
+    error: Optional[str] = None
+
+
+class TracesResponse(BaseModel):
+    traces: list[TraceRecord]
+    total: int
+    offset: int
+    limit: int
+
+
+class ReplayChunk(BaseModel):
+    chunk_id: str
+    article_id: Optional[str]
+    section: Optional[str]
+    text: str
+
+
+class ReplayResult(BaseModel):
+    trace_id: str
+    question: str
+    model: str
+    original_raw_output: str
+    original_citations: list[str]
+    original_citations_valid: bool
+    replayed_raw_output: str
+    replayed_citations: list[str]
+    replayed_citations_valid: bool
+    chunks_used: list[ReplayChunk]
+    chunks_available: bool
+    replayed_input_tokens: int
+    replayed_output_tokens: int
+    outputs_match: bool

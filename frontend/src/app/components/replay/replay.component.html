@@ -1,0 +1,154 @@
+<div class="replay-page">
+
+  <!-- Back link -->
+  <a class="back-link" routerLink="/sample">← Back to Sample</a>
+
+  @if (loading) {
+    <div class="loading">
+      <div class="loading__spinner"></div>
+      <p>Re-calling the LLM with the stored trace inputs… this may take a few seconds.</p>
+    </div>
+  }
+
+  @if (error) {
+    <div class="alert alert--error">{{ error }}</div>
+  }
+
+  @if (!loading && result) {
+
+    <!-- Header -->
+    <div class="replay-header">
+      <div class="replay-header__id">
+        <span class="label">REPLAY</span>
+        <code class="trace-id">{{ result.trace_id }}</code>
+      </div>
+      <div class="replay-header__meta">
+        <span class="meta-item">model: <code>{{ result.model }}</code></span>
+        <span class="meta-item">question: <strong>{{ result.question }}</strong></span>
+      </div>
+    </div>
+
+    <!-- Match verdict -->
+    <div class="verdict" [class.verdict--match]="result.outputs_match" [class.verdict--diff]="!result.outputs_match">
+      @if (result.outputs_match) {
+        <span class="verdict__icon">✓</span>
+        <div>
+          <strong>Outputs match.</strong>
+          The replayed LLM response is identical to the original stored output.
+          This confirms the trace stored enough information to fully reproduce the call.
+        </div>
+      } @else {
+        <span class="verdict__icon">≠</span>
+        <div>
+          <strong>Outputs differ.</strong>
+          The replayed response differs from the stored original. This can happen due to
+          LLM non-determinism, prompt changes since the trace was recorded, or chunk text
+          changes if the knowledge base was re-ingested.
+        </div>
+      }
+    </div>
+
+    @if (!result.chunks_available) {
+      <div class="alert alert--warn">
+        ⚠ Could not fetch chunk text from ChromaDB. Replay was skipped — ensure ChromaDB is running
+        and the collection exists.
+      </div>
+    }
+
+    <!-- Side-by-side outputs -->
+    <div class="compare-grid">
+
+      <div class="compare-panel compare-panel--original">
+        <div class="compare-panel__header">
+          <span class="panel-label">ORIGINAL</span>
+          <span class="panel-sub">stored in trace</span>
+          <span class="badge" [class.badge--valid]="result.original_citations_valid" [class.badge--invalid]="!result.original_citations_valid">
+            {{ result.original_citations_valid ? '✓ citations valid' : '✗ citations invalid' }}
+          </span>
+        </div>
+        <pre class="output-box" [class.output-box--invalid]="!result.original_citations_valid">{{ result.original_raw_output }}</pre>
+        <div class="citations-row">
+          <span class="citations-label">Citations:</span>
+          @if (result.original_citations.length === 0) {
+            <span class="muted">none</span>
+          } @else {
+            @for (cid of result.original_citations; track cid) {
+              <code class="citation-tag">{{ cid }}</code>
+            }
+          }
+        </div>
+      </div>
+
+      <div class="compare-panel compare-panel--replayed">
+        <div class="compare-panel__header">
+          <span class="panel-label">REPLAYED</span>
+          <span class="panel-sub">re-called now</span>
+          @if (result.chunks_available) {
+            <span class="badge" [class.badge--valid]="result.replayed_citations_valid" [class.badge--invalid]="!result.replayed_citations_valid">
+              {{ result.replayed_citations_valid ? '✓ citations valid' : '✗ citations invalid' }}
+            </span>
+          }
+        </div>
+        @if (result.chunks_available) {
+          <pre class="output-box" [class.output-box--invalid]="!result.replayed_citations_valid">{{ result.replayed_raw_output }}</pre>
+          <div class="citations-row">
+            <span class="citations-label">Citations:</span>
+            @if (result.replayed_citations.length === 0) {
+              <span class="muted">none</span>
+            } @else {
+              @for (cid of result.replayed_citations; track cid) {
+                <code class="citation-tag">{{ cid }}</code>
+              }
+            }
+          </div>
+          <div class="token-row">
+            {{ result.replayed_input_tokens }} in / {{ result.replayed_output_tokens }} out tokens
+          </div>
+        } @else {
+          <div class="output-box output-box--skipped">Replay skipped — ChromaDB unavailable.</div>
+        }
+      </div>
+
+    </div>
+
+    <!-- Chunks used -->
+    @if (result.chunks_used.length > 0) {
+      <div class="section">
+        <div class="section__title">Chunks Used in Replay (fetched live from ChromaDB)</div>
+        <div class="chunks-note">
+          These are the same chunk IDs stored in the trace, but text is fetched live.
+          If the knowledge base was re-ingested with different text, the replay would diverge — that is a known limitation.
+        </div>
+        @for (chunk of result.chunks_used; track chunk.chunk_id; let i = $index) {
+          <div class="chunk-card">
+            <div class="chunk-card__header">
+              <span class="rank-badge">{{ i + 1 }}</span>
+              <code class="chunk-card__id">{{ chunk.chunk_id }}</code>
+              @if (chunk.article_id) {
+                <span class="chunk-card__meta">article: {{ chunk.article_id }}</span>
+              }
+              @if (chunk.section) {
+                <span class="chunk-card__meta">section: {{ chunk.section }}</span>
+              }
+            </div>
+            <pre class="chunk-text">{{ chunk.text }}</pre>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- What this proves -->
+    <div class="section section--evidence">
+      <div class="section__title">What This Proves</div>
+      <ul class="evidence-list">
+        <li>The trace stored: <code>retrieved_chunks</code> (chunk IDs + rank + score), <code>model</code>, <code>temperature</code>, <code>prompt_version</code>, <code>question</code></li>
+        <li>From those fields alone, we reconstructed the exact LLM call without running the retriever again</li>
+        <li>Chunk <em>text</em> was fetched live from ChromaDB — if the knowledge base changes, the replay would diverge</li>
+        <li>Prompt <em>content</em> is read from the current <code>prompts.py</code> — <code>prompt_version="v1"</code> is stored to detect drift</li>
+        <li>Match result: <strong>{{ result.outputs_match ? 'IDENTICAL ✓' : 'DIFFERENT ≠' }}</strong></li>
+      </ul>
+    </div>
+
+  }
+
+</div>

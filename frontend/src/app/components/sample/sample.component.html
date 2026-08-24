@@ -1,0 +1,150 @@
+<div class="sample-page">
+
+  <div class="sample-header">
+    <div class="sample-header__title">
+      <h1>Random Sample <span class="seed-badge">seed = 42</span></h1>
+      <p class="sample-header__sub">
+        20 traces selected with <code>random.seed(42)</code> from the full trace file.
+        This is the provably unbiased set used for open-coding and failure taxonomy.
+      </p>
+    </div>
+    @if (!loading && traces.length > 0) {
+      <div class="sample-stats">
+        <div class="stat stat--valid">
+          <span class="stat__num">{{ validCount }}</span>
+          <span class="stat__label">valid citations</span>
+        </div>
+        <div class="stat stat--invalid">
+          <span class="stat__num">{{ invalidCount }}</span>
+          <span class="stat__label">invalid / refused</span>
+        </div>
+        <div class="stat">
+          <span class="stat__num">{{ traces.length }}</span>
+          <span class="stat__label">total sampled</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (error) {
+    <div class="alert alert--error">{{ error }}</div>
+  }
+
+  @if (loading) {
+    <div class="loading">Loading sample…</div>
+  }
+
+  @if (!loading && traces.length === 0 && !error) {
+    <div class="empty-state">
+      <div class="empty-state__icon">📋</div>
+      <p>No sample file found.</p>
+      <p class="empty-state__hint">
+        Run <code>python scripts/sample_traces.py</code> to generate it.
+      </p>
+    </div>
+  }
+
+  @if (!loading && traces.length > 0) {
+    <div class="trace-list">
+      @for (trace of traces; track trace.trace_id; let idx = $index) {
+        <div class="trace-card" [class.trace-card--invalid]="!trace.citations_valid">
+
+          <div class="trace-card__header" (click)="toggleExpand(trace.trace_id)">
+            <div class="trace-card__meta">
+              <span class="sample-num">#{{ idx + 1 }}</span>
+              <span class="trace-card__id" title="{{ trace.trace_id }}">{{ shortId(trace.trace_id) }}</span>
+              <span class="trace-card__time">{{ formatTimestamp(trace.timestamp) }}</span>
+              <span class="badge badge--retriever">{{ trace.retriever }}</span>
+              <span class="badge" [class.badge--valid]="trace.citations_valid" [class.badge--invalid]="!trace.citations_valid">
+                {{ trace.citations_valid ? '✓ valid' : '✗ invalid' }}
+              </span>
+              @if (trace.error) {
+                <span class="badge badge--error">error</span>
+              }
+            </div>
+
+            <div class="trace-card__question">{{ trace.question }}</div>
+
+            <div class="trace-card__stats">
+              <span>retrieval {{ trace.retrieval_ms }}ms</span>
+              <span>+</span>
+              <span>generation {{ trace.generation_ms }}ms</span>
+              <span>=</span>
+              <span><strong>{{ trace.total_ms }}ms</strong></span>
+              <span class="tokens">{{ trace.input_tokens }} in / {{ trace.output_tokens }} out tokens</span>
+            </div>
+
+            <div class="trace-card__actions">
+              <button class="btn btn--replay" (click)="goReplay(trace.trace_id); $event.stopPropagation()">
+                ▶ Replay
+              </button>
+              <button class="btn btn--expand">
+                {{ isExpanded(trace.trace_id) ? '▲ Collapse' : '▼ Expand' }}
+              </button>
+            </div>
+          </div>
+
+          @if (isExpanded(trace.trace_id)) {
+            <div class="trace-card__body">
+
+              <div class="detail-section">
+                <div class="detail-section__title">Retrieved Chunks</div>
+                <table class="chunk-table">
+                  <thead>
+                    <tr><th>Rank</th><th>Chunk ID</th><th>Document ID</th><th>Score</th></tr>
+                  </thead>
+                  <tbody>
+                    @for (chunk of trace.retrieved_chunks; track chunk.chunk_id) {
+                      <tr>
+                        <td>{{ chunk.rank }}</td>
+                        <td class="chunk-id">{{ chunk.chunk_id }}</td>
+                        <td>{{ chunk.document_id ?? '—' }}</td>
+                        <td>{{ chunk.score.toFixed(4) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="detail-section">
+                <div class="detail-section__title">Citations</div>
+                @if (trace.citations.length === 0) {
+                  <span class="muted">none</span>
+                } @else {
+                  <div class="citation-list">
+                    @for (cid of trace.citations; track cid) {
+                      <code class="citation-tag">{{ cid }}</code>
+                    }
+                  </div>
+                }
+              </div>
+
+              <div class="detail-section">
+                <div class="detail-section__title">Raw LLM Output</div>
+                <pre class="output-box">{{ trace.raw_output }}</pre>
+              </div>
+
+              @if (!trace.citations_valid) {
+                <div class="detail-section">
+                  <div class="detail-section__title">Final Answer (shown to user)</div>
+                  <pre class="output-box output-box--refusal">{{ trace.final_answer }}</pre>
+                </div>
+              }
+
+              <div class="detail-section detail-section--meta">
+                <span>model: <code>{{ trace.model }}</code></span>
+                <span>temp: {{ trace.temperature }}</span>
+                <span>prompt: <code>{{ trace.prompt_version }}</code></span>
+                <span>collection: <code>{{ trace.collection }}</code></span>
+                <span>top_k: {{ trace.top_k }}</span>
+              </div>
+
+            </div>
+          }
+
+        </div>
+      }
+    </div>
+  }
+
+</div>

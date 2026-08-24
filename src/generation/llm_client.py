@@ -20,13 +20,14 @@ class LLMRequestError(Exception):
     pass
 
 
-def ask_llm(system_prompt: str, user_prompt: str) -> str:
+def ask_llm(system_prompt: str, user_prompt: str) -> tuple[str, int, int]:
+    """Returns (text, input_tokens, output_tokens)."""
     if LLM_PROVIDER == "groq":
         return _ask_groq(system_prompt, user_prompt)
     return _ask_ollama(system_prompt, user_prompt)
 
 
-def _ask_groq(system_prompt: str, user_prompt: str) -> str:
+def _ask_groq(system_prompt: str, user_prompt: str) -> tuple[str, int, int]:
     if not GROQ_API_KEY:
         raise LLMRequestError(
             "GROQ_API_KEY is not set. Add it to your .env file."
@@ -55,10 +56,13 @@ def _ask_groq(system_prompt: str, user_prompt: str) -> str:
             f"Check your GROQ_API_KEY and network. Original error: {exc}"
         ) from exc
 
-    return response.json()["choices"][0]["message"]["content"].strip()
+    data = response.json()
+    text = data["choices"][0]["message"]["content"].strip()
+    usage = data.get("usage", {})
+    return text, usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0)
 
 
-def _ask_ollama(system_prompt: str, user_prompt: str) -> str:
+def _ask_ollama(system_prompt: str, user_prompt: str) -> tuple[str, int, int]:
     url = f"{OLLAMA_BASE_URL}/api/chat"
     payload = {
         "model": OLLAMA_MODEL,
@@ -80,4 +84,6 @@ def _ask_ollama(system_prompt: str, user_prompt: str) -> str:
             f"been pulled (`ollama pull {OLLAMA_MODEL}`)? Original error: {exc}"
         ) from exc
 
-    return response.json()["message"]["content"].strip()
+    data = response.json()
+    text = data["message"]["content"].strip()
+    return text, data.get("prompt_eval_count", 0), data.get("eval_count", 0)

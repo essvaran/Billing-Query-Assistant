@@ -12,6 +12,8 @@ __pycache__/
 # ── Data / generated ──────────────────────────────────────────────────────────
 chroma_db/
 evaluation/generation_transcripts.json
+evaluation/traces.jsonl
+evaluation/sample.jsonl
 
 # ── Frontend ──────────────────────────────────────────────────────────────────
 frontend/node_modules/
