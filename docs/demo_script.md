@@ -1,4 +1,5 @@
 # Week 5 Practical Demo Script
+
 > Read this top-to-bottom before your demo. Every graded point is marked with its marks.
 
 ---
@@ -23,30 +24,35 @@ Open browser at `http://localhost:4200`
 ## Step 1 — Show the System Works (Context Setting)
 
 **What to say:**
+
 > "This is the billing support RAG app I built in Week 3 and 4.
 > A user types a billing question, the system retrieves relevant chunks
 > from ChromaDB, sends them to the LLM, and returns a grounded answer."
 
 **What to do:**
+
 - Type this question in the chat: `What does ERR-4032 mean?`
 - Show the answer appears with citations
-- Point out: *"The answer cites a chunk ID in brackets — this proves the answer came from our knowledge base, not the model's memory."*
+- Point out: _"The answer cites a chunk ID in brackets — this proves the answer came from our knowledge base, not the model's memory."_
 
 ---
 
 ## Step 2 — Show Trace Logging is Working [20 marks]
 
 **What to say:**
+
 > "In Week 5, I added trace logging. Every single request is now
 > permanently recorded as a JSON line in traces.jsonl.
 > This is what makes error analysis possible."
 
 **What to do:**
+
 - Click the **Traces** tab in the nav bar
 - Show the trace that just appeared from the question you typed
 - Point out the fields: trace_id, timestamp, question, retriever, citations_valid
 
 **Then say:**
+
 > "Each trace has everything needed to REPLAY it — the question,
 > which chunks were retrieved, the exact LLM model used, and the
 > raw output before any validation."
@@ -55,22 +61,23 @@ Open browser at `http://localhost:4200`
 
 Point at `_write_trace()` and explain each field group:
 
-| Field group | Fields | Why it matters |
-|---|---|---|
-| Identity | `trace_id`, `timestamp` | Unique ID + when it happened |
-| Input | `question`, `prompt_version`, `model`, `temperature` | Reproduce the exact LLM call |
-| Retrieval | `retrieved_chunks`, `collection`, `top_k` | What context the LLM saw |
-| Generation | `raw_output`, `final_answer`, `citations_valid` | What the LLM said and what we showed the user |
-| Performance | `retrieval_ms`, `generation_ms`, `total_ms` | Latency breakdown |
-| Tokens | `input_tokens`, `output_tokens` | Cost tracking |
+| Field group | Fields                                               | Why it matters                                |
+| ----------- | ---------------------------------------------------- | --------------------------------------------- |
+| Identity    | `trace_id`, `timestamp`                              | Unique ID + when it happened                  |
+| Input       | `question`, `prompt_version`, `model`, `temperature` | Reproduce the exact LLM call                  |
+| Retrieval   | `retrieved_chunks`, `collection`, `top_k`            | What context the LLM saw                      |
+| Generation  | `raw_output`, `final_answer`, `citations_valid`      | What the LLM said and what we showed the user |
+| Performance | `retrieval_ms`, `generation_ms`, `total_ms`          | Latency breakdown                             |
+| Tokens      | `input_tokens`, `output_tokens`                      | Cost tracking                                 |
 
 ---
 
 ## Step 3 — Show the Random Sample [20 marks]
 
 **What to say:**
+
 > "The assignment requires a provably random sample — not hand-picked traces,
-> not the ones I know are broken. I used `random.seed(42)` so anyone can
+> not the ones I know are broken. I used `random.seed(35)` so anyone can
 > reproduce my exact 20 traces."
 
 **What to demo — run this in terminal:**
@@ -79,11 +86,11 @@ Point at `_write_trace()` and explain each field group:
 python -c "
 import random, json
 
-random.seed(42)
+random.seed(35)
 traces = [json.loads(l) for l in open('evaluation/traces.jsonl')]
 sample = random.sample(traces, 20)
 
-print('SEED: 42')
+print('SEED: 35')
 print(f'Total traces in file: {len(traces)}')
 print(f'Sampled 20 trace IDs:')
 for i, t in enumerate(sample, 1):
@@ -92,7 +99,8 @@ for i, t in enumerate(sample, 1):
 ```
 
 **What to say while it runs:**
-> "Seed 42 means anyone — my assessor, a teammate — runs this same
+
+> "Seed 35 means anyone — my assessor, a teammate — runs this same
 > code and gets these exact same 20 traces. That's what makes it
 > provable and not cherry-picked."
 
@@ -101,11 +109,13 @@ for i, t in enumerate(sample, 1):
 ## Step 4 — Show Trace Replay [20 marks]
 
 **What to say:**
+
 > "Replayability means: given ONLY the trace record — no memory of
 > what happened — I can reconstruct the exact inputs and re-run the
 > LLM call. Let me show you."
 
 **What to do:**
+
 1. Pick one trace_id from the list above
 2. Run in terminal:
 
@@ -116,7 +126,9 @@ python scripts/replay_trace.py --trace-id <paste-trace-id-here>
 3. Show the output side by side — **original raw_output** vs **replayed output**
 
 **What to say:**
+
 > "The replayed output matches the original. The trace stored:
+>
 > - which chunks were retrieved (by ID)
 > - the model name and temperature
 > - the prompt version
@@ -131,6 +143,7 @@ python scripts/replay_trace.py --trace-id <paste-trace-id-here>
 ## Step 5 — Open-Coding: 20 Observation Sentences [25 marks]
 
 **What to say:**
+
 > "Open-coding means reading each of my 20 sampled traces and writing
 > ONE honest sentence about what I SAW — not what I think caused it,
 > not what I would fix. Pure observation."
@@ -138,6 +151,7 @@ python scripts/replay_trace.py --trace-id <paste-trace-id-here>
 **Show `evaluation/notes.md`** — read 3–4 sentences aloud.
 
 **What to say about the sentences:**
+
 > "Notice these describe what happened in the trace specifically —
 > which chunk was retrieved, what the model said, what citation
 > appeared. I did NOT fix anything during this step.
@@ -145,6 +159,7 @@ python scripts/replay_trace.py --trace-id <paste-trace-id-here>
 > the remaining 14 traces describe a different system."
 
 **If asked why this discipline matters:**
+
 > "If you diagnose and fix at the same time as observing, you find
 > exactly the modes you expected. You miss the surprises. The whole
 > point of error analysis is to discover failure modes you didn't
@@ -155,21 +170,23 @@ python scripts/replay_trace.py --trace-id <paste-trace-id-here>
 ## Step 6 — Show the Failure Taxonomy [30 marks]
 
 **What to say:**
+
 > "After open-coding all 20, I clustered my observations into
 > named failure modes. The names have to be legible to a stranger —
 > not 'retrieval issue' but something specific enough to act on."
 
 **Show `evaluation/taxonomy.md`** — walk through the table:
 
-| Column | What to say |
-|---|---|
-| Mode name | "This name tells a non-technical manager exactly what's wrong" |
-| Count | "This many of my 20 traces showed this pattern" |
-| Frequency % | "Count divided by 20" |
-| Severity | "Embarrasses the client = wrong answer shown. Annoys the user = unnecessary refusal." |
-| Example trace_id | "I can open this specific trace in the viewer and show you exactly what happened" |
+| Column           | What to say                                                                           |
+| ---------------- | ------------------------------------------------------------------------------------- |
+| Mode name        | "This name tells a non-technical manager exactly what's wrong"                        |
+| Count            | "This many of my 20 traces showed this pattern"                                       |
+| Frequency %      | "Count divided by 20"                                                                 |
+| Severity         | "Embarrasses the client = wrong answer shown. Annoys the user = unnecessary refusal." |
+| Example trace_id | "I can open this specific trace in the viewer and show you exactly what happened"     |
 
 **Then open the Traces UI**, filter by `Citations: invalid`, and expand one trace from your top failure mode:
+
 > "Here is a live trace from the failure mode I named. You can see
 > exactly what was retrieved, what the model said, and why
 > citations_valid is false."
@@ -179,6 +196,7 @@ python scripts/replay_trace.py --trace-id <paste-trace-id-here>
 ## Step 7 — Show the Prediction [15 marks]
 
 **What to say:**
+
 > "The prediction must be falsifiable — a specific claim with
 > specific numbers, committed to git BEFORE I apply any fix.
 > That way I can't cheat by adjusting the number after I see
@@ -191,12 +209,14 @@ git log --oneline -3
 ```
 
 **Read the commit message aloud** — it should say something like:
+
 > "Week 5: failure taxonomy + dated prediction (2026-08-24)
 >
 > Prediction: [specific change] will reduce [mode name]
 > from X% (N/20) to under Y% by [date]"
 
 **What to say:**
+
 > "The date in the commit proves I wrote this before applying any fix.
 > Next week I make the change, measure the new frequency,
 > and check whether I hit the number. Being wrong teaches me something.
@@ -208,6 +228,7 @@ git log --oneline -3
 ## Step 8 — Benchmark Note [10 marks]
 
 **What to say:**
+
 > "The final requirement is 3 sentences on why a public benchmark
 > score — like BEIR or MMLU — would not have surfaced any of
 > my top 3 failure modes."
@@ -237,28 +258,28 @@ git log --oneline -3
 
 ## Demo Flow Summary (5 minutes total)
 
-| Time | Action | Marks covered |
-|---|---|---|
-| 0:00 | Show chat working, ask one question | Context |
-| 0:45 | Click Traces tab — show the trace just created | 20 marks |
-| 1:30 | Run the seeded sample script in terminal | 20 marks |
-| 2:15 | Run replay_trace.py — show original vs replayed | 20 marks |
-| 3:00 | Show notes.md — read 2-3 observation sentences | 25 marks |
-| 3:30 | Show taxonomy.md — walk the table, open one trace in UI | 30 marks |
-| 4:15 | Show git log — read prediction commit | 15 marks |
-| 4:45 | Read 3 benchmark sentences | 10 marks |
+| Time | Action                                                  | Marks covered |
+| ---- | ------------------------------------------------------- | ------------- |
+| 0:00 | Show chat working, ask one question                     | Context       |
+| 0:45 | Click Traces tab — show the trace just created          | 20 marks      |
+| 1:30 | Run the seeded sample script in terminal                | 20 marks      |
+| 2:15 | Run replay_trace.py — show original vs replayed         | 20 marks      |
+| 3:00 | Show notes.md — read 2-3 observation sentences          | 25 marks      |
+| 3:30 | Show taxonomy.md — walk the table, open one trace in UI | 30 marks      |
+| 4:15 | Show git log — read prediction commit                   | 15 marks      |
+| 4:45 | Read 3 benchmark sentences                              | 10 marks      |
 
 ---
 
 ## Things NOT to Say
 
-| Don't say | Say instead |
-|---|---|
-| "retrieval issue" | The specific chunk ID that was missing or wrong |
-| "hallucination" | "The model cited a chunk ID that was not in the retrieved set" |
-| "this should improve things" | "This specific change will drop mode X from N% to under Y%" |
-| "I fixed it during analysis" | Never say this — zero fixes during open-coding |
-| "I picked these 20 because they looked interesting" | "I used random.seed(42) — here's the code" |
+| Don't say                                           | Say instead                                                    |
+| --------------------------------------------------- | -------------------------------------------------------------- |
+| "retrieval issue"                                   | The specific chunk ID that was missing or wrong                |
+| "hallucination"                                     | "The model cited a chunk ID that was not in the retrieved set" |
+| "this should improve things"                        | "This specific change will drop mode X from N% to under Y%"    |
+| "I fixed it during analysis"                        | Never say this — zero fixes during open-coding                 |
+| "I picked these 20 because they looked interesting" | "I used random.seed(35) — here's the code"                     |
 
 ---
 

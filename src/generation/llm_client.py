@@ -20,14 +20,22 @@ class LLMRequestError(Exception):
     pass
 
 
-def ask_llm(system_prompt: str, user_prompt: str) -> tuple[str, int, int]:
-    """Returns (text, input_tokens, output_tokens)."""
+def ask_llm(
+    system_prompt: str,
+    user_prompt: str,
+    model: str | None = None,
+) -> tuple[str, int, int]:
+    """Returns (text, input_tokens, output_tokens).
+
+    Pass ``model`` to override the default configured model — used by replay
+    to ensure the same model that generated the original trace is re-used.
+    """
     if LLM_PROVIDER == "groq":
-        return _ask_groq(system_prompt, user_prompt)
-    return _ask_ollama(system_prompt, user_prompt)
+        return _ask_groq(system_prompt, user_prompt, model or GROQ_MODEL)
+    return _ask_ollama(system_prompt, user_prompt, model or OLLAMA_MODEL)
 
 
-def _ask_groq(system_prompt: str, user_prompt: str) -> tuple[str, int, int]:
+def _ask_groq(system_prompt: str, user_prompt: str, model: str) -> tuple[str, int, int]:
     if not GROQ_API_KEY:
         raise LLMRequestError(
             "GROQ_API_KEY is not set. Add it to your .env file."
@@ -39,7 +47,7 @@ def _ask_groq(system_prompt: str, user_prompt: str) -> tuple[str, int, int]:
         "Content-Type": "application/json",
     }
     payload = {
-        "model": GROQ_MODEL,
+        "model": model,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
@@ -52,7 +60,7 @@ def _ask_groq(system_prompt: str, user_prompt: str) -> tuple[str, int, int]:
         response.raise_for_status()
     except requests.RequestException as exc:
         raise LLMRequestError(
-            f"Groq API request failed (model='{GROQ_MODEL}'). "
+            f"Groq API request failed (model='{model}'). "
             f"Check your GROQ_API_KEY and network. Original error: {exc}"
         ) from exc
 
@@ -62,10 +70,10 @@ def _ask_groq(system_prompt: str, user_prompt: str) -> tuple[str, int, int]:
     return text, usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0)
 
 
-def _ask_ollama(system_prompt: str, user_prompt: str) -> tuple[str, int, int]:
+def _ask_ollama(system_prompt: str, user_prompt: str, model: str) -> tuple[str, int, int]:
     url = f"{OLLAMA_BASE_URL}/api/chat"
     payload = {
-        "model": OLLAMA_MODEL,
+        "model": model,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
@@ -80,8 +88,8 @@ def _ask_ollama(system_prompt: str, user_prompt: str) -> tuple[str, int, int]:
     except requests.RequestException as exc:
         raise LLMRequestError(
             f"Could not reach Ollama at {OLLAMA_BASE_URL} with model "
-            f"'{OLLAMA_MODEL}'. Is `ollama serve` running and has the model "
-            f"been pulled (`ollama pull {OLLAMA_MODEL}`)? Original error: {exc}"
+            f"'{model}'. Is `ollama serve` running and has the model "
+            f"been pulled (`ollama pull {model}`)? Original error: {exc}"
         ) from exc
 
     data = response.json()

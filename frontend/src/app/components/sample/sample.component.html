@@ -2,9 +2,9 @@
 
   <div class="sample-header">
     <div class="sample-header__title">
-      <h1>Random Sample <span class="seed-badge">seed = 42</span></h1>
+      <h1>Random Sample <span class="seed-badge">seed = 80</span></h1>
       <p class="sample-header__sub">
-        20 traces selected with <code>random.seed(42)</code> from the full trace file.
+        20 traces selected with <code>random.seed(80)</code> from the full trace file.
         This is the provably unbiased set used for open-coding and failure taxonomy.
       </p>
     </div>
@@ -55,6 +55,9 @@
               <span class="trace-card__id" title="{{ trace.trace_id }}">{{ shortId(trace.trace_id) }}</span>
               <span class="trace-card__time">{{ formatTimestamp(trace.timestamp) }}</span>
               <span class="badge badge--retriever">{{ trace.retriever }}</span>
+              @if (trace.query_type) {
+                <span class="badge badge--query-type" [title]="queryTypeTitle(trace.query_type)">{{ trace.query_type }}</span>
+              }
               <span class="badge" [class.badge--valid]="trace.citations_valid" [class.badge--invalid]="!trace.citations_valid">
                 {{ trace.citations_valid ? '✓ valid' : '✗ invalid' }}
               </span>
@@ -137,6 +140,28 @@
                 <span>prompt: <code>{{ trace.prompt_version }}</code></span>
                 <span>collection: <code>{{ trace.collection }}</code></span>
                 <span>top_k: {{ trace.top_k }}</span>
+                @if (trace.query_type) {
+                  <span>query type: <code class="badge badge--query-type" [title]="queryTypeTitle(trace.query_type)">{{ trace.query_type }}</code></span>
+                }
+              </div>
+
+              <!-- Prompt sent to LLM -->
+              <div class="detail-section">
+                <div class="detail-section__title">Prompt Sent to LLM</div>
+                @if (!prompts[trace.trace_id] && !promptLoading[trace.trace_id]) {
+                  <button class="btn btn--prompt" (click)="loadPrompt(trace.trace_id)">Load Prompt</button>
+                }
+                @if (promptLoading[trace.trace_id]) {
+                  <span class="muted">Fetching prompt…</span>
+                }
+                @if (prompts[trace.trace_id]) {
+                  <div class="prompt-block">
+                    <div class="prompt-block__label">System Prompt</div>
+                    <pre class="output-box output-box--prompt">{{ prompts[trace.trace_id].system_prompt }}</pre>
+                    <div class="prompt-block__label">User Prompt</div>
+                    <pre class="output-box output-box--prompt">{{ prompts[trace.trace_id].user_prompt }}</pre>
+                  </div>
+                }
               </div>
 
             </div>

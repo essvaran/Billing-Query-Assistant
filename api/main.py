@@ -8,7 +8,32 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.models import AskRequest, AskResponse, ChunkResult, ReplayResult, TraceRecord, TracesResponse
+import re as _re
+
+from api.models import AskRequest, AskResponse, ChunkResult, ReplayResult, TracePrompt, TraceRecord, TracesResponse
+
+_CODE_RE = _re.compile(r"\b[A-Z]{2,}-[A-Z0-9]{2,}(?:-[A-Z0-9]+)+\b")
+
+
+def _normalise(text: str) -> str:
+    """Strip and normalise line endings for output comparison."""
+    return text.strip().replace("\r\n", "\n").replace("\r", "\n")
+_MULTI_PART_MARKERS = (" and ", " as well", " also ", "both ", " plus ", " additionally")
+_SEMANTIC_STARTS = ("why ", "how does ", "how do ", "what happens ", "explain ",
+                    "describe ", "what would ", "when does ", "when do ")
+
+
+def _classify_query_type(question: str) -> str:
+    q = question.lower()
+    if question.count("?") > 1:
+        return "multi-part"
+    if any(m in q for m in _MULTI_PART_MARKERS) and "?" in question:
+        return "multi-part"
+    if _CODE_RE.search(question):
+        return "exact keyword"
+    if q.startswith(_SEMANTIC_STARTS):
+        return "semantic"
+    return "simple"
 from src.generation.answer import answer_question
 from src.generation.llm_client import LLMRequestError
 
@@ -96,6 +121,8 @@ def get_traces(
     traces = []
     for r in page:
         try:
+            if not r.get("query_type"):
+                r["query_type"] = _classify_query_type(r.get("question", ""))
             traces.append(TraceRecord(**r))
         except Exception:
             continue
@@ -124,10 +151,67 @@ def get_sample_traces() -> list[TraceRecord]:
     result = []
     for r in records:
         try:
+            if not r.get("query_type"):
+                r["query_type"] = _classify_query_type(r.get("question", ""))
             result.append(TraceRecord(**r))
         except Exception:
             continue
     return result
+
+
+@app.get("/api/traces/{trace_id}/prompt", response_model=TracePrompt)
+def get_trace_prompt(trace_id: str) -> TracePrompt:
+    """Return the system and user prompt that were sent to the LLM for this trace."""
+    from src.generation.prompts import SYSTEM_PROMPT, build_user_prompt
+    from src.retrieval.vector_store import get_collection
+
+    trace: Optional[dict] = None
+    for path in (_SAMPLE_PATH, _TRACES_PATH):
+        if not path.exists():
+            continue
+        for rec in _load_jsonl(path):
+            if rec.get("trace_id") == trace_id:
+                trace = rec
+                break
+        if trace:
+            break
+
+    if trace is None:
+        raise HTTPException(status_code=404, detail=f"trace_id '{trace_id}' not found")
+
+    original_chunks = trace.get("retrieved_chunks", [])
+    chunk_ids = [c["chunk_id"] for c in original_chunks]
+    rank_by_id = {c["chunk_id"]: c.get("rank", i + 1) for i, c in enumerate(original_chunks)}
+
+    prompt_chunks = []
+    if chunk_ids:
+        try:
+            collection = get_collection(trace.get("collection", "billing_docs"))
+            result = collection.get(ids=chunk_ids, include=["documents", "metadatas"])
+            fetched = {}
+            for cid, doc, meta in zip(result["ids"], result["documents"], result["metadatas"]):
+                fetched[cid] = {
+                    "chunk_id": cid,
+                    "article_id": meta.get("article_id"),
+                    "section": meta.get("section"),
+                    "score": 0.0,
+                    "rank": rank_by_id.get(cid, 1),
+                    "text": doc,
+                }
+            for cid in chunk_ids:
+                if cid in fetched:
+                    prompt_chunks.append(fetched[cid])
+        except Exception:
+            pass
+
+    user_prompt = build_user_prompt(trace["question"], prompt_chunks) if prompt_chunks else "(chunk text unavailable — ChromaDB unreachable)"
+
+    return TracePrompt(
+        trace_id=trace_id,
+        query_type=_classify_query_type(trace.get("question", "")),
+        system_prompt=SYSTEM_PROMPT,
+        user_prompt=user_prompt,
+    )
 
 
 @app.get("/api/traces/{trace_id}/replay", response_model=ReplayResult)
@@ -138,7 +222,7 @@ def replay_trace(trace_id: str) -> ReplayResult:
     sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 
     from src.generation.citations import extract_citations, validate_citations
-    from src.generation.llm_client import ask_llm
+    from src.generation.llm_client import LLM_PROVIDER, GROQ_MODEL, OLLAMA_MODEL, ask_llm
     from src.generation.prompts import SYSTEM_PROMPT, build_user_prompt
     from src.retrieval.vector_store import get_collection
 
@@ -157,7 +241,11 @@ def replay_trace(trace_id: str) -> ReplayResult:
     if trace is None:
         raise HTTPException(status_code=404, detail=f"trace_id '{trace_id}' not found")
 
-    chunk_ids = [c["chunk_id"] for c in trace.get("retrieved_chunks", [])]
+    # Build rank lookup from stored trace so we can restore original order after ChromaDB fetch
+    original_chunks = trace.get("retrieved_chunks", [])
+    chunk_ids = [c["chunk_id"] for c in original_chunks]
+    rank_by_id = {c["chunk_id"]: c.get("rank", i + 1) for i, c in enumerate(original_chunks)}
+
     chunks_available = False
     chunks_used = []
 
@@ -165,14 +253,19 @@ def replay_trace(trace_id: str) -> ReplayResult:
         try:
             collection = get_collection(trace["collection"])
             result = collection.get(ids=chunk_ids, include=["documents", "metadatas"])
+            fetched = {}
             for cid, doc, meta in zip(result["ids"], result["documents"], result["metadatas"]):
-                chunks_used.append({
+                fetched[cid] = {
                     "chunk_id": cid,
                     "article_id": meta.get("article_id"),
                     "section": meta.get("section"),
                     "text": doc,
-                })
-            chunks_available = True
+                }
+            # Restore original rank order — ChromaDB.get() does not preserve input order
+            for cid in chunk_ids:
+                if cid in fetched:
+                    chunks_used.append(fetched[cid])
+            chunks_available = bool(chunks_used)
         except Exception:
             pass
 
@@ -182,21 +275,33 @@ def replay_trace(trace_id: str) -> ReplayResult:
     in_tok = 0
     out_tok = 0
 
+    original_model = trace.get("model", "unknown")
+    # Default replay_model to env default; overwritten below after the actual call
+    env_default_model = GROQ_MODEL if LLM_PROVIDER == "groq" else OLLAMA_MODEL
+    replay_model = original_model  # we will try to use the stored model
+
     if chunks_available and chunks_used:
-        # Build chunks in the format expected by build_user_prompt
+        # Build prompt chunks with original rank — same structure as answer.py
         prompt_chunks = [
             {
                 "chunk_id": c["chunk_id"],
                 "article_id": c["article_id"],
                 "section": c["section"],
                 "score": 0.0,
-                "rank": i + 1,
+                "rank": rank_by_id.get(c["chunk_id"], i + 1),
                 "text": c["text"],
             }
             for i, c in enumerate(chunks_used)
         ]
         user_prompt = build_user_prompt(trace["question"], prompt_chunks)
-        replayed_raw, in_tok, out_tok = ask_llm(SYSTEM_PROMPT, user_prompt)
+        try:
+            # Pass original_model so the replay uses exactly the same model as the trace
+            replayed_raw, in_tok, out_tok = ask_llm(SYSTEM_PROMPT, user_prompt, model=original_model)
+            replay_model = original_model
+        except LLMRequestError:
+            # Stored model unavailable — fall back to env default and note the switch
+            replayed_raw, in_tok, out_tok = ask_llm(SYSTEM_PROMPT, user_prompt)
+            replay_model = env_default_model
         retrieved_ids = {c["chunk_id"] for c in chunks_used}
         replayed_citations = extract_citations(replayed_raw)
         replayed_citations_valid = validate_citations(replayed_citations, retrieved_ids)
@@ -207,7 +312,9 @@ def replay_trace(trace_id: str) -> ReplayResult:
     return ReplayResult(
         trace_id=trace_id,
         question=trace["question"],
-        model=trace["model"],
+        original_model=original_model,
+        replay_model=replay_model,
+        model_matched=(original_model == replay_model),
         original_raw_output=trace["raw_output"],
         original_citations=sorted(original_citations),
         original_citations_valid=original_citations_valid,
@@ -218,5 +325,5 @@ def replay_trace(trace_id: str) -> ReplayResult:
         chunks_available=chunks_available,
         replayed_input_tokens=in_tok,
         replayed_output_tokens=out_tok,
-        outputs_match=(trace["raw_output"].strip() == replayed_raw.strip()),
+        outputs_match=(_normalise(trace["raw_output"]) == _normalise(replayed_raw)),
     )

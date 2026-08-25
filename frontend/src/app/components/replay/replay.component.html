@@ -23,10 +23,20 @@
         <code class="trace-id">{{ result.trace_id }}</code>
       </div>
       <div class="replay-header__meta">
-        <span class="meta-item">model: <code>{{ result.model }}</code></span>
+        <span class="meta-item">original model: <code>{{ result.original_model }}</code></span>
+        <span class="meta-item">replay model: <code [class.model-warn]="!result.model_matched">{{ result.replay_model }}</code></span>
         <span class="meta-item">question: <strong>{{ result.question }}</strong></span>
       </div>
     </div>
+
+    <!-- Model mismatch warning -->
+    @if (!result.model_matched) {
+      <div class="alert alert--warn">
+        ⚠ Model mismatch: trace was generated with <strong>{{ result.original_model }}</strong>
+        but replay used <strong>{{ result.replay_model }}</strong>.
+        Output differences may be due to model change, not just non-determinism.
+      </div>
+    }
 
     <!-- Match verdict -->
     <div class="verdict" [class.verdict--match]="result.outputs_match" [class.verdict--diff]="!result.outputs_match">

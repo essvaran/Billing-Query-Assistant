@@ -13,6 +13,7 @@ export interface TraceRecord {
   trace_id: string;
   timestamp: string;
   question: string;
+  query_type: string | null;
   original_query: string;
   rewritten_query: string | null;
   prompt_version: string;
@@ -34,6 +35,13 @@ export interface TraceRecord {
   error: string | null;
 }
 
+export interface TracePrompt {
+  trace_id: string;
+  query_type: string;
+  system_prompt: string;
+  user_prompt: string;
+}
+
 export interface ReplayChunk {
   chunk_id: string;
   article_id: string | null;
@@ -44,7 +52,9 @@ export interface ReplayChunk {
 export interface ReplayResult {
   trace_id: string;
   question: string;
-  model: string;
+  original_model: string;
+  replay_model: string;
+  model_matched: boolean;
   original_raw_output: string;
   original_citations: string[];
   original_citations_valid: boolean;
@@ -68,5 +78,9 @@ export class SampleService {
 
   replayTrace(traceId: string): Observable<ReplayResult> {
     return this.http.get<ReplayResult>(`/api/traces/${traceId}/replay`);
+  }
+
+  getPrompt(traceId: string): Observable<TracePrompt> {
+    return this.http.get<TracePrompt>(`/api/traces/${traceId}/prompt`);
   }
 }

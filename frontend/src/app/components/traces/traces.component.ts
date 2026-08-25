@@ -6,6 +6,7 @@ import {
   TracesService,
   TraceRecord,
   TraceFilters,
+  TracePrompt,
 } from '../../services/traces.service';
 
 @Component({
@@ -37,6 +38,8 @@ export class TracesComponent implements OnInit, OnDestroy {
 
   // Expand state per trace
   expanded: Record<string, boolean> = {};
+  prompts: Record<string, TracePrompt> = {};
+  promptLoading: Record<string, boolean> = {};
 
   get totalPages(): number {
     return Math.ceil(this.total / this.pageSize);
@@ -93,6 +96,18 @@ export class TracesComponent implements OnInit, OnDestroy {
     return !!this.expanded[traceId];
   }
 
+  loadPrompt(traceId: string): void {
+    if (this.prompts[traceId] || this.promptLoading[traceId]) return;
+    this.promptLoading[traceId] = true;
+    this.tracesService
+      .getPrompt(traceId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (p) => { this.prompts[traceId] = p; this.promptLoading[traceId] = false; },
+        error: () => { this.promptLoading[traceId] = false; },
+      });
+  }
+
   formatTimestamp(ts: string): string {
     try {
       return new Date(ts).toLocaleString();
@@ -103,6 +118,16 @@ export class TracesComponent implements OnInit, OnDestroy {
 
   shortId(id: string): string {
     return id.slice(0, 8) + '…';
+  }
+
+  queryTypeTitle(qt: string | null): string {
+    const map: Record<string, string> = {
+      'simple':        'Single direct question — one clear answer expected',
+      'multi-part':    'Two or more sub-questions combined in one query',
+      'exact keyword': 'Uses specific codes or technical terms (e.g. HC-BILL-001)',
+      'semantic':      'Meaning-based query — intent must be inferred from natural language',
+    };
+    return qt ? (map[qt] ?? qt) : '';
   }
 
   private fetchTraces(): void {

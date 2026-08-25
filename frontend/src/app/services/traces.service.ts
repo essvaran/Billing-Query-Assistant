@@ -9,10 +9,18 @@ export interface TraceChunk {
   rank: number;
 }
 
+export interface TracePrompt {
+  trace_id: string;
+  query_type: string;
+  system_prompt: string;
+  user_prompt: string;
+}
+
 export interface TraceRecord {
   trace_id: string;
   timestamp: string;
   question: string;
+  query_type: string | null;
   original_query: string;
   rewritten_query: string | null;
   prompt_version: string;
@@ -53,6 +61,10 @@ export interface TraceFilters {
 @Injectable({ providedIn: 'root' })
 export class TracesService {
   private http = inject(HttpClient);
+
+  getPrompt(traceId: string): Observable<TracePrompt> {
+    return this.http.get<TracePrompt>(`/api/traces/${traceId}/prompt`);
+  }
 
   getTraces(filters: TraceFilters = {}): Observable<TracesResponse> {
     let params = new HttpParams();

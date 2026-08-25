@@ -207,7 +207,8 @@
   &--valid   { background: #1a3a2a; color: #a6e3a1; }
   &--invalid { background: #3b1a1a; color: #f38ba8; }
   &--error   { background: #3b2a1a; color: #fab387; }
-  &--retriever { background: #1a2a3b; color: #89b4fa; }
+  &--retriever  { background: #1a2a3b; color: #89b4fa; }
+  &--query-type { background: #2a1a3b; color: #cba6f7; }
 }
 
 /* ── Detail sections ────────────────────────────────────────────────────── */
@@ -283,6 +284,30 @@
 
   &--refusal { border-color: #f38ba8; color: #f38ba8; }
   &--error   { border-color: #fab387; color: #fab387; }
+  &--prompt  { max-height: 400px; color: #a6adc8; }
+}
+
+/* ── Prompt block ───────────────────────────────────────────────────────── */
+.prompt-block {
+  &__label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6c7086;
+    margin: 0.75rem 0 0.3rem;
+  }
+}
+
+.btn--prompt {
+  background: #1a2a3b;
+  color: #89b4fa;
+  border: 1px solid #89b4fa;
+  border-radius: 6px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  &:hover { background: #213a4e; }
 }
 
 /* ── Citations ──────────────────────────────────────────────────────────── */

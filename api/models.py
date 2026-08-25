@@ -42,6 +42,7 @@ class TraceRecord(BaseModel):
     trace_id: str
     timestamp: str
     question: str
+    query_type: Optional[str] = None
     original_query: Optional[str] = None
     rewritten_query: Optional[str] = None
     prompt_version: str = "v1"
@@ -70,6 +71,13 @@ class TracesResponse(BaseModel):
     limit: int
 
 
+class TracePrompt(BaseModel):
+    trace_id: str
+    query_type: str
+    system_prompt: str
+    user_prompt: str
+
+
 class ReplayChunk(BaseModel):
     chunk_id: str
     article_id: Optional[str]
@@ -80,7 +88,9 @@ class ReplayChunk(BaseModel):
 class ReplayResult(BaseModel):
     trace_id: str
     question: str
-    model: str
+    original_model: str       # model stored in the trace
+    replay_model: str         # model actually used during replay
+    model_matched: bool       # True when both models are the same
     original_raw_output: str
     original_citations: list[str]
     original_citations_valid: bool

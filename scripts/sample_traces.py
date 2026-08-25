@@ -14,9 +14,32 @@ from pathlib import Path
 
 TRACES_PATH = Path(__file__).resolve().parents[1] / "evaluation" / "traces.jsonl"
 SAMPLE_PATH = Path(__file__).resolve().parents[1] / "evaluation" / "sample.jsonl"
-SEED = 35
+SEED = 80
 SAMPLE_SIZE = 20
 REQUIRED_RETRIEVER = "hybrid-bm25-rrf"
+
+_MULTI_PART_PATTERNS = [
+    " and ", " as well", " also ", "both ", " plus ", " additionally",
+]
+_SEMANTIC_STARTS = (
+    "why ", "how does ", "how do ", "what happens ", "explain ", "describe ",
+    "what would ", "when does ", "when do ",
+)
+_CODE_PATTERN = __import__("re").compile(r"\b[A-Z]{2,}-[A-Z0-9]{2,}(?:-[A-Z0-9]+)+\b")
+
+
+def classify_query_type(question: str) -> str:
+    """Heuristically classify a question into one of four types."""
+    q = question.lower()
+    if question.count("?") > 1:
+        return "multi-part"
+    if any(pat in q for pat in _MULTI_PART_PATTERNS) and "?" in question:
+        return "multi-part"
+    if _CODE_PATTERN.search(question):
+        return "exact keyword"
+    if q.startswith(_SEMANTIC_STARTS):
+        return "semantic"
+    return "simple"
 
 
 def main() -> None:
@@ -70,6 +93,7 @@ def main() -> None:
     SAMPLE_PATH.parent.mkdir(parents=True, exist_ok=True)
     with SAMPLE_PATH.open("w", encoding="utf-8") as f:
         for t in sample:
+            t["query_type"] = classify_query_type(t.get("question", ""))
             f.write(json.dumps(t) + "\n")
 
     print(f"\nSampled {len(sample)} traces  (seed={SEED}, retriever={REQUIRED_RETRIEVER})")
