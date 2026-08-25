@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 class AskRequest(BaseModel):
     question: str
-    use_hybrid: bool = False
+    use_hybrid: bool = True
 
 
 class ChunkResult(BaseModel):

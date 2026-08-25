@@ -25,7 +25,7 @@ class Answer:
     citations_valid: bool
     retrieval_ms: float = field(default=0.0)
     generation_ms: float = field(default=0.0)
-    retriever: str = field(default="dense")
+    retriever: str = field(default="hybrid-bm25-rrf")
     input_tokens: int = field(default=0)
     output_tokens: int = field(default=0)
 
@@ -76,7 +76,7 @@ def answer_question(
     collection_name: str = DEFAULT_COLLECTION,
     k: int = TOP_K,
     where: dict | None = None,
-    use_hybrid: bool = False,
+    use_hybrid: bool = True,
 ) -> Answer:
     retriever_label = "hybrid-bm25-rrf" if use_hybrid else "dense"
 

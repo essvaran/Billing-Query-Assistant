@@ -35,7 +35,7 @@ export class ChatComponent implements AfterViewChecked {
   inputText = '';
   loading = false;
   expandedChunks: Set<number> = new Set();
-  hybridMode = false;
+  hybridMode = true;
 
   openGroups: Set<string> = new Set(['Error Codes']);
 

@@ -1,5 +1,6 @@
 """Sample 20 traces from evaluation/traces.jsonl using a fixed random seed.
 
+Only traces that used the hybrid BM25+RRF retriever are eligible for sampling.
 Writes the sampled traces to evaluation/sample.jsonl so the same 20 traces
 can be loaded by the API and the Sample Viewer UI without re-running the
 random selection every time.
@@ -13,8 +14,9 @@ from pathlib import Path
 
 TRACES_PATH = Path(__file__).resolve().parents[1] / "evaluation" / "traces.jsonl"
 SAMPLE_PATH = Path(__file__).resolve().parents[1] / "evaluation" / "sample.jsonl"
-SEED = 42
+SEED = 35
 SAMPLE_SIZE = 20
+REQUIRED_RETRIEVER = "hybrid-bm25-rrf"
 
 
 def main() -> None:
@@ -23,35 +25,57 @@ def main() -> None:
         print("Run:   python scripts/generate_traces.py  first.")
         return
 
-    traces: list[dict] = []
+    all_traces: list[dict] = []
     for line in TRACES_PATH.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if line:
             try:
                 parsed = json.loads(line)
                 if isinstance(parsed, dict):
-                    traces.append(parsed)
+                    all_traces.append(parsed)
             except json.JSONDecodeError:
                 pass
 
-    print(f"Total traces in file : {len(traces)}")
+    print(f"Total traces in file : {len(all_traces)}")
 
-    if len(traces) < SAMPLE_SIZE:
-        print(f"WARNING: only {len(traces)} traces available — sampling all of them")
-        sample = traces[:]
+    # Show retriever breakdown
+    retriever_counts: dict[str, int] = {}
+    for t in all_traces:
+        r = t.get("retriever", "unknown")
+        retriever_counts[r] = retriever_counts.get(r, 0) + 1
+    for retriever, count in sorted(retriever_counts.items()):
+        marker = " ✓ (eligible)" if retriever == REQUIRED_RETRIEVER else " ✗ (excluded)"
+        print(f"  {retriever:30} {count:4d} traces{marker}")
+
+    # Filter to hybrid-only
+    eligible = [t for t in all_traces if t.get("retriever") == REQUIRED_RETRIEVER]
+    excluded = len(all_traces) - len(eligible)
+
+    if excluded > 0:
+        print(f"\nExcluded {excluded} non-hybrid trace(s) from the sampling pool.")
+
+    print(f"Eligible (hybrid)    : {len(eligible)}")
+
+    if len(eligible) == 0:
+        print("\nERROR: No hybrid traces found. Run generate_traces.py first.")
+        return
+
+    if len(eligible) < SAMPLE_SIZE:
+        print(f"WARNING: only {len(eligible)} hybrid traces — sampling all of them")
+        sample = eligible[:]
     else:
         random.seed(SEED)
-        sample = random.sample(traces, SAMPLE_SIZE)
+        sample = random.sample(eligible, SAMPLE_SIZE)
 
     SAMPLE_PATH.parent.mkdir(parents=True, exist_ok=True)
     with SAMPLE_PATH.open("w", encoding="utf-8") as f:
         for t in sample:
             f.write(json.dumps(t) + "\n")
 
-    print(f"Sampled {len(sample)} traces  (seed={SEED})")
+    print(f"\nSampled {len(sample)} traces  (seed={SEED}, retriever={REQUIRED_RETRIEVER})")
     print(f"Written to           : {SAMPLE_PATH}\n")
 
-    w = 55
+    w = 52
     print(f"{'#':>3}  {'trace_id':36}  {'citations':10}  question")
     print("-" * (3 + 2 + 36 + 2 + 10 + 2 + w))
     for i, t in enumerate(sample, 1):

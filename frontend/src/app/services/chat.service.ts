@@ -33,7 +33,7 @@ export class ChatService {
 
   constructor(private http: HttpClient) {}
 
-  ask(question: string, useHybrid: boolean = false): Observable<AskResponse> {
+  ask(question: string, useHybrid: boolean = true): Observable<AskResponse> {
     return this.http.post<AskResponse>(this.apiUrl, { question, use_hybrid: useHybrid });
   }
 }
