@@ -12,6 +12,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
          [routerLinkActiveOptions]="{exact: true}">Chat</a>
       <a class="app-nav__link" routerLink="/traces" routerLinkActive="app-nav__link--active">Traces</a>
       <a class="app-nav__link" routerLink="/sample" routerLinkActive="app-nav__link--active">Sample</a>
+      <a class="app-nav__link" routerLink="/taxonomy" routerLinkActive="app-nav__link--active">Taxonomy</a>
     </nav>
     <router-outlet />
   `,

@@ -1,0 +1,81 @@
+<div class="taxonomy-page">
+
+  <div class="taxonomy-header">
+    <div class="taxonomy-header__left">
+      <a class="back-link" routerLink="/sample">← Back to Sample</a>
+      <h1>Failure Taxonomy <span class="seed-badge">seed = 80</span></h1>
+      <p class="taxonomy-header__sub">
+        Failed traces from the 20-trace random sample. 4 of 20 traces failed (20% failure rate).
+      </p>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="state-loading">Loading sample traces…</div>
+  <div *ngIf="error" class="state-error">{{ error }}</div>
+
+  <ng-container *ngIf="!loading && !error">
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend__item">
+        <span class="sev-dot sev--high"></span> High — corpus or structural gap; no code fix resolves it
+      </div>
+      <div class="legend__item">
+        <span class="sev-dot sev--medium"></span> Medium — retrieval or prompt change can resolve it
+      </div>
+      <div class="legend__item">
+        <span class="sev-dot sev--low"></span> Low — one-line normalisation fix
+      </div>
+    </div>
+
+    <!-- Taxonomy table -->
+    <div class="table-wrap">
+      <table class="taxonomy-table">
+        <thead>
+          <tr>
+            <th>Trace ID</th>
+            <th>Question</th>
+            <th>Mode</th>
+            <th class="num-col">Count</th>
+            <th class="num-col">Freq</th>
+            <th>Severity</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of rows">
+            <td class="trace-id-cell">
+              <code class="trace-id" [title]="row.traceId">{{ row.shortId }}…</code>
+            </td>
+            <td class="question-cell">{{ row.question }}</td>
+            <td>
+              <span class="mode-badge" [title]="modeDetail(row.mode)">{{ row.mode }}</span>
+            </td>
+            <td class="num-col">{{ row.count }}</td>
+            <td class="num-col">{{ row.freq }}</td>
+            <td>
+              <span class="sev-badge" [ngClass]="severityClass(row.severity)">
+                {{ row.severity }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mode detail cards -->
+    <h2 class="detail-heading">Mode Details</h2>
+    <div class="mode-cards">
+      <div *ngFor="let row of rows" class="mode-card" [ngClass]="severityClass(row.severity)">
+        <div class="mode-card__header">
+          <span class="mode-card__mode">{{ row.mode }}</span>
+          <span class="sev-badge" [ngClass]="severityClass(row.severity)">{{ row.severity }}</span>
+        </div>
+        <p class="mode-card__question">{{ row.question }}</p>
+        <p class="mode-card__detail">{{ modeDetail(row.mode) }}</p>
+        <code class="mode-card__trace">{{ row.traceId }}</code>
+      </div>
+    </div>
+
+  </ng-container>
+
+</div>

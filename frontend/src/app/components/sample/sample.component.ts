@@ -8,7 +8,7 @@ import { SampleService, TracePrompt, TraceRecord } from '../../services/sample.s
 @Component({
   selector: 'app-sample',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './sample.component.html',
   styleUrl: './sample.component.scss',
 })

@@ -1,3 +1,5 @@
+fastapi
+uvicorn[standard]
 langchain
 langchain-community
 langchain-text-splitters
@@ -15,3 +17,5 @@ pypdf
 openpyxl
 xlrd
 rank-bm25
+langfuse>=2,<3
+python-multipart

@@ -30,6 +30,37 @@
       </div>
     </div>
 
+    <!-- Document upload -->
+    <div class="upload-section">
+      <span class="upload-label">Upload Document</span>
+
+      <label class="upload-btn" [class.uploading]="uploadState === 'uploading'">
+        <input
+          type="file"
+          accept=".pdf,.md,.txt,.docx,.xlsx,.xls"
+          (change)="onFileSelected($event)"
+          [disabled]="uploadState === 'uploading'"
+          style="display:none"
+        />
+        <span *ngIf="uploadState !== 'uploading'">+ Add Document</span>
+        <span *ngIf="uploadState === 'uploading'">Indexing…</span>
+      </label>
+
+      <div class="upload-status" *ngIf="uploadState !== 'idle'">
+        <div class="upload-filename" *ngIf="uploadedFileName">{{ uploadedFileName }}</div>
+        <div class="upload-msg"
+          [class.upload-msg--success]="uploadState === 'success'"
+          [class.upload-msg--error]="uploadState === 'error'"
+          [class.upload-msg--uploading]="uploadState === 'uploading'"
+        >
+          <span *ngIf="uploadState === 'uploading'">Processing file…</span>
+          <span *ngIf="uploadState === 'success'">✓ {{ uploadMessage }}</span>
+          <span *ngIf="uploadState === 'error'">✗ {{ uploadMessage }}</span>
+        </div>
+        <button class="upload-reset" *ngIf="uploadState !== 'uploading'" (click)="resetUpload()">✕</button>
+      </div>
+    </div>
+
     <!-- Question bank -->
     <div class="qbank">
       <span class="qbank-title">Golden Set</span>

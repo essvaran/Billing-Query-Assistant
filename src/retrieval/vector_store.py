@@ -47,3 +47,21 @@ def build_collection(collection_name: str, chunks: list[Chunk]) -> None:
 def get_collection(collection_name: str):
     client = get_client()
     return client.get_collection(collection_name)
+
+
+def add_chunks_to_collection(collection_name: str, chunks: list[Chunk]) -> int:
+    """Embed and upsert chunks into an existing collection. Returns chunk count."""
+    client = get_client()
+    collection = client.get_collection(collection_name)
+    embeddings = get_embeddings()
+
+    texts = [chunk.page_content for chunk in chunks]
+    vectors = embeddings.embed_documents(texts)
+
+    collection.upsert(
+        ids=[chunk.metadata["chunk_id"] for chunk in chunks],
+        embeddings=vectors,
+        documents=texts,
+        metadatas=[chunk.metadata for chunk in chunks],
+    )
+    return len(chunks)

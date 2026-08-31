@@ -1,0 +1,242 @@
+:host {
+  display: block;
+}
+
+.taxonomy-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+  font-family: 'Inter', sans-serif;
+  color: #e2e8f0;
+}
+
+/* Header */
+.taxonomy-header {
+  margin-bottom: 2rem;
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #f8fafc;
+    margin: 0.25rem 0 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  &__sub {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+}
+
+.back-link {
+  display: inline-block;
+  color: #7dd3fc;
+  text-decoration: none;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+
+  &:hover { text-decoration: underline; }
+}
+
+.seed-badge {
+  background: #1e293b;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.15rem 0.6rem;
+  border-radius: 99px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* States */
+.state-loading,
+.state-error {
+  padding: 3rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+
+.state-error { color: #f87171; }
+
+/* Legend */
+.legend {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    color: #94a3b8;
+  }
+}
+
+.sev-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+
+  &.sev--high   { background: #f87171; }
+  &.sev--medium { background: #fb923c; }
+  &.sev--low    { background: #4ade80; }
+}
+
+/* Table */
+.table-wrap {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid #1e293b;
+  margin-bottom: 3rem;
+}
+
+.taxonomy-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  thead tr {
+    background: #0f172a;
+  }
+
+  th {
+    padding: 0.8rem 1rem;
+    text-align: left;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    border-bottom: 1px solid #1e293b;
+  }
+
+  td {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid #1e293b;
+    vertical-align: top;
+  }
+
+  tbody tr {
+    background: #111827;
+    transition: background 0.15s;
+
+    &:last-child td { border-bottom: none; }
+    &:hover { background: #1a2335; }
+  }
+
+  .num-col {
+    text-align: center;
+  }
+}
+
+.trace-id-cell { white-space: nowrap; }
+
+.trace-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: #7dd3fc;
+  background: #0c1a2e;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+
+.question-cell {
+  max-width: 320px;
+  color: #e2e8f0;
+}
+
+/* Mode badge */
+.mode-badge {
+  display: inline-block;
+  background: #1e1e3a;
+  color: #a5b4fc;
+  border: 1px solid #312e81;
+  border-radius: 6px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: default;
+  white-space: nowrap;
+}
+
+/* Severity badge */
+.sev-badge {
+  display: inline-block;
+  border-radius: 6px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &.sev--high   { background: #3b1212; color: #fca5a5; border: 1px solid #7f1d1d; }
+  &.sev--medium { background: #2d1b08; color: #fdba74; border: 1px solid #7c2d12; }
+  &.sev--low    { background: #0a2416; color: #86efac; border: 1px solid #14532d; }
+}
+
+/* Detail cards */
+.detail-heading {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 0 0 1rem;
+}
+
+.mode-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.mode-card {
+  background: #111827;
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+  padding: 1.25rem;
+
+  &.sev--high   { border-left: 3px solid #f87171; }
+  &.sev--medium { border-left: 3px solid #fb923c; }
+  &.sev--low    { border-left: 3px solid #4ade80; }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  &__mode {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #c4b5fd;
+  }
+
+  &__question {
+    font-size: 0.85rem;
+    color: #e2e8f0;
+    margin: 0 0 0.6rem;
+    font-style: italic;
+  }
+
+  &__detail {
+    font-size: 0.82rem;
+    color: #94a3b8;
+    margin: 0 0 0.75rem;
+    line-height: 1.5;
+  }
+
+  &__trace {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: #475569;
+    word-break: break-all;
+  }
+}

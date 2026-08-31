@@ -85,6 +85,13 @@ class ReplayChunk(BaseModel):
     text: str
 
 
+class UploadResponse(BaseModel):
+    filename: str
+    chunks_indexed: int
+    collection: str
+    status: str
+
+
 class ReplayResult(BaseModel):
     trace_id: str
     question: str

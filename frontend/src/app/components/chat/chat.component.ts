@@ -8,6 +8,7 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { ChatService, Message, AskResponse } from '../../services/chat.service';
+import { UploadService } from '../../services/upload.service';
 
 interface QuestionItem {
   id: string;
@@ -36,6 +37,10 @@ export class ChatComponent implements AfterViewChecked {
   loading = false;
   expandedChunks: Set<number> = new Set();
   hybridMode = true;
+
+  uploadState: 'idle' | 'uploading' | 'success' | 'error' = 'idle';
+  uploadMessage = '';
+  uploadedFileName = '';
 
   openGroups: Set<string> = new Set(['Error Codes']);
 
@@ -69,7 +74,7 @@ export class ChatComponent implements AfterViewChecked {
     },
   ];
 
-  constructor(private chatService: ChatService) {}
+  constructor(private chatService: ChatService, private uploadService: UploadService) {}
 
   toggleGroup(label: string): void {
     const next = new Set(this.openGroups);
@@ -154,6 +159,38 @@ export class ChatComponent implements AfterViewChecked {
       event.preventDefault();
       this.sendMessage();
     }
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    const file = input.files[0];
+    input.value = '';
+
+    this.uploadState = 'uploading';
+    this.uploadedFileName = file.name;
+    this.uploadMessage = '';
+
+    this.uploadService.uploadDocument(file).subscribe({
+      next: (res) => {
+        this.uploadState = 'success';
+        this.uploadMessage = `Indexed ${res.chunks_indexed} chunks`;
+        this.messages.push({
+          role: 'assistant',
+          text: `Document "${res.filename}" uploaded and indexed (${res.chunks_indexed} chunks). You can now ask questions about it.`,
+        });
+      },
+      error: (err) => {
+        this.uploadState = 'error';
+        this.uploadMessage = err?.error?.detail ?? 'Upload failed';
+      },
+    });
+  }
+
+  resetUpload(): void {
+    this.uploadState = 'idle';
+    this.uploadMessage = '';
+    this.uploadedFileName = '';
   }
 
   private scrollToBottom(): void {

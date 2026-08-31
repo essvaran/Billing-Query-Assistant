@@ -5,12 +5,12 @@ from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 import re as _re
 
-from api.models import AskRequest, AskResponse, ChunkResult, ReplayResult, TracePrompt, TraceRecord, TracesResponse
+from api.models import AskRequest, AskResponse, ChunkResult, ReplayResult, TracePrompt, TraceRecord, TracesResponse, UploadResponse
 
 _CODE_RE = _re.compile(r"\b[A-Z]{2,}-[A-Z0-9]{2,}(?:-[A-Z0-9]+)+\b")
 
@@ -39,14 +39,26 @@ from src.generation.llm_client import LLMRequestError
 
 _TRACES_PATH = Path(__file__).resolve().parent.parent / "evaluation" / "traces.jsonl"
 _SAMPLE_PATH = Path(__file__).resolve().parent.parent / "evaluation" / "sample.jsonl"
+_ARTICLES_DIR = Path(__file__).resolve().parent.parent / "data" / "billing_articles"
 
 app = FastAPI(title="Billing Support RAG API")
+
+
+@app.on_event("startup")
+async def _startup_check() -> None:
+    from src.generation.langfuse_client import get_langfuse
+    lf = get_langfuse()
+    if lf:
+        print(f"[LangFuse] OK — client initialised: {type(lf).__name__}")
+    else:
+        print("[LangFuse] DISABLED — client is None (check .env keys)")
+
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "Accept"],
 )
 
 
@@ -80,6 +92,44 @@ def ask(request: AskRequest) -> AskResponse:
         total_ms=round(result.retrieval_ms + result.generation_ms, 1),
         citations_valid=result.citations_valid,
         retriever=result.retriever,
+    )
+
+
+_ALLOWED_UPLOAD_EXTENSIONS = {".pdf", ".md", ".txt", ".docx", ".xlsx", ".xls"}
+
+
+@app.post("/api/upload", response_model=UploadResponse)
+async def upload_document(file: UploadFile = File(...)) -> UploadResponse:
+    import shutil
+    from src.config import DEFAULT_COLLECTION
+    from src.ingestion.ingest_document import ingest_file
+
+    filename = file.filename or "upload"
+    suffix = Path(filename).suffix.lower()
+    if suffix not in _ALLOWED_UPLOAD_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type '{suffix}'. Allowed: {', '.join(sorted(_ALLOWED_UPLOAD_EXTENSIONS))}",
+        )
+
+    dest = _ARTICLES_DIR / filename
+    try:
+        with dest.open("wb") as out:
+            shutil.copyfileobj(file.file, out)
+    finally:
+        await file.close()
+
+    try:
+        chunk_count = ingest_file(dest, DEFAULT_COLLECTION)
+    except Exception as exc:
+        dest.unlink(missing_ok=True)
+        raise HTTPException(status_code=422, detail=f"Failed to process document: {exc}") from exc
+
+    return UploadResponse(
+        filename=filename,
+        chunks_indexed=chunk_count,
+        collection=DEFAULT_COLLECTION,
+        status="success",
     )
 
 
