@@ -4,6 +4,7 @@ import { TracesComponent } from './components/traces/traces.component';
 import { SampleComponent } from './components/sample/sample.component';
 import { ReplayComponent } from './components/replay/replay.component';
 import { TaxonomyComponent } from './components/taxonomy/taxonomy.component';
+import { EvalComponent } from './components/eval/eval.component';
 
 export const routes: Routes = [
   { path: '', component: ChatComponent },
@@ -11,4 +12,5 @@ export const routes: Routes = [
   { path: 'sample', component: SampleComponent },
   { path: 'replay/:traceId', component: ReplayComponent },
   { path: 'taxonomy', component: TaxonomyComponent },
+  { path: 'eval', component: EvalComponent },
 ];

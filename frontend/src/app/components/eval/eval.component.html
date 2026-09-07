@@ -1,0 +1,632 @@
+<div class="eval-page">
+
+  <!-- ── header ── -->
+  <div class="eval-header">
+    <div class="eval-header__left">
+      <h1>Eval Dashboard <span class="week-badge">Week 6</span></h1>
+      <p class="eval-header__sub">25 cases · 4 taxonomy modes · 4 deterministic assertions · LLM judge</p>
+    </div>
+  </div>
+
+  <!-- ── stat strip ── -->
+  <div class="stat-strip">
+    <div class="stat-card">
+      <div class="stat-card__num">25</div>
+      <div class="stat-card__label">Total Cases</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__num">4</div>
+      <div class="stat-card__label">Assertions</div>
+    </div>
+    <div class="stat-card stat-card--warn">
+      <div class="stat-card__num">{{ (totalOverall / 25 * 100).toFixed(0) }}%</div>
+      <div class="stat-card__label">Overall Pass</div>
+    </div>
+    <div class="stat-card stat-card--good">
+      <div class="stat-card__num">{{ (totalJudge / 25 * 100).toFixed(0) }}%</div>
+      <div class="stat-card__label">Judge Pass (v1)</div>
+    </div>
+    <div class="stat-card stat-card--bad">
+      <div class="stat-card__num">2</div>
+      <div class="stat-card__label">Regressions</div>
+    </div>
+  </div>
+
+  <!-- ── tab nav ── -->
+  <div class="tab-nav">
+    <button class="tab-btn" [class.tab-btn--active]="activeTab === 'overview'"   (click)="setTab('overview')">Overview</button>
+    <button class="tab-btn" [class.tab-btn--active]="activeTab === 'cases'"      (click)="setTab('cases')">Case Explorer</button>
+    <button class="tab-btn" [class.tab-btn--active]="activeTab === 'assertions'" (click)="setTab('assertions')">Assertions</button>
+    <button class="tab-btn" [class.tab-btn--active]="activeTab === 'judge'"      (click)="setTab('judge')">Judge</button>
+  </div>
+
+  <!-- ════════════ OVERVIEW ════════════ -->
+  <div *ngIf="activeTab === 'overview'" class="tab-content">
+
+    <!-- eval pipeline -->
+    <h2 class="section-title">Eval Pipeline</h2>
+    <div class="pipeline">
+      <div class="pipeline__step">
+        <div class="pipeline__num">01</div>
+        <div class="pipeline__name">Run queries</div>
+        <div class="pipeline__desc">Call answer_question() for all 25 cases</div>
+      </div>
+      <div class="pipeline__arrow">→</div>
+      <div class="pipeline__step">
+        <div class="pipeline__num">02</div>
+        <div class="pipeline__name">4 assertions</div>
+        <div class="pipeline__desc">Deterministic — bare ID, en-dash, hallucinate, fabricate</div>
+      </div>
+      <div class="pipeline__arrow">→</div>
+      <div class="pipeline__step pipeline__step--star">
+        <div class="pipeline__num">03 ★</div>
+        <div class="pipeline__name">Blind label</div>
+        <div class="pipeline__desc">Human commits labels_25.json before any judge code</div>
+      </div>
+      <div class="pipeline__arrow">→</div>
+      <div class="pipeline__step">
+        <div class="pipeline__num">04</div>
+        <div class="pipeline__name">LLM judge</div>
+        <div class="pipeline__desc">judge_v1.txt → GOOD / NOT_GOOD per case</div>
+      </div>
+      <div class="pipeline__arrow">→</div>
+      <div class="pipeline__step">
+        <div class="pipeline__num">05</div>
+        <div class="pipeline__name">Agreement</div>
+        <div class="pipeline__desc">Judge vs human labels; iterate prompt if &lt; 85%</div>
+      </div>
+    </div>
+
+    <!-- mode cards -->
+    <h2 class="section-title">Pass Rate by Mode</h2>
+    <div class="mode-grid">
+      <div *ngFor="let m of modeStats" class="mode-card" [ngClass]="m.cssClass">
+        <div class="mode-card__head">
+          <div>
+            <div class="mode-card__name">{{ m.mode }}</div>
+            <div class="mode-card__desc">{{ m.description }}</div>
+          </div>
+          <div class="mode-card__pct">{{ m.pct }}%</div>
+        </div>
+        <div class="progress-bg">
+          <div class="progress-fill" [style.width.%]="m.pct"></div>
+        </div>
+        <div class="mode-card__detail">
+          <strong>{{ m.overallPass }}/{{ m.n }} pass</strong>
+          &nbsp;·&nbsp; asserts {{ m.assertPass }}/{{ m.n }}
+          &nbsp;·&nbsp; judge {{ m.judgePass }}/{{ m.n }}
+        </div>
+      </div>
+    </div>
+
+    <!-- regression spotlight -->
+    <h2 class="section-title">Regression Cases</h2>
+    <div class="reg-grid">
+      <div *ngFor="let c of regressions" class="reg-card" [class.reg-card--pass]="overallPass(c)">
+        <div class="reg-card__badge">Regression {{ c.id }}</div>
+        <div class="reg-card__question">"{{ c.question }}"</div>
+        <code class="reg-card__trace">trace_id: {{ c.traceId }} · mode: {{ c.mode }}</code>
+        <div class="reg-card__snippet">{{ c.snippet }}</div>
+        <div class="reg-card__failure">
+          <ng-container *ngIf="overallPass(c)">
+            <span class="status-chip status-chip--pass">PASS</span>
+            Judge: GOOD — {{ c.snippet }}
+          </ng-container>
+          <ng-container *ngIf="!overallPass(c) && !assertPass(c)">
+            <span class="status-chip status-chip--fail">FAIL</span>
+            Assertion: {{ failedAsserts(c).join(', ') }} — bare article ID or en-dash in citation
+          </ng-container>
+          <ng-container *ngIf="!overallPass(c) && assertPass(c)">
+            <span class="status-chip status-chip--fail">FAIL</span>
+            Judge: NOT_GOOD — {{ c.snippet }}
+          </ng-container>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════ CASES ════════════ -->
+  <div *ngIf="activeTab === 'cases'" class="tab-content">
+
+    <h2 class="section-title">All {{ cases.length }} Cases</h2>
+
+    <div class="filter-row">
+      <button
+        *ngFor="let f of filterOptions"
+        class="filter-btn"
+        [class.filter-btn--active]="caseFilter === f.value"
+        [ngClass]="caseFilter === f.value ? 'filter-btn--' + (f.value === 'all' ? 'all' : f.value.split('_')[0]) : ''"
+        (click)="setFilter(f.value)">
+        {{ f.label }}
+      </button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Question</th>
+            <th>Mode</th>
+            <th>Expected</th>
+            <th>Assertions</th>
+            <th>Judge v1</th>
+            <th>Judge v2</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of filteredCases" [class.row--regression]="c.regression">
+            <td>
+              <code class="case-id" [class.case-id--reg]="c.regression">{{ c.id }}</code>
+            </td>
+            <td class="question-cell">
+              <div class="question-text">{{ c.question }}</div>
+              <div class="snippet-text">{{ c.snippet.substring(0, 65) }}…</div>
+            </td>
+            <td>
+              <span class="mode-chip" [ngClass]="modeClass(c.mode)">
+                {{ modeLabels[c.mode] }}
+              </span>
+            </td>
+            <td class="expected-cell">{{ c.expected }}</td>
+            <td>
+              <span *ngIf="assertPass(c)" class="status-chip status-chip--pass">✓ pass</span>
+              <span *ngIf="!assertPass(c)" class="status-chip status-chip--fail">✗ {{ failedAsserts(c).join(', ') }}</span>
+            </td>
+            <td>
+              <span *ngIf="c.judge === 'GOOD'"     class="status-chip status-chip--pass">GOOD</span>
+              <span *ngIf="c.judge === 'NOT_GOOD'" class="status-chip status-chip--fail">NOT_GOOD</span>
+            </td>
+            <td>
+              <span *ngIf="c.judgeV2 === 'GOOD'"     class="status-chip status-chip--pass">GOOD</span>
+              <span *ngIf="c.judgeV2 === 'NOT_GOOD'" class="status-chip status-chip--fail">NOT_GOOD</span>
+              <span *ngIf="c.judgeV2 !== c.judge" class="improved-badge">improved</span>
+            </td>
+            <td>
+              <span *ngIf="overallV2Pass(c)"  class="status-chip status-chip--pass">PASS</span>
+              <span *ngIf="!overallV2Pass(c)" class="status-chip status-chip--fail">FAIL</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- ════════════ ASSERTIONS ════════════ -->
+  <div *ngIf="activeTab === 'assertions'" class="tab-content">
+
+    <h2 class="section-title">4 Deterministic Assertions — no LLM call required</h2>
+
+    <div class="assert-grid">
+
+      <div class="assert-card">
+        <div class="assert-card__head">
+          <div>
+            <div class="assert-card__name">no_bare_article_id</div>
+            <code class="assert-card__loc">assertions.py:22</code>
+          </div>
+          <div class="assert-card__score assert-card__score--good">25/25</div>
+        </div>
+        <div class="progress-bg progress-bg--sm"><div class="progress-fill progress-fill--good" style="width:100%"></div></div>
+        <div class="assert-card__desc">
+          Fails when the answer cites a bare article ID like <code>[HC-BILL-002]</code>.
+          The full chunk ID must include section and specific slugs:
+          <code>[HC-BILL-002--error-codes--err-4040]</code>.
+        </div>
+        <div class="assert-card__tag">Catches: citation_abbreviation failures</div>
+        <div class="assert-all-pass">
+          ✓ All 25 pass — citation validator runs upstream and converts bare-ID raw answers to refusals before assertions see them.
+          R01, F04 were false refusals caused by this masking.
+        </div>
+      </div>
+
+      <div class="assert-card">
+        <div class="assert-card__head">
+          <div>
+            <div class="assert-card__name">no_en_dash_in_citation</div>
+            <code class="assert-card__loc">assertions.py:44</code>
+          </div>
+          <div class="assert-card__score assert-card__score--good">25/25</div>
+        </div>
+        <div class="progress-bg progress-bg--sm"><div class="progress-fill progress-fill--good" style="width:100%"></div></div>
+        <div class="assert-card__desc">
+          Fails when a citation bracket contains an en-dash <code>–</code> (U+2013)
+          instead of an ASCII hyphen <code>-</code> (U+002D).
+          Pattern: any <code>[…–…]</code> in the response.
+        </div>
+        <div class="assert-card__tag">Catches: citation_character_error failures</div>
+        <div class="assert-all-pass">
+          ✓ All 25 pass — citation validator upstream caught CE01's en-dash and returned refusal message,
+          so final_answer contains no citations at all. CE02-CE05 returned API errors.
+        </div>
+      </div>
+
+      <div class="assert-card">
+        <div class="assert-card__head">
+          <div>
+            <div class="assert-card__name">no_hallucinated_error_code</div>
+            <code class="assert-card__loc">assertions.py:58</code>
+          </div>
+          <div class="assert-card__score assert-card__score--good">25/25</div>
+        </div>
+        <div class="progress-bg progress-bg--sm"><div class="progress-fill progress-fill--good" style="width:100%"></div></div>
+        <div class="assert-card__desc">
+          Scans the answer for any <code>ERR-*</code>, <code>PAY-*</code>, or <code>PLAN-*</code> codes.
+          Each must appear somewhere in the retrieved chunk IDs — if the code is not in any chunk,
+          the model invented it.
+        </div>
+        <div class="assert-card__tag">Catches: hallucination of error codes not in corpus</div>
+        <div class="assert-all-pass">✓ All 25 cases passed — no hallucinated codes detected</div>
+      </div>
+
+      <div class="assert-card">
+        <div class="assert-card__head">
+          <div>
+            <div class="assert-card__name">no_fabricated_citation</div>
+            <code class="assert-card__loc">assertions.py:77</code>
+          </div>
+          <div class="assert-card__score assert-card__score--good">25/25</div>
+        </div>
+        <div class="progress-bg progress-bg--sm"><div class="progress-fill progress-fill--good" style="width:100%"></div></div>
+        <div class="assert-card__desc">
+          For every properly-formatted 3-part chunk ID cited in the answer, verifies it was
+          present in the retrieval result set. Catches cases where the model cites a
+          real-looking but unretieved chunk ID.
+        </div>
+        <div class="assert-card__tag">Catches: grounding failures — citation not in context</div>
+        <div class="assert-all-pass">✓ All 25 cases passed — every cited chunk was retrieved</div>
+      </div>
+
+    </div>
+
+    <!-- assertion × mode table -->
+    <h2 class="section-title">Assertion Results by Mode</h2>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Mode</th>
+            <th class="num-col">N</th>
+            <th class="num-col">bare_id</th>
+            <th class="num-col">en_dash</th>
+            <th class="num-col">hallucinate</th>
+            <th class="num-col">fabricate</th>
+            <th class="num-col">All Pass</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="mode-chip mode--gap">corpus_gap</span></td>
+            <td class="num-col faint">6</td>
+            <td class="num-col good-val">6/6</td>
+            <td class="num-col good-val">6/6</td>
+            <td class="num-col good-val">6/6</td>
+            <td class="num-col good-val">6/6</td>
+            <td class="num-col"><span class="status-chip status-chip--pass">6/6</span></td>
+          </tr>
+          <tr>
+            <td><span class="mode-chip mode--fr">false_refusal</span></td>
+            <td class="num-col faint">8</td>
+            <td class="num-col good-val">8/8</td>
+            <td class="num-col good-val">8/8</td>
+            <td class="num-col good-val">8/8</td>
+            <td class="num-col good-val">8/8</td>
+            <td class="num-col"><span class="status-chip status-chip--pass">8/8</span></td>
+          </tr>
+          <tr>
+            <td><span class="mode-chip mode--ca">citation_abbrev</span></td>
+            <td class="num-col faint">6</td>
+            <td class="num-col good-val">6/6</td>
+            <td class="num-col good-val">6/6</td>
+            <td class="num-col good-val">6/6</td>
+            <td class="num-col good-val">6/6</td>
+            <td class="num-col"><span class="status-chip status-chip--pass">6/6</span></td>
+          </tr>
+          <tr>
+            <td><span class="mode-chip mode--ce">citation_char_err</span></td>
+            <td class="num-col faint">5</td>
+            <td class="num-col good-val">5/5</td>
+            <td class="num-col good-val">5/5</td>
+            <td class="num-col good-val">5/5</td>
+            <td class="num-col good-val">5/5</td>
+            <td class="num-col"><span class="status-chip status-chip--pass">5/5</span></td>
+          </tr>
+          <tr class="total-row">
+            <td><strong>TOTAL</strong></td>
+            <td class="num-col faint">25</td>
+            <td class="num-col good-val">25/25</td>
+            <td class="num-col good-val">25/25</td>
+            <td class="num-col good-val">25/25</td>
+            <td class="num-col good-val">25/25</td>
+            <td class="num-col"><span class="status-chip status-chip--pass">25/25</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- ════════════ JUDGE ════════════ -->
+  <div *ngIf="activeTab === 'judge'" class="tab-content">
+
+    <!-- failure breakdown -->
+    <h2 class="section-title">Clean Run — Failure Root Cause Analysis (3 failures)</h2>
+    <div class="failure-breakdown">
+      <div class="fb-card fb-card--pass">
+        <div class="fb-card__num">22</div>
+        <div class="fb-card__label">Correct responses (GOOD)</div>
+        <div class="fb-card__desc">System answered from corpus or refused correctly. Rate-limit fix (5s delay + 429 retry) resolved all 17 previous infrastructure failures. Includes R01 and R02 (week 5 regressions, now fixed).</div>
+        <div class="fb-card__cases">R01, R02, G01–G03, G05–G06, F01–F05, F07, A01–A05, CE01, CE03–CE05</div>
+      </div>
+      <div class="fb-card fb-card--model">
+        <div class="fb-card__num">2</div>
+        <div class="fb-card__label">Model failures (NOT_GOOD)</div>
+        <div class="fb-card__desc">G04: cited chunk does not contain the claimed info (wrong chunk). CE02: step 2 adds escalation details (menu paths, data fields) not found in retrieved context.</div>
+        <div class="fb-card__cases">G04 (wrong chunk cited), CE02 (hallucinated escalation steps)</div>
+      </div>
+      <div class="fb-card fb-card--infra">
+        <div class="fb-card__num">1</div>
+        <div class="fb-card__label">Judge disagreement (F06)</div>
+        <div class="fb-card__desc">F06: core answer correct from HC-BILL-006 chunk. Judge marked NOT_GOOD because second citation (FAQ chunk) was seen as not explicitly supporting the claim. Human label: GOOD.</div>
+        <div class="fb-card__cases">F06 (human=GOOD, judge=NOT_GOOD — single judge/human disagreement)</div>
+      </div>
+      <div class="fb-card" style="border-left:3px solid #a78bfa; background:rgba(167,139,250,0.08)">
+        <div class="fb-card__num" style="color:#a78bfa">2</div>
+        <div class="fb-card__label">Week 5 regressions fixed</div>
+        <div class="fb-card__desc">R01 (trace 3dd5ae80): bare citation IDs [HC-BILL-002][HC-BILL-003] -- citation validator rejected. R02 (trace a9161b2e): false refusal -- wrong chunks retrieved, ERR-4032 article not surfaced. Both now GOOD in clean run with gpt-oss-120b.</div>
+        <div class="fb-card__cases">R01 (citation_abbreviation fixed), R02 (false_refusal fixed)</div>
+      </div>
+    </div>
+
+    <div class="insight-box" style="border-left-color:#4ade80; margin-bottom:2rem">
+      <div class="insight-box__title">Clean run result: 22/25 = 88% GOOD</div>
+      <p>
+        After adding 5s inter-call delay and 429 retry-backoff, all 25 cases generated real answers.
+        Both judge v1 and v2 agree: <strong>22/25 = 88% GOOD</strong>, exceeding the 80% target.
+        <br><br>
+        <strong style="color:#4ade80">88% exceeds the 80% target.</strong>
+        The citation validator masking issue (R01, F04, CE01 from the broken run) is also resolved --
+        the new model produces full 3-part chunk IDs so citations pass validation.
+      </p>
+    </div>
+
+    <!-- prompt comparison -->
+    <h2 class="section-title">Prompt Iteration — v1 vs v2</h2>
+    <div class="prompt-compare">
+
+      <div class="prompt-card">
+        <div class="prompt-card__head">
+          <span class="prompt-version">judge_v1.txt</span>
+          <code class="prompt-path">evaluation/judge_v1.txt</code>
+          <span class="version-badge version-badge--v1">v1</span>
+        </div>
+        <pre class="prompt-body">You are evaluating a billing support AI assistant's
+response to a customer question.
+
+The assistant has access only to the context chunks
+provided below. Decide whether the response is
+GOOD or NOT_GOOD.
+
+A response is GOOD when:
+• It answers the question using only the context
+• OR it refuses when the context has no answer
+
+A response is NOT_GOOD when:
+• Context has the answer but assistant refused
+• Assistant stated facts not in the context chunks
+• Response is vague when context is sufficient
+
+Respond with one word: GOOD or NOT_GOOD</pre>
+        <div class="prompt-note">
+          <strong>Do NOT evaluate:</strong> citation IDs, formatting,
+          en-dashes, or separator characters.
+        </div>
+        <div class="prompt-result">
+          <span class="result-label">Result:</span>
+          <span class="status-chip status-chip--fail">{{ totalJudge }}/25 GOOD ({{ (totalJudge / 25 * 100).toFixed(0) }}%)</span>
+          <span class="result-fail">17 API errors + R01, F04, CE01 false refusals</span>
+        </div>
+      </div>
+
+      <div class="prompt-arrow-v">
+        <div class="v-arrow">iteration</div>
+      </div>
+
+      <div class="prompt-card prompt-card--v2">
+        <div class="prompt-card__head">
+          <span class="prompt-version">judge_v2.txt</span>
+          <code class="prompt-path">evaluation/judge_v2.txt</code>
+          <span class="version-badge version-badge--v2">v2</span>
+        </div>
+        <div class="prompt-body">You are evaluating a billing support AI assistant's
+response to a customer question.
+
+A response is GOOD when:
+• It answers using only the provided context
+• OR it refuses when context has no answer
+<span class="prompt-diff">• For multi-part questions: partial answer is GOOD
+  if system answers what it can and refuses the rest</span>
+<span class="prompt-diff">• API/timeout errors are NOT_GOOD</span>
+
+Do NOT evaluate citation format (assertions do that).
+
+<span class="prompt-diff">--- FEW-SHOT EXAMPLES ---
+
+Q: "How long does migration take?"
+Context has: [HC-BILL-001--timeline--prose-001]
+Answer: "Typically 24 hrs..."
+→ GOOD (answered from real chunk, ignore corpus_gap tag)
+
+Q: "Error code ERR-4040?"
+Context has: [HC-BILL-002--error-codes--err-4040]
+Answer: "I cannot answer that..."
+→ NOT_GOOD (false refusal — corpus has the answer)</span>
+
+Respond with one word: GOOD or NOT_GOOD</div>
+        <div class="prompt-note">
+          <strong>Do NOT evaluate:</strong> citation IDs, formatting,
+          en-dashes, or separator characters.
+        </div>
+        <div class="prompt-result">
+          <span class="result-label">Result:</span>
+          <span class="status-chip status-chip--fail">{{ totalJudgeV2 }}/25 GOOD ({{ (totalJudgeV2 / 25 * 100).toFixed(0) }}%)</span>
+          <span class="result-fail">G04, F06, CE02 fail — all other 22 GOOD</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- v1 vs v2 comparison table -->
+    <h2 class="section-title">Judge v1 vs v2 — Results by Mode</h2>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Mode</th>
+            <th class="num-col">N</th>
+            <th class="num-col">v1 GOOD</th>
+            <th class="num-col">v1 NOT_GOOD</th>
+            <th class="num-col">v1 Pass%</th>
+            <th class="num-col">v2 GOOD</th>
+            <th class="num-col">v2 NOT_GOOD</th>
+            <th class="num-col">v2 Pass%</th>
+            <th class="num-col">Change</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let m of modeStats">
+            <td><span class="mode-chip" [ngClass]="m.cssClass">{{ modeLabels[m.mode] }}</span></td>
+            <td class="num-col faint">{{ m.n }}</td>
+            <td class="num-col good-val">{{ m.judgePass }}</td>
+            <td class="num-col" [class.bad-val]="m.n - m.judgePass > 0">{{ m.n - m.judgePass }}</td>
+            <td class="num-col">
+              <span class="status-chip" [ngClass]="m.judgePass === m.n ? 'status-chip--pass' : 'status-chip--warn'">
+                {{ (m.judgePass / m.n * 100).toFixed(0) }}%
+              </span>
+            </td>
+            <td class="num-col good-val">{{ m.judgeV2Pass }}</td>
+            <td class="num-col" [class.bad-val]="m.n - m.judgeV2Pass > 0">{{ m.n - m.judgeV2Pass }}</td>
+            <td class="num-col">
+              <span class="status-chip" [ngClass]="m.judgeV2Pass === m.n ? 'status-chip--pass' : 'status-chip--warn'">
+                {{ (m.judgeV2Pass / m.n * 100).toFixed(0) }}%
+              </span>
+            </td>
+            <td class="num-col">
+              <span *ngIf="m.judgeV2Pass > m.judgePass" class="change-chip change-chip--up">+{{ m.judgeV2Pass - m.judgePass }}</span>
+              <span *ngIf="m.judgeV2Pass === m.judgePass" class="faint">—</span>
+              <span *ngIf="m.judgeV2Pass < m.judgePass" class="change-chip change-chip--down">{{ m.judgeV2Pass - m.judgePass }}</span>
+            </td>
+          </tr>
+          <tr class="total-row">
+            <td><strong>TOTAL</strong></td>
+            <td class="num-col faint">25</td>
+            <td class="num-col good-val">{{ totalJudge }}</td>
+            <td class="num-col bad-val">{{ 25 - totalJudge }}</td>
+            <td class="num-col"><span class="status-chip status-chip--warn">{{ (totalJudge / 25 * 100).toFixed(0) }}%</span></td>
+            <td class="num-col good-val">{{ totalJudgeV2 }}</td>
+            <td class="num-col" [class.bad-val]="25 - totalJudgeV2 > 0">{{ 25 - totalJudgeV2 }}</td>
+            <td class="num-col"><span class="status-chip status-chip--warn">{{ (totalJudgeV2 / 25 * 100).toFixed(0) }}%</span></td>
+            <td class="num-col"><span class="change-chip change-chip--up">+{{ totalJudgeV2 - totalJudge }}</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- agreement boxes -->
+    <div class="agreement-row">
+      <div class="agreement-box">
+        <div>
+          <div class="agreement-box__label">v1 Human Label Agreement</div>
+          <div class="agreement-box__sub">labels_25.json updated after clean run — {{ agreementV1() }}/25 match. Disagree on F06 only (human=GOOD, judge=NOT_GOOD).</div>
+        </div>
+        <div class="agreement-box__score" style="color:var(--clr-good)">{{ (agreementV1() / 25 * 100).toFixed(0) }}%</div>
+      </div>
+      <div class="agreement-box agreement-box--v2">
+        <div>
+          <div class="agreement-box__label">v2 Human Label Agreement</div>
+          <div class="agreement-box__sub">{{ agreementV2() }}/25 match. F06 is the single remaining disagreement (judge too strict on second citation).</div>
+        </div>
+        <div class="agreement-box__score" style="color:var(--clr-good)">{{ (agreementV2() / 25 * 100).toFixed(0) }}%</div>
+      </div>
+    </div>
+
+    <div class="insight-box">
+      <div class="insight-box__title">What changed v1 to v2? And why do both score identically on the clean run?</div>
+      <p>
+        <strong>Multi-part question rule:</strong> if corpus covers some parts and system answers those
+        while refusing the rest, verdict is GOOD. Designed to fix F07 (ERR-4040 vs ERR-4032) --
+        F07 now gets a real answer and both judges mark it GOOD.
+      </p>
+      <p>
+        <strong>2 few-shot examples added</strong> from v1 disagreements (broken run):
+        G03 = GOOD (system answered from real chunk despite corpus_gap tag) and
+        R01 = NOT_GOOD (false refusal when corpus has the answer).
+        In the clean run, R01 now produces a correct answer (model uses full chunk IDs), so the
+        R01 few-shot example is no longer a calibration point -- both judges agree GOOD.
+      </p>
+      <p>
+        <strong>Result: v1 = v2 = 22/25 = 88%.</strong> The few-shot examples taught the judge about
+        edge cases from the broken run. The clean run surfaces different failures (G04, F06, CE02)
+        that neither prompt was calibrated for. Agreement with updated human labels: both at 96% (24/25).
+        Single remaining disagreement: F06 (judge too strict on second citation; human says GOOD).
+      </p>
+    </div>
+
+    <!-- final summary table -->
+    <h2 class="section-title">Final Pass Rate — Assertions + Judge (v1 vs v2)</h2>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Mode</th>
+            <th class="num-col">Cases</th>
+            <th class="num-col">Assert</th>
+            <th class="num-col">v1 Judge</th>
+            <th class="num-col">v1 Overall</th>
+            <th class="num-col">v2 Judge</th>
+            <th class="num-col">v2 Overall</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let m of modeStats">
+            <td><span class="mode-chip" [ngClass]="m.cssClass">{{ modeLabels[m.mode] }}</span></td>
+            <td class="num-col faint">{{ m.n }}</td>
+            <td class="num-col" [ngClass]="m.assertPass === m.n ? 'good-val' : 'bad-val'">{{ m.assertPass }}/{{ m.n }}</td>
+            <td class="num-col" [ngClass]="m.judgePass  === m.n ? 'good-val' : 'bad-val'">{{ m.judgePass }}/{{ m.n }}</td>
+            <td class="num-col">
+              <span class="status-chip"
+                [class.status-chip--pass]="m.pct >= 80"
+                [class.status-chip--warn]="m.pct >= 50 && m.pct < 80"
+                [class.status-chip--fail]="m.pct < 50">
+                {{ m.pct }}%
+              </span>
+            </td>
+            <td class="num-col" [ngClass]="m.judgeV2Pass === m.n ? 'good-val' : 'bad-val'">{{ m.judgeV2Pass }}/{{ m.n }}</td>
+            <td class="num-col">
+              <span class="status-chip"
+                [class.status-chip--pass]="m.pctV2 >= 80"
+                [class.status-chip--warn]="m.pctV2 >= 50 && m.pctV2 < 80"
+                [class.status-chip--fail]="m.pctV2 < 50">
+                {{ m.pctV2 }}%
+              </span>
+            </td>
+          </tr>
+          <tr class="total-row">
+            <td><strong>TOTAL</strong></td>
+            <td class="num-col faint">25</td>
+            <td class="num-col">{{ totalAssert }}/25</td>
+            <td class="num-col">{{ totalJudge }}/25</td>
+            <td class="num-col"><span class="status-chip status-chip--warn">{{ (totalOverall / 25 * 100).toFixed(0) }}%</span></td>
+            <td class="num-col">{{ totalJudgeV2 }}/25</td>
+            <td class="num-col"><span class="status-chip status-chip--warn">{{ (totalOverallV2 / 25 * 100).toFixed(0) }}%</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>

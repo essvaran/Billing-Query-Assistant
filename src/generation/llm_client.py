@@ -1,4 +1,5 @@
 import os
+import time
 
 import requests
 from dotenv import load_dotenv
@@ -55,19 +56,39 @@ def _ask_groq(system_prompt: str, user_prompt: str, model: str) -> tuple[str, in
         "temperature": 0.0,
     }
 
-    try:
-        response = requests.post(url, json=payload, headers=headers, timeout=60)
-        response.raise_for_status()
-    except requests.RequestException as exc:
-        raise LLMRequestError(
-            f"Groq API request failed (model='{model}'). "
-            f"Check your GROQ_API_KEY and network. Original error: {exc}"
-        ) from exc
+    wait = 10
+    for attempt in range(4):
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=60)
+        except requests.RequestException as exc:
+            raise LLMRequestError(
+                f"Groq API request failed (model='{model}'). "
+                f"Check your GROQ_API_KEY and network. Original error: {exc}"
+            ) from exc
 
-    data = response.json()
-    text = data["choices"][0]["message"]["content"].strip()
-    usage = data.get("usage", {})
-    return text, usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0)
+        if response.status_code == 429:
+            if attempt == 3:
+                break
+            retry_after = int(response.headers.get("Retry-After", wait))
+            print(f"\n  [rate-limit] 429 -- retrying in {retry_after}s (attempt {attempt + 1}/4)...", flush=True)
+            time.sleep(retry_after)
+            wait = min(wait * 2, 60)
+            continue
+
+        try:
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            raise LLMRequestError(
+                f"Groq API request failed (model='{model}'). "
+                f"Check your GROQ_API_KEY and network. Original error: {exc}"
+            ) from exc
+
+        data = response.json()
+        text = data["choices"][0]["message"]["content"].strip()
+        usage = data.get("usage", {})
+        return text, usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0)
+
+    raise LLMRequestError(f"Groq API 429 rate limit: failed after 4 attempts (model='{model}')")
 
 
 def _ask_ollama(system_prompt: str, user_prompt: str, model: str) -> tuple[str, int, int]:

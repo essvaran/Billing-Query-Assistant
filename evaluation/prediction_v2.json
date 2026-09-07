@@ -1,0 +1,127 @@
+[
+  {
+    "case_id": "R01",
+    "label": "GOOD",
+    "mode": "citation_abbreviation"
+  },
+  {
+    "case_id": "R02",
+    "label": "GOOD",
+    "mode": "false_refusal"
+  },
+  {
+    "case_id": "G01",
+    "label": "GOOD",
+    "mode": "corpus_gap"
+  },
+  {
+    "case_id": "G02",
+    "label": "GOOD",
+    "mode": "corpus_gap"
+  },
+  {
+    "case_id": "G03",
+    "label": "GOOD",
+    "mode": "corpus_gap"
+  },
+  {
+    "case_id": "G04",
+    "label": "NOT_GOOD",
+    "mode": "corpus_gap"
+  },
+  {
+    "case_id": "G05",
+    "label": "GOOD",
+    "mode": "corpus_gap"
+  },
+  {
+    "case_id": "G06",
+    "label": "GOOD",
+    "mode": "corpus_gap"
+  },
+  {
+    "case_id": "F01",
+    "label": "GOOD",
+    "mode": "false_refusal"
+  },
+  {
+    "case_id": "F02",
+    "label": "GOOD",
+    "mode": "false_refusal"
+  },
+  {
+    "case_id": "F03",
+    "label": "GOOD",
+    "mode": "false_refusal"
+  },
+  {
+    "case_id": "F04",
+    "label": "GOOD",
+    "mode": "false_refusal"
+  },
+  {
+    "case_id": "F05",
+    "label": "GOOD",
+    "mode": "false_refusal"
+  },
+  {
+    "case_id": "F06",
+    "label": "GOOD",
+    "mode": "false_refusal"
+  },
+  {
+    "case_id": "F07",
+    "label": "GOOD",
+    "mode": "false_refusal"
+  },
+  {
+    "case_id": "A01",
+    "label": "GOOD",
+    "mode": "citation_abbreviation"
+  },
+  {
+    "case_id": "A02",
+    "label": "GOOD",
+    "mode": "citation_abbreviation"
+  },
+  {
+    "case_id": "A03",
+    "label": "GOOD",
+    "mode": "citation_abbreviation"
+  },
+  {
+    "case_id": "A04",
+    "label": "GOOD",
+    "mode": "citation_abbreviation"
+  },
+  {
+    "case_id": "A05",
+    "label": "GOOD",
+    "mode": "citation_abbreviation"
+  },
+  {
+    "case_id": "CE01",
+    "label": "GOOD",
+    "mode": "citation_character_error"
+  },
+  {
+    "case_id": "CE02",
+    "label": "NOT_GOOD",
+    "mode": "citation_character_error"
+  },
+  {
+    "case_id": "CE03",
+    "label": "GOOD",
+    "mode": "citation_character_error"
+  },
+  {
+    "case_id": "CE04",
+    "label": "GOOD",
+    "mode": "citation_character_error"
+  },
+  {
+    "case_id": "CE05",
+    "label": "GOOD",
+    "mode": "citation_character_error"
+  }
+]

@@ -1,0 +1,42 @@
+Prediction (written 2026-09-03, before judge_v2 clean run):
+
+Adding 2 few-shot examples to the judge prompt (G03 = GOOD, R01 = NOT_GOOD)
+will push human-judge agreement from 96% (24/25) to 100% (25/25) by calibrating
+the judge's handling of the corpus_gap ambiguity and false-refusal cases.
+
+Result (actual, broken run -- 17/25 API errors): 96% for both v1 and v2.
+
+Where wrong (broken run): The G03 few-shot example reinforced the judge's
+existing GOOD verdict on G03. The disagreement was never in the judge -- it was
+in the human label (labeled NOT_GOOD out of caution without verifying that
+HC-BILL-001--timeline--prose-001 actually exists and answers the question).
+
+---
+
+Clean Run Result (2026-09-03, model: openai/gpt-oss-120b, 5s delay + 429 retry):
+
+All 25 cases generated real answers. Citation validator masking eliminated --
+model now produces full 3-part chunk IDs throughout.
+
+Judge v1: 22/25 = 88% GOOD
+Judge v2: 22/25 = 88% GOOD (identical result)
+
+Both judges fail the same 3 cases: G04, F06, CE02.
+
+Agreement with updated human labels (labels_25.json corrected after clean run):
+v1 = 24/25 = 96%
+v2 = 24/25 = 96%
+
+Single remaining disagreement: F06 (human=GOOD, both judges=NOT_GOOD).
+Human reasoning: HC-BILL-006 chunk directly answers the question correctly.
+Judge reasoning: second citation (FAQ chunk) does not explicitly confirm the claim.
+
+Key lessons:
+1. Few-shot examples calibrate for the edge cases in the run they were derived from.
+   When the run changes (broken -> clean), the edge cases shift and agreement stays
+   the same even with few-shot -- the failing cases are different ones.
+2. Blind labeling protocol must be re-run when the system changes significantly
+   (model change + rate-limit fix counts as a significant change).
+3. 88% exceeds the 80% target. The two genuine model failures (G04, CE02) are
+   diagnosable and fixable: G04 needs better retrieval (right chunk not at top),
+   CE02 needs a stricter system prompt ("do not add steps not in the context").

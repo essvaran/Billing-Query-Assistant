@@ -5,13 +5,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
-from src.config import DEFAULT_COLLECTION, MIN_QUERY_RELEVANCE, MIN_SCORE_DENSE, MIN_SCORE_HYBRID, TOP_K
+from src.config import DEFAULT_COLLECTION, MIN_SCORE_DENSE, MIN_SCORE_HYBRID, TOP_K
 from src.generation.citations import extract_citations, validate_citations
 from src.generation.langfuse_client import get_langfuse
 from src.generation.llm_client import LLM_PROVIDER, GROQ_MODEL, OLLAMA_MODEL, ask_llm
 from src.generation.prompts import SYSTEM_PROMPT, build_user_prompt
 from src.generation.refusal import REFUSAL_MESSAGE
-from src.retrieval.query_filter import is_query_relevant
 from src.retrieval.search import search
 
 _TRACES_PATH = Path(__file__).resolve().parents[2] / "evaluation" / "traces.jsonl"
@@ -99,31 +98,6 @@ def answer_question(
             )
         except Exception:
             trace = None
-
-    # ── Pre-retrieval relevance gate ───────────────────────────────────────
-    # Embed the query and compare against the corpus centroid.  If the query
-    # is too far from the indexed content, refuse immediately without touching
-    # ChromaDB or BM25 at all.
-    if not is_query_relevant(question, collection_name, MIN_QUERY_RELEVANCE):
-        ans = Answer(
-            question=question,
-            retrieved_chunks=[],
-            raw_answer=REFUSAL_MESSAGE,
-            final_answer=REFUSAL_MESSAGE,
-            citations=set(),
-            citations_valid=False,
-            retrieval_ms=0.0,
-            generation_ms=0.0,
-            retriever=retriever_label,
-        )
-        if trace:
-            trace.update(
-                output={"final_answer": REFUSAL_MESSAGE, "reason": "query_off_topic"},
-                metadata={"citations_valid": False},
-            )
-            lf.flush()
-        _write_trace(ans, question, k, collection_name)
-        return ans
 
     # ── Retrieval ──────────────────────────────────────────────────────────
     retrieval_span = (

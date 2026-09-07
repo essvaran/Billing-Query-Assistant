@@ -13,6 +13,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
       <a class="app-nav__link" routerLink="/traces" routerLinkActive="app-nav__link--active">Traces</a>
       <a class="app-nav__link" routerLink="/sample" routerLinkActive="app-nav__link--active">Sample</a>
       <a class="app-nav__link" routerLink="/taxonomy" routerLinkActive="app-nav__link--active">Taxonomy</a>
+      <a class="app-nav__link" routerLink="/eval" routerLinkActive="app-nav__link--active">Eval</a>
     </nav>
     <router-outlet />
   `,

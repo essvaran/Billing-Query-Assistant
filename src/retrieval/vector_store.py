@@ -5,6 +5,7 @@ from src.chunking.chunk_types import Chunk
 from src.config import CHROMA_DB_DIR, EMBEDDING_MODEL
 
 _embeddings = None
+_client = None
 
 
 def get_embeddings() -> HuggingFaceEmbeddings:
@@ -19,7 +20,10 @@ def get_embeddings() -> HuggingFaceEmbeddings:
 
 
 def get_client() -> chromadb.ClientAPI:
-    return chromadb.PersistentClient(path=str(CHROMA_DB_DIR))
+    global _client
+    if _client is None:
+        _client = chromadb.PersistentClient(path=str(CHROMA_DB_DIR))
+    return _client
 
 
 def build_collection(collection_name: str, chunks: list[Chunk]) -> None:

@@ -24,6 +24,7 @@ try:
 except Exception:
     xlrd = None
 
+from src.chunking.chunk_ids import slugify
 from src.config import ARTICLES_DIR
 from src.ingestion.metadata import validate_metadata
 
@@ -147,7 +148,7 @@ def load_article(file_path: Path) -> Article:
     front_matter, body = _split_front_matter(raw_text)
 
     metadata = dict(front_matter)
-    metadata.setdefault("article_id", file_path.stem)
+    metadata.setdefault("article_id", slugify(file_path.stem))
     metadata.setdefault("product_area", "unknown")
     metadata.setdefault("last_updated", "unknown")
     metadata["source_file"] = file_path.name

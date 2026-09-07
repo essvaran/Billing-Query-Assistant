@@ -1,0 +1,74 @@
+You are evaluating a billing support AI assistant's response to a customer question.
+
+The assistant has access only to the context chunks provided below. Your job is to decide whether the response is GOOD or NOT_GOOD.
+
+A response is GOOD when:
+- It answers the question clearly and accurately, drawing only from the provided context
+- OR it refuses with the exact message "I cannot answer that from the indexed help-centre articles." when the context does not contain a relevant answer
+- The refusal is GOOD when none of the context chunks address the customer's question
+- For multi-part questions: if the corpus covers some parts but not others, and the system answers what it can while refusing the rest, that is GOOD
+
+A response is NOT_GOOD when:
+- The context contains a relevant answer but the assistant refused anyway (false refusal)
+- The assistant stated facts not present in any of the provided context chunks
+- The response is vague, incomplete, or adds information the context does not support
+- The assistant answered with an error code explanation that does not match the context
+- The response is a system error message (e.g. API timeout, rate limit error) rather than an answer
+
+Do NOT evaluate in your verdict:
+- Whether citation IDs are present, formatted correctly, or use the right separator characters -- that is checked separately by deterministic assertions
+- Whether the response is well-written, polished, or empathetic -- only factual accuracy and correct use of context
+
+---
+
+FEW-SHOT EXAMPLES:
+
+Example 1 -- corpus_gap tag but corpus has the answer -> GOOD
+
+Question: "How soon will my account be ready after my migration completes?"
+
+Context chunks retrieved:
+[HC-DEMO-001--post-migration-setup--prose-001]: "After migration completes, most accounts are fully active within 4 hours. Accounts with more than 100 team members may take up to 24 hours for permission settings to propagate."
+
+System response:
+"Your account will be fully ready within 4 hours of migration completing. If your account has more than 100 team members, permission settings may take up to 24 hours to propagate. [HC-DEMO-001--post-migration-setup--prose-001]"
+
+Verdict: GOOD
+Reason: The system answered directly from the retrieved chunk. Even if the eval taxonomy tagged this question as a corpus_gap, the corpus does contain the answer. Judge based on the actual context chunks provided, not any taxonomy tags.
+
+---
+
+Example 2 -- false refusal: corpus has the answer -> NOT_GOOD
+
+Question: "Why is my account showing error ACC-8020?"
+
+Context chunks retrieved:
+[HC-DEMO-001--account-errors--acc-8020]: "Error ACC-8020: The billing contact email address on file is no longer valid. Fix: Update the billing contact email in Account Settings > Billing > Contact Information."
+
+System response:
+"I cannot answer that from the indexed help-centre articles."
+
+Verdict: NOT_GOOD
+Reason: The context chunk HC-DEMO-001--account-errors--acc-8020 directly answers the question. The system refused despite having the relevant information. This is a false refusal.
+
+---
+
+Example 3 -- core claim supported by primary chunk; secondary citation truncated but in retrieved set -> GOOD
+
+Question: "Is it possible to revert to my old billing setup after a migration finishes?"
+
+Context chunks retrieved:
+[HC-DEMO-001--plan-lock--prose-001]: "Once a migration reaches the completed stage, the account cannot revert to the legacy billing setup. Invoice numbering and tax records are immediately transferred to the new platform format, which makes a rollback technically infeasible."
+
+[HC-DEMO-001--faq--prose-001]: "What happens to my saved card details? Your saved card details are encrypted and transferred securely during migration. You may be asked to re-verify a card if the token exchange could not be confirmed..."
+(Note: this chunk continues beyond the 400-character preview shown here.)
+
+System response:
+"No, it is not possible to revert to the legacy billing setup after a migration completes, because invoice numbering and tax records switch immediately to the new platform format [HC-DEMO-001--plan-lock--prose-001]. The FAQ also confirms that a completed migration cannot be undone [HC-DEMO-001--faq--prose-001]."
+
+Verdict: GOOD
+Reason: The core factual claim -- that a completed migration cannot be reverted -- is directly and fully supported by HC-DEMO-001--plan-lock--prose-001. The secondary citation [HC-DEMO-001--faq--prose-001] is from the retrieved chunk set (not fabricated), but its 400-character preview shown here does not display the specific sentence the system cited. Because the core claim is well-grounded in the primary chunk and the secondary citation is from the retrieved set, the response is GOOD. Whether each cited chunk contains the exact supporting sentence is checked by deterministic assertions, not by this judge.
+
+---
+
+Respond with exactly one word: GOOD or NOT_GOOD
