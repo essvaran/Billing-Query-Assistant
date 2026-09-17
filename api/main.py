@@ -1,26 +1,41 @@
+"""Billing Support RAG API — FastAPI application entry point."""
+
 import json
+import logging
 import sys
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 import re as _re
 
-from api.models import AskRequest, AskResponse, ChunkResult, ReplayResult, TracePrompt, TraceRecord, TracesResponse, UploadResponse
+# ---------------------------------------------------------------------------
+# Logging — structured, to stdout
+# ---------------------------------------------------------------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S",
+)
+log = logging.getLogger("api")
 
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
 _CODE_RE = _re.compile(r"\b[A-Z]{2,}-[A-Z0-9]{2,}(?:-[A-Z0-9]+)+\b")
-
-
-def _normalise(text: str) -> str:
-    """Strip and normalise line endings for output comparison."""
-    return text.strip().replace("\r\n", "\n").replace("\r", "\n")
 _MULTI_PART_MARKERS = (" and ", " as well", " also ", "both ", " plus ", " additionally")
 _SEMANTIC_STARTS = ("why ", "how does ", "how do ", "what happens ", "explain ",
                     "describe ", "what would ", "when does ", "when do ")
+
+
+def _normalise(text: str) -> str:
+    return text.strip().replace("\r\n", "\n").replace("\r", "\n")
 
 
 def _classify_query_type(question: str) -> str:
@@ -34,43 +49,115 @@ def _classify_query_type(question: str) -> str:
     if q.startswith(_SEMANTIC_STARTS):
         return "semantic"
     return "simple"
-from src.generation.answer import answer_question
-from src.generation.llm_client import LLMRequestError
 
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
 _TRACES_PATH = Path(__file__).resolve().parent.parent / "evaluation" / "traces.jsonl"
 _SAMPLE_PATH = Path(__file__).resolve().parent.parent / "evaluation" / "sample.jsonl"
 _ARTICLES_DIR = Path(__file__).resolve().parent.parent / "data" / "billing_articles"
 
-app = FastAPI(title="Billing Support RAG API")
+# ---------------------------------------------------------------------------
+# App lifespan
+# ---------------------------------------------------------------------------
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from api.database import init_db
+    log.info("Initialising database…")
+    init_db()
+    log.info("Database ready")
 
-@app.on_event("startup")
-async def _startup_check() -> None:
     from src.generation.langfuse_client import get_langfuse
     lf = get_langfuse()
-    if lf:
-        print(f"[LangFuse] OK — client initialised: {type(lf).__name__}")
-    else:
-        print("[LangFuse] DISABLED — client is None (check .env keys)")
+    log.info("LangFuse: %s", "enabled" if lf else "disabled (check .env keys)")
 
+    yield
+    log.info("Shutdown complete")
+
+
+# ---------------------------------------------------------------------------
+# Application
+# ---------------------------------------------------------------------------
+app = FastAPI(
+    title="Billing Support RAG API",
+    version="1.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
+    lifespan=lifespan,
+)
+
+# ---------------------------------------------------------------------------
+# Routers
+# ---------------------------------------------------------------------------
+from api.race_router import router as race_router
+from api.agent_router import router as agent_router
+from api.auth import router as auth_router, get_current_user, require_admin
+from api.admin_router import router as admin_router
+
+app.include_router(auth_router)
+app.include_router(admin_router)
+app.include_router(race_router)
+app.include_router(agent_router)
+
+# ---------------------------------------------------------------------------
+# CORS  —  restrict to configured origins only
+# ---------------------------------------------------------------------------
+from api.config import ALLOWED_ORIGINS, MAX_UPLOAD_BYTES
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type", "Accept"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Accept", "Authorization"],
+    allow_credentials=True,
 )
 
+# ---------------------------------------------------------------------------
+# Request logging middleware
+# ---------------------------------------------------------------------------
+
+@app.middleware("http")
+async def _log_requests(request: Request, call_next):
+    response = await call_next(request)
+    log.info("%s %s %s", request.method, request.url.path, response.status_code)
+    return response
+
+# ---------------------------------------------------------------------------
+# Models
+# ---------------------------------------------------------------------------
+from api.models import (
+    AskRequest, AskResponse, ChunkResult,
+    ReplayResult, TracePrompt, TraceRecord, TracesResponse, UploadResponse,
+)
+
+# ---------------------------------------------------------------------------
+# Health
+# ---------------------------------------------------------------------------
+
+@app.get("/api/health", tags=["meta"])
+def health():
+    return {"status": "ok"}
+
+# ---------------------------------------------------------------------------
+# RAG ask endpoint (authenticated)
+# ---------------------------------------------------------------------------
 
 @app.post("/api/ask", response_model=AskResponse)
-def ask(request: AskRequest) -> AskResponse:
+def ask(request: AskRequest, _user=Depends(get_current_user)) -> AskResponse:
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question must not be empty.")
+
+    from src.generation.answer import answer_question
+    from src.generation.llm_client import LLMRequestError
 
     try:
         result = answer_question(request.question, use_hybrid=request.use_hybrid)
     except LLMRequestError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+        log.error("LLM error on ask: %s", exc)
+        raise HTTPException(status_code=502, detail="LLM service unavailable — please retry") from exc
 
     chunks = [
         ChunkResult(
@@ -94,12 +181,17 @@ def ask(request: AskRequest) -> AskResponse:
         retriever=result.retriever,
     )
 
-
+# ---------------------------------------------------------------------------
+# Document upload (admin only, size-limited)
+# ---------------------------------------------------------------------------
 _ALLOWED_UPLOAD_EXTENSIONS = {".pdf", ".md", ".txt", ".docx", ".xlsx", ".xls"}
 
 
 @app.post("/api/upload", response_model=UploadResponse)
-async def upload_document(file: UploadFile = File(...)) -> UploadResponse:
+async def upload_document(
+    file: UploadFile = File(...),
+    _admin=Depends(require_admin),
+) -> UploadResponse:
     import shutil
     from src.config import DEFAULT_COLLECTION
     from src.ingestion.ingest_document import ingest_file
@@ -112,10 +204,21 @@ async def upload_document(file: UploadFile = File(...)) -> UploadResponse:
             detail=f"Unsupported file type '{suffix}'. Allowed: {', '.join(sorted(_ALLOWED_UPLOAD_EXTENSIONS))}",
         )
 
+    # Stream to a temp buffer and enforce size limit
+    _ARTICLES_DIR.mkdir(parents=True, exist_ok=True)
     dest = _ARTICLES_DIR / filename
+    bytes_written = 0
     try:
         with dest.open("wb") as out:
-            shutil.copyfileobj(file.file, out)
+            while chunk := await file.read(64 * 1024):
+                bytes_written += len(chunk)
+                if bytes_written > MAX_UPLOAD_BYTES:
+                    dest.unlink(missing_ok=True)
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"File too large — maximum is {MAX_UPLOAD_BYTES // (1024 * 1024)} MB",
+                    )
+                out.write(chunk)
     finally:
         await file.close()
 
@@ -123,14 +226,35 @@ async def upload_document(file: UploadFile = File(...)) -> UploadResponse:
         chunk_count = ingest_file(dest, DEFAULT_COLLECTION)
     except Exception as exc:
         dest.unlink(missing_ok=True)
-        raise HTTPException(status_code=422, detail=f"Failed to process document: {exc}") from exc
+        log.error("Ingestion failed for %s: %s", filename, exc)
+        raise HTTPException(status_code=422, detail="Failed to process document") from exc
 
+    log.info("Ingested %s — %d chunks", filename, chunk_count)
     return UploadResponse(
         filename=filename,
         chunks_indexed=chunk_count,
         collection=DEFAULT_COLLECTION,
         status="success",
     )
+
+# ---------------------------------------------------------------------------
+# Traces (authenticated)
+# ---------------------------------------------------------------------------
+
+def _load_jsonl(path: Path) -> list[dict]:
+    records: list[dict] = []
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        records.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        log.warning("Skipping malformed JSONL line in %s", path.name)
+    except FileNotFoundError:
+        pass
+    return records
 
 
 @app.get("/api/traces", response_model=TracesResponse)
@@ -141,19 +265,9 @@ def get_traces(
     question: Optional[str] = Query(default=None),
     limit: int = Query(default=50, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
+    _user=Depends(get_current_user),
 ) -> TracesResponse:
-    if not _TRACES_PATH.exists():
-        return TracesResponse(traces=[], total=0, offset=offset, limit=limit)
-
-    records: list[dict] = []
-    with _TRACES_PATH.open("r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                try:
-                    records.append(json.loads(line))
-                except json.JSONDecodeError:
-                    continue
+    records = _load_jsonl(_TRACES_PATH)
 
     if citations_valid is not None:
         records = [r for r in records if r.get("citations_valid") == citations_valid]
@@ -166,37 +280,20 @@ def get_traces(
         records = [r for r in records if q_lower in r.get("question", "").lower()]
 
     total = len(records)
-    page = records[offset : offset + limit]
-
     traces = []
-    for r in page:
+    for r in records[offset: offset + limit]:
         try:
             if not r.get("query_type"):
                 r["query_type"] = _classify_query_type(r.get("question", ""))
             traces.append(TraceRecord(**r))
         except Exception:
-            continue
+            log.debug("Skipping undecodable trace record")
+
     return TracesResponse(traces=traces, total=total, offset=offset, limit=limit)
 
 
-def _load_jsonl(path: Path) -> list[dict]:
-    records: list[dict] = []
-    with path.open("r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                try:
-                    records.append(json.loads(line))
-                except json.JSONDecodeError:
-                    continue
-    return records
-
-
 @app.get("/api/traces/sample", response_model=list[TraceRecord])
-def get_sample_traces() -> list[TraceRecord]:
-    """Return the fixed 20-trace random sample (written by sample_traces.py)."""
-    if not _SAMPLE_PATH.exists():
-        return []
+def get_sample_traces(_user=Depends(get_current_user)) -> list[TraceRecord]:
     records = _load_jsonl(_SAMPLE_PATH)
     result = []
     for r in records:
@@ -205,20 +302,17 @@ def get_sample_traces() -> list[TraceRecord]:
                 r["query_type"] = _classify_query_type(r.get("question", ""))
             result.append(TraceRecord(**r))
         except Exception:
-            continue
+            pass
     return result
 
 
 @app.get("/api/traces/{trace_id}/prompt", response_model=TracePrompt)
-def get_trace_prompt(trace_id: str) -> TracePrompt:
-    """Return the system and user prompt that were sent to the LLM for this trace."""
+def get_trace_prompt(trace_id: str, _user=Depends(get_current_user)) -> TracePrompt:
     from src.generation.prompts import SYSTEM_PROMPT, build_user_prompt
     from src.retrieval.vector_store import get_collection
 
     trace: Optional[dict] = None
     for path in (_SAMPLE_PATH, _TRACES_PATH):
-        if not path.exists():
-            continue
         for rec in _load_jsonl(path):
             if rec.get("trace_id") == trace_id:
                 trace = rec
@@ -227,7 +321,7 @@ def get_trace_prompt(trace_id: str) -> TracePrompt:
             break
 
     if trace is None:
-        raise HTTPException(status_code=404, detail=f"trace_id '{trace_id}' not found")
+        raise HTTPException(status_code=404, detail=f"Trace '{trace_id}' not found")
 
     original_chunks = trace.get("retrieved_chunks", [])
     chunk_ids = [c["chunk_id"] for c in original_chunks]
@@ -238,24 +332,20 @@ def get_trace_prompt(trace_id: str) -> TracePrompt:
         try:
             collection = get_collection(trace.get("collection", "billing_docs"))
             result = collection.get(ids=chunk_ids, include=["documents", "metadatas"])
-            fetched = {}
-            for cid, doc, meta in zip(result["ids"], result["documents"], result["metadatas"]):
-                fetched[cid] = {
-                    "chunk_id": cid,
-                    "article_id": meta.get("article_id"),
-                    "section": meta.get("section"),
-                    "score": 0.0,
-                    "rank": rank_by_id.get(cid, 1),
-                    "text": doc,
-                }
-            for cid in chunk_ids:
-                if cid in fetched:
-                    prompt_chunks.append(fetched[cid])
-        except Exception:
-            pass
+            fetched = {
+                cid: {"chunk_id": cid, "article_id": meta.get("article_id"),
+                      "section": meta.get("section"), "score": 0.0,
+                      "rank": rank_by_id.get(cid, 1), "text": doc}
+                for cid, doc, meta in zip(result["ids"], result["documents"], result["metadatas"])
+            }
+            prompt_chunks = [fetched[cid] for cid in chunk_ids if cid in fetched]
+        except Exception as exc:
+            log.warning("ChromaDB unavailable for trace prompt: %s", exc)
 
-    user_prompt = build_user_prompt(trace["question"], prompt_chunks) if prompt_chunks else "(chunk text unavailable — ChromaDB unreachable)"
-
+    user_prompt = (
+        build_user_prompt(trace["question"], prompt_chunks)
+        if prompt_chunks else "(chunk text unavailable — ChromaDB unreachable)"
+    )
     return TracePrompt(
         trace_id=trace_id,
         query_type=_classify_query_type(trace.get("question", "")),
@@ -265,22 +355,14 @@ def get_trace_prompt(trace_id: str) -> TracePrompt:
 
 
 @app.get("/api/traces/{trace_id}/replay", response_model=ReplayResult)
-def replay_trace(trace_id: str) -> ReplayResult:
-    """Replay a trace: fetch its chunks from ChromaDB and re-call the LLM."""
-    import sys
-    from pathlib import Path as _Path
-    sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
-
+def replay_trace(trace_id: str, _user=Depends(get_current_user)) -> ReplayResult:
     from src.generation.citations import extract_citations, validate_citations
-    from src.generation.llm_client import LLM_PROVIDER, GROQ_MODEL, OLLAMA_MODEL, ask_llm
+    from src.generation.llm_client import LLM_PROVIDER, GROQ_MODEL, OLLAMA_MODEL, LLMRequestError, ask_llm
     from src.generation.prompts import SYSTEM_PROMPT, build_user_prompt
     from src.retrieval.vector_store import get_collection
 
-    # Find the trace (check sample first, then full file)
     trace: Optional[dict] = None
     for path in (_SAMPLE_PATH, _TRACES_PATH):
-        if not path.exists():
-            continue
         for rec in _load_jsonl(path):
             if rec.get("trace_id") == trace_id:
                 trace = rec
@@ -289,75 +371,48 @@ def replay_trace(trace_id: str) -> ReplayResult:
             break
 
     if trace is None:
-        raise HTTPException(status_code=404, detail=f"trace_id '{trace_id}' not found")
+        raise HTTPException(status_code=404, detail=f"Trace '{trace_id}' not found")
 
-    # Build rank lookup from stored trace so we can restore original order after ChromaDB fetch
     original_chunks = trace.get("retrieved_chunks", [])
     chunk_ids = [c["chunk_id"] for c in original_chunks]
     rank_by_id = {c["chunk_id"]: c.get("rank", i + 1) for i, c in enumerate(original_chunks)}
 
-    chunks_available = False
-    chunks_used = []
-
+    chunks_used: list[dict] = []
     if chunk_ids:
         try:
             collection = get_collection(trace["collection"])
             result = collection.get(ids=chunk_ids, include=["documents", "metadatas"])
-            fetched = {}
-            for cid, doc, meta in zip(result["ids"], result["documents"], result["metadatas"]):
-                fetched[cid] = {
-                    "chunk_id": cid,
-                    "article_id": meta.get("article_id"),
-                    "section": meta.get("section"),
-                    "text": doc,
-                }
-            # Restore original rank order — ChromaDB.get() does not preserve input order
-            for cid in chunk_ids:
-                if cid in fetched:
-                    chunks_used.append(fetched[cid])
-            chunks_available = bool(chunks_used)
-        except Exception:
-            pass
+            fetched = {
+                cid: {"chunk_id": cid, "article_id": meta.get("article_id"),
+                      "section": meta.get("section"), "text": doc}
+                for cid, doc, meta in zip(result["ids"], result["documents"], result["metadatas"])
+            }
+            chunks_used = [fetched[cid] for cid in chunk_ids if cid in fetched]
+        except Exception as exc:
+            log.warning("ChromaDB unavailable for replay: %s", exc)
 
     replayed_raw = ""
     replayed_citations: set[str] = set()
     replayed_citations_valid = False
-    in_tok = 0
-    out_tok = 0
-
+    in_tok = out_tok = 0
     original_model = trace.get("model", "unknown")
-    # Default replay_model to env default; overwritten below after the actual call
-    env_default_model = GROQ_MODEL if LLM_PROVIDER == "groq" else OLLAMA_MODEL
-    replay_model = original_model  # we will try to use the stored model
+    env_default = GROQ_MODEL if LLM_PROVIDER == "groq" else OLLAMA_MODEL
+    replay_model = original_model
 
-    if chunks_available and chunks_used:
-        # Build prompt chunks with original rank — same structure as answer.py
+    if chunks_used:
         prompt_chunks = [
-            {
-                "chunk_id": c["chunk_id"],
-                "article_id": c["article_id"],
-                "section": c["section"],
-                "score": 0.0,
-                "rank": rank_by_id.get(c["chunk_id"], i + 1),
-                "text": c["text"],
-            }
+            {**c, "score": 0.0, "rank": rank_by_id.get(c["chunk_id"], i + 1)}
             for i, c in enumerate(chunks_used)
         ]
         user_prompt = build_user_prompt(trace["question"], prompt_chunks)
         try:
-            # Pass original_model so the replay uses exactly the same model as the trace
             replayed_raw, in_tok, out_tok = ask_llm(SYSTEM_PROMPT, user_prompt, model=original_model)
-            replay_model = original_model
         except LLMRequestError:
-            # Stored model unavailable — fall back to env default and note the switch
             replayed_raw, in_tok, out_tok = ask_llm(SYSTEM_PROMPT, user_prompt)
-            replay_model = env_default_model
+            replay_model = env_default
         retrieved_ids = {c["chunk_id"] for c in chunks_used}
         replayed_citations = extract_citations(replayed_raw)
         replayed_citations_valid = validate_citations(replayed_citations, retrieved_ids)
-
-    original_citations = set(trace.get("citations", []))
-    original_citations_valid = trace.get("citations_valid", False)
 
     return ReplayResult(
         trace_id=trace_id,
@@ -366,13 +421,13 @@ def replay_trace(trace_id: str) -> ReplayResult:
         replay_model=replay_model,
         model_matched=(original_model == replay_model),
         original_raw_output=trace["raw_output"],
-        original_citations=sorted(original_citations),
-        original_citations_valid=original_citations_valid,
+        original_citations=sorted(set(trace.get("citations", []))),
+        original_citations_valid=trace.get("citations_valid", False),
         replayed_raw_output=replayed_raw,
         replayed_citations=sorted(replayed_citations),
         replayed_citations_valid=replayed_citations_valid,
         chunks_used=chunks_used,
-        chunks_available=chunks_available,
+        chunks_available=bool(chunks_used),
         replayed_input_tokens=in_tok,
         replayed_output_tokens=out_tok,
         outputs_match=(_normalise(trace["raw_output"]) == _normalise(replayed_raw)),

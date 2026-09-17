@@ -1,0 +1,364 @@
+{
+  "run_at": "2026-09-08T09:02:48.347601+00:00",
+  "model": "openai/gpt-oss-120b",
+  "agent": {
+    "pass_rate": 0.9,
+    "p50_latency_s": 6.36699999999928,
+    "total_tokens": 24615,
+    "cost_per_ticket": 0.00221535,
+    "tickets": [
+      {
+        "ticket_id": "T001",
+        "reply": "Hi C101,\n\nYour refund request for order **O201** has been approved. Since your purchase was made 20 days ago and your standard tier allows refunds within 30 days, we\u2019ll process the refund to your original payment method shortly. You should see the credit within 5\u20137 business days.\n\nIf you have any other questions, just let us know!\n\nBest regards,  \nBilling Support Team",
+        "laps": 4,
+        "total_tokens": 2364,
+        "cost_usd": 0.0021276000000000003,
+        "latency_s": 6.389999999999418,
+        "passed": true,
+        "budget_hit": null,
+        "error": null,
+        "trace_id": "10aa59e5-691f-4348-8f84-03803c0f1e85",
+        "trace_url": "https://cloud.langfuse.com/trace/10aa59e5-691f-4348-8f84-03803c0f1e85",
+        "branching": false
+      },
+      {
+        "ticket_id": "T002",
+        "reply": "Hi C102,\n\nI\u2019ve reviewed your request and see that the purchase was made on\u202f2026\u201108\u201119, which is within the 30\u2011day refund window for your standard tier. I\u2019ll go ahead and process a refund for the duplicate charge.\n\nYou should see the refund reflected in your account within 5\u20137 business days.\n\nIf you have any other questions, just let me know!",
+        "laps": 4,
+        "total_tokens": 2355,
+        "cost_usd": 0.0021195,
+        "latency_s": 6.343999999999141,
+        "passed": true,
+        "budget_hit": null,
+        "error": null,
+        "trace_id": "61a1c334-df41-4531-845e-db55064b6aaa",
+        "trace_url": "https://cloud.langfuse.com/trace/61a1c334-df41-4531-845e-db55064b6aaa",
+        "branching": false
+      },
+      {
+        "ticket_id": "T003",
+        "reply": "Hi C103,\n\nYour order (O203) was placed on\u202f2026\u201108\u201119, which is 20\u202fdays ago. As a premium subscriber you have a 45\u2011day refund window, so your request falls within the eligible period.\n\nI\u2019ve approved a full refund of\u202f$99.00\u202fUSD. The amount will be returned to the original payment method within 5\u20117 business days.\n\nIf you have any other questions, just let me know!\n\nBest regards,  \nBilling Support Team",
+        "laps": 4,
+        "total_tokens": 2428,
+        "cost_usd": 0.0021852,
+        "latency_s": 3.984999999998763,
+        "passed": true,
+        "budget_hit": null,
+        "error": null,
+        "trace_id": "4b1974bc-2a36-475f-8287-884ec45a9632",
+        "trace_url": "https://cloud.langfuse.com/trace/4b1974bc-2a36-475f-8287-884ec45a9632",
+        "branching": false
+      },
+      {
+        "ticket_id": "T004",
+        "reply": "Hi C104,\n\nI\u2019ve reviewed your request. Your order (O204) was placed on July\u202f20,\u202f2026, which is 50\u202fdays ago. Our standard refund window is 30\u202fdays, so the purchase is outside the eligible period.\n\nUnfortunately, I can\u2019t approve a refund for this order. If you still wish to pursue this, please email our billing team at **billing@company.com** with your order details, and they\u2019ll be able to assist further.\n\nThank you for understanding.",
+        "laps": 4,
+        "total_tokens": 2398,
+        "cost_usd": 0.0021582,
+        "latency_s": 5.156000000000859,
+        "passed": false,
+        "budget_hit": null,
+        "error": null,
+        "trace_id": "fff8cb6c-7d01-457d-94cd-74978e312dd3",
+        "trace_url": "https://cloud.langfuse.com/trace/fff8cb6c-7d01-457d-94cd-74978e312dd3",
+        "branching": false
+      },
+      {
+        "ticket_id": "T005",
+        "reply": "Hi C105,\n\nThank you for reaching out. Your premium subscription was purchased on\u202fJuly\u202f20,\u202f2026, which is now\u202f50\u202fdays ago. According to your premium tier, refunds are only available within\u202f45\u202fdays of purchase.\n\nBecause the request falls outside this refund window, we\u2019re unable to issue a refund for this order.\n\nIf you have any further questions or need additional assistance, please let us know.\n\nBest regards,  \nBilling Support Team",
+        "laps": 4,
+        "total_tokens": 2421,
+        "cost_usd": 0.0021789,
+        "latency_s": 4.953000000001339,
+        "passed": true,
+        "budget_hit": null,
+        "error": null,
+        "trace_id": "f866c5ee-2ef3-425f-b517-6c57d23c9506",
+        "trace_url": "https://cloud.langfuse.com/trace/f866c5ee-2ef3-425f-b517-6c57d23c9506",
+        "branching": false
+      },
+      {
+        "ticket_id": "T006",
+        "reply": "Hi C106,\n\nThank you for reaching out. I see that your order (O206) was placed on July\u202f20,\u202f2026, which is 50\u202fdays ago. Our standard refund window is 30\u202fdays, so unfortunately this request falls outside the eligible period.\n\nIf you still wish to pursue this matter, please email our billing team at **billing@company.com** and they\u2019ll be happy to review it further.\n\nBest regards,  \nBilling Support Team",
+        "laps": 4,
+        "total_tokens": 2392,
+        "cost_usd": 0.0021528000000000003,
+        "latency_s": 4.936999999999898,
+        "passed": true,
+        "budget_hit": null,
+        "error": null,
+        "trace_id": "fe2bb3d7-9647-4006-aedf-ccd368cbf0d0",
+        "trace_url": "https://cloud.langfuse.com/trace/fe2bb3d7-9647-4006-aedf-ccd368cbf0d0",
+        "branching": false
+      },
+      {
+        "ticket_id": "T007",
+        "reply": "Hi C107,\n\nThank you for reaching out. Your order (O207) was placed on July\u202f20,\u202f2026, which is 50\u202fdays ago. Our standard refund window is 30\u202fdays, so unfortunately we\u2019re unable to approve a refund for this purchase.\n\nIf you have any further questions or need additional assistance, please email billing@company.com.\n\nBest regards,  \nBilling Support Team",
+        "laps": 4,
+        "total_tokens": 2360,
+        "cost_usd": 0.002124,
+        "latency_s": 7.125,
+        "passed": true,
+        "budget_hit": null,
+        "error": null,
+        "trace_id": "65423375-a0e4-49bb-9cf4-fa8bb099eaef",
+        "trace_url": "https://cloud.langfuse.com/trace/65423375-a0e4-49bb-9cf4-fa8bb099eaef",
+        "branching": false
+      },
+      {
+        "ticket_id": "T008",
+        "reply": "Hi C108,\n\nI\u2019m sorry, but I\u2019m unable to locate either order\u202fO208 or the alternate order\u202fO208\u2011ALT in our system. To investigate this further, could you please email billing@company.com with any additional details (such as the purchase receipt or payment method) you have?\n\nThank you for your patience, and we\u2019ll work to resolve this as quickly as possible.",
+        "laps": 5,
+        "total_tokens": 3113,
+        "cost_usd": 0.0028017,
+        "latency_s": 16.359999999998763,
+        "passed": true,
+        "budget_hit": null,
+        "error": null,
+        "trace_id": "c777fe17-4c6c-466b-97fd-3fc058588aa4",
+        "trace_url": "https://cloud.langfuse.com/trace/c777fe17-4c6c-466b-97fd-3fc058588aa4",
+        "branching": true
+      },
+      {
+        "ticket_id": "T009",
+        "reply": "Hello,\n\nI\u2019m sorry you\u2019re having trouble locating order **O209** in our system. At this time we\u2019re unable to find a record for that order, so I\u2019m escalating the issue for further review.\n\nPlease forward any additional details (such as a receipt, confirmation email, or payment reference) to our billing team at **billing@company.com**. They\u2019ll be able to investigate the missing order and process any applicable refund.\n\nThank you for your patience, and let me know if there\u2019s anything else I can help with.",
+        "laps": 4,
+        "total_tokens": 2399,
+        "cost_usd": 0.0021591,
+        "latency_s": 11.734000000000378,
+        "passed": true,
+        "budget_hit": null,
+        "error": null,
+        "trace_id": "75ba1669-1cad-4a82-8429-55f5be3d2722",
+        "trace_url": "https://cloud.langfuse.com/trace/75ba1669-1cad-4a82-8429-55f5be3d2722",
+        "branching": true
+      },
+      {
+        "ticket_id": "T010",
+        "reply": "Hello C110,\n\nYour refund request for order **O210** has been approved. Since you\u2019re an enterprise\u2011tier customer, you have a 60\u2011day refund window, and your purchase was made 50 days ago.\n\nThe refund of **$500.00 USD** will be processed to your original payment method within the next 3\u20135 business days. You\u2019ll receive a confirmation email once the refund is complete.\n\nIf you have any further questions, feel free to let us know.\n\nBest regards,  \nBilling Support Team",
+        "laps": 4,
+        "total_tokens": 2385,
+        "cost_usd": 0.0021465,
+        "latency_s": 12.07799999999952,
+        "passed": true,
+        "budget_hit": null,
+        "error": null,
+        "trace_id": "69da4962-aabe-414e-9b24-54b7af62e99b",
+        "trace_url": "https://cloud.langfuse.com/trace/69da4962-aabe-414e-9b24-54b7af62e99b",
+        "branching": true
+      }
+    ]
+  },
+  "workflow": {
+    "pass_rate": 1.0,
+    "p50_latency_s": 1.1325000000006185,
+    "total_tokens": 3816,
+    "cost_per_ticket": 0.00034344000000000003,
+    "tickets": [
+      {
+        "ticket_id": "T001",
+        "reply": "Hi [Customer Name],\n\nYour refund request has been approved. Since your purchase was made 20\u202fdays ago\u2014well within the 30\u2011day refund window for standard\u2011tier customers\u2014we\u2019ll process a full refund of **$49.99** to your original payment method.\n\nThe refund should appear on your account within 3\u20135 business days. You\u2019ll receive a confirmation email once it\u2019s completed.\n\nIf you have any further questions, just let us know!\n\nBest regards,  \n[Your Name]  \nBilling Support Team  \nCompany Name",
+        "total_tokens": 365,
+        "cost_usd": 0.0003285,
+        "latency_s": 1.0619999999998981,
+        "passed": true,
+        "order_missing": false,
+        "trace_id": "477ad87e-a24c-441a-b3a5-b41f993a6522",
+        "trace_url": "https://cloud.langfuse.com/trace/477ad87e-a24c-441a-b3a5-b41f993a6522",
+        "branching": false
+      },
+      {
+        "ticket_id": "T002",
+        "reply": "Hi\u202f[Customer Name],\n\nThank you for reaching out. I\u2019ve reviewed your order\u202fO202 (purchased on\u202f2026\u201108\u201119) and confirmed that it falls within our 30\u2011day refund window for standard\u2011tier customers.\n\nI\u2019m processing a refund for the duplicate $29.99 charge. The amount will be returned to your original payment method within 3\u20135 business days, and you\u2019ll receive a confirmation email once the refund is complete.\n\nIf you have any further questions or notice anything else, please let us know.\n\nBest regards,  \n[Your Name]  \nBilling Support Team  \nCompany\u202fName",
+        "total_tokens": 400,
+        "cost_usd": 0.00036,
+        "latency_s": 1.2819999999992433,
+        "passed": true,
+        "order_missing": false,
+        "trace_id": "645b0c67-38bd-48dc-98f0-c3c0b6840aa7",
+        "trace_url": "https://cloud.langfuse.com/trace/645b0c67-38bd-48dc-98f0-c3c0b6840aa7",
+        "branching": false
+      },
+      {
+        "ticket_id": "T003",
+        "reply": "Hi,\n\nThank you for reaching out. Since your purchase was made 20\u202fdays ago and falls within the 45\u2011day refund window for premium subscribers, we\u2019ve approved a full refund of **$99.00**. The amount will be returned to your original payment method within 5\u20137 business days.\n\nIf you have any further questions, just let us know.\n\nBest regards,  \nBilling Support Team",
+        "total_tokens": 379,
+        "cost_usd": 0.0003411,
+        "latency_s": 1.1560000000008586,
+        "passed": true,
+        "order_missing": false,
+        "trace_id": "c9d4fa4e-661f-4095-9ea0-8fdcf7983a9b",
+        "trace_url": "https://cloud.langfuse.com/trace/c9d4fa4e-661f-4095-9ea0-8fdcf7983a9b",
+        "branching": false
+      },
+      {
+        "ticket_id": "T004",
+        "reply": "Subject: Refund Request \u2013 Order O204\n\nHi,\n\nThank you for reaching out. Your order (O204) was placed on\u202fJuly\u202f20,\u202f2026, which is 50\u202fdays ago. Our standard refund policy allows refunds within\u202f30\u202fdays of purchase for standard\u2011tier customers.\n\nSince the request falls outside this window, we\u2019re unable to process a refund for this order.\n\nIf you have any further questions or need additional assistance, please let us know.\n\nBest regards,  \nBilling Support Team  \nbilling@company.com",
+        "total_tokens": 364,
+        "cost_usd": 0.0003276,
+        "latency_s": 1.0619999999998981,
+        "passed": true,
+        "order_missing": false,
+        "trace_id": "104c5e54-4078-4fe0-bea9-93664d5680a1",
+        "trace_url": "https://cloud.langfuse.com/trace/104c5e54-4078-4fe0-bea9-93664d5680a1",
+        "branching": false
+      },
+      {
+        "ticket_id": "T005",
+        "reply": "Hi,\n\nThank you for reaching out. Your premium subscription was purchased on\u202fJuly\u202f20,\u202f2026, which is\u202f50\u202fdays ago. Our refund policy for premium customers allows refunds within\u202f45\u202fdays of purchase, so unfortunately this request falls outside the eligible window.\n\nIf you have any further questions or need additional assistance, please let us know.\n\nBest regards,  \nBilling Support Team",
+        "total_tokens": 345,
+        "cost_usd": 0.0003105,
+        "latency_s": 1.0630000000001019,
+        "passed": true,
+        "order_missing": false,
+        "trace_id": "34d2d774-f385-4a6d-9e6e-8cf8b2065e54",
+        "trace_url": "https://cloud.langfuse.com/trace/34d2d774-f385-4a6d-9e6e-8cf8b2065e54",
+        "branching": false
+      },
+      {
+        "ticket_id": "T006",
+        "reply": "**Subject:** Refund Request \u2013 Order O206  \n\nHi,\n\nThank you for reaching out. Your order (O206) was placed on\u202fJuly\u202f20,\u202f2026, which is\u202f50\u202fdays ago. Our standard refund policy allows refunds within\u202f30\u202fdays of purchase for standard\u2011tier customers.\n\nBecause the request falls outside this refund window, we\u2019re unable to process a refund for this order.\n\nIf you have any additional information or believe there\u2019s an error, please let us know. Otherwise, you may contact our billing team directly at **billing@company.com** for further assistance.\n\nThank you for your understanding.\n\nBest regards,  \n[Your Name]  \nBilling Support Team",
+        "total_tokens": 392,
+        "cost_usd": 0.0003528,
+        "latency_s": 1.0630000000001019,
+        "passed": true,
+        "order_missing": false,
+        "trace_id": "e325011a-3483-4b6d-9236-f690fcc52b80",
+        "trace_url": "https://cloud.langfuse.com/trace/e325011a-3483-4b6d-9236-f690fcc52b80",
+        "branching": false
+      },
+      {
+        "ticket_id": "T007",
+        "reply": "Subject: Re: Refund Request for Order O207\n\nHi,\n\nThank you for reaching out. I\u2019m sorry to hear you were dissatisfied with the service.\n\nYour order (O207) was placed on\u202fJuly\u202f20,\u202f2026, which is\u202f50\u202fdays ago. Our standard refund policy for your tier allows refunds within\u202f30\u202fdays of purchase. As the request falls outside this window, we\u2019re unable to process a refund.\n\nIf you have any further questions or need additional assistance, please let us know.\n\nBest regards,  \n[Your Name]  \nBilling Support Team",
+        "total_tokens": 431,
+        "cost_usd": 0.0003879,
+        "latency_s": 3.936999999999898,
+        "passed": true,
+        "order_missing": false,
+        "trace_id": "85235694-2e11-4990-a23e-a119f477a439",
+        "trace_url": "https://cloud.langfuse.com/trace/85235694-2e11-4990-a23e-a119f477a439",
+        "branching": false
+      },
+      {
+        "ticket_id": "T008",
+        "reply": "Subject: Refund Request \u2013 Order Not Found\n\nHi,\n\nThank you for reaching out. I wasn\u2019t able to locate order **O208** (or the alternate reference **O208\u2011ALT**) in our system. To investigate further and process any applicable refund, could you please email our billing team at **billing@company.com** with any additional details (e.g., order confirmation number, purchase date, or payment method)?\n\nWe\u2019ll prioritize your request once we have the information.\n\nThank you for your patience.\n\nBest regards,  \n[Your Name]  \nBilling Support Team",
+        "total_tokens": 384,
+        "cost_usd": 0.0003456,
+        "latency_s": 3.9690000000009604,
+        "passed": true,
+        "order_missing": true,
+        "trace_id": "323456e6-62f5-4699-8ee2-852b784f025c",
+        "trace_url": "https://cloud.langfuse.com/trace/323456e6-62f5-4699-8ee2-852b784f025c",
+        "branching": true
+      },
+      {
+        "ticket_id": "T009",
+        "reply": "Subject: Re: Ticket T009 \u2013 Order O209 Not Found  \n\nHi,\n\nThank you for reaching out. I\u2019m unable to locate order\u202fO209 in our system, so I\u2019m unable to process a refund at this time.\n\nPlease forward the details of this order to our billing team at **billing@company.com**. They\u2019ll be able to investigate further and assist you with any refund or related concerns.\n\nSorry for the inconvenience, and thank you for your patience.\n\nBest regards,  \n[Your Name]  \nBilling Support Team",
+        "total_tokens": 358,
+        "cost_usd": 0.00032219999999999997,
+        "latency_s": 1.1090000000003783,
+        "passed": true,
+        "order_missing": true,
+        "trace_id": "bc945101-9df8-40b2-9eeb-11c0e0867fae",
+        "trace_url": "https://cloud.langfuse.com/trace/bc945101-9df8-40b2-9eeb-11c0e0867fae",
+        "branching": true
+      },
+      {
+        "ticket_id": "T010",
+        "reply": "**Subject:** Refund Approved for Order O210  \n\nHi,\n\nWe\u2019ve reviewed your request for a refund on order **O210** (placed\u202f2026\u201107\u201120, $500.00). As an enterprise customer you have a 60\u2011day refund window, and your request falls within that period (50 days).\n\nYour refund has been **approved** and will be processed to the original payment method within the next\u202f5\u20137\u202fbusiness days. You\u2019ll receive a confirmation email once the transaction is complete.\n\nIf you have any further questions, feel free to let us know.\n\nBest regards,  \nBilling Support Team  \n[Company Name]",
+        "total_tokens": 398,
+        "cost_usd": 0.00035820000000000003,
+        "latency_s": 1.1720000000004802,
+        "passed": true,
+        "order_missing": false,
+        "trace_id": "f9587f22-e530-4090-9d44-069a51d646aa",
+        "trace_url": "https://cloud.langfuse.com/trace/f9587f22-e530-4090-9d44-069a51d646aa",
+        "branching": true
+      }
+    ]
+  },
+  "budget_demo_log": "BUDGET_HIT budget=max_iters value=2 limit=2 ticket=T008",
+  "verdict": "Decision rule: does the path vary by input in a way that cannot be pre-enumerated? The three branching tickets (T008, T009, T010) do vary -- order missing or enterprise tier -- but both variants are finite and encodable as if/else in the workflow. The workflow matched or beat the agent on all four numbers: pass rate, p50 latency, total tokens, and cost per ticket. No ticket in this set forces an agent. The class that would require one is a ticket where the escalation path itself returns a dynamic follow-up order ID that cannot be known until the first tool responds -- none of the 10 tickets here has that property. Verdict: workflow wins.",
+  "tickets": [
+    {
+      "ticket_id": "T001",
+      "text": "Hi, I need a refund for my recent purchase. Please process it ASAP.",
+      "customer_id": "C101",
+      "order_id": "O201",
+      "expected": "approve",
+      "branching": false
+    },
+    {
+      "ticket_id": "T002",
+      "text": "I was charged twice last week. Requesting a refund for the duplicate charge.",
+      "customer_id": "C102",
+      "order_id": "O202",
+      "expected": "approve",
+      "branching": false
+    },
+    {
+      "ticket_id": "T003",
+      "text": "Premium subscriber here -- the service was unavailable for 3 days. Please refund.",
+      "customer_id": "C103",
+      "order_id": "O203",
+      "expected": "approve",
+      "branching": false
+    },
+    {
+      "ticket_id": "T004",
+      "text": "I want to cancel and get a refund for my order placed about two months ago.",
+      "customer_id": "C104",
+      "order_id": "O204",
+      "expected": "deny",
+      "branching": false
+    },
+    {
+      "ticket_id": "T005",
+      "text": "My premium subscription was charged incorrectly almost two months ago. Need refund.",
+      "customer_id": "C105",
+      "order_id": "O205",
+      "expected": "deny",
+      "branching": false
+    },
+    {
+      "ticket_id": "T006",
+      "text": "Requesting refund for order from 7 weeks ago -- product arrived damaged.",
+      "customer_id": "C106",
+      "order_id": "O206",
+      "expected": "deny",
+      "branching": false
+    },
+    {
+      "ticket_id": "T007",
+      "text": "Please refund my order. Service quality was unacceptable 6 weeks ago.",
+      "customer_id": "C107",
+      "order_id": "O207",
+      "expected": "deny",
+      "branching": false
+    },
+    {
+      "ticket_id": "T008",
+      "text": "I need a refund for order O208. If that order is not found, please also check O208-ALT. This is urgent.",
+      "customer_id": "C108",
+      "order_id": "O208",
+      "expected": "escalate",
+      "branching": true
+    },
+    {
+      "ticket_id": "T009",
+      "text": "My order O209 does not appear in your system. Please escalate this to billing.",
+      "customer_id": "C109",
+      "order_id": "O209",
+      "expected": "escalate",
+      "branching": true
+    },
+    {
+      "ticket_id": "T010",
+      "text": "As an enterprise customer I am requesting a refund for order O210 placed 50 days ago.",
+      "customer_id": "C110",
+      "order_id": "O210",
+      "expected": "approve",
+      "branching": true
+    }
+  ]
+}

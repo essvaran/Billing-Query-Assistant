@@ -29,14 +29,16 @@
       </label>
     </div>
 
-    <div class="filter-bar__meta" *ngIf="!loading">
-      @if (total === 0) {
-        <span class="filter-bar__count">No traces found</span>
-      } @else {
-        <span class="filter-bar__count">{{ total }} trace{{ total === 1 ? '' : 's' }}</span>
-        <span class="filter-bar__page">page {{ currentPage }} / {{ totalPages }}</span>
-      }
-    </div>
+    @if (!loading) {
+      <div class="filter-bar__meta">
+        @if (total === 0) {
+          <span class="filter-bar__count">No traces found</span>
+        } @else {
+          <span class="filter-bar__count">{{ total }} trace{{ total === 1 ? '' : 's' }}</span>
+          <span class="filter-bar__page">page {{ currentPage }} / {{ totalPages }}</span>
+        }
+      </div>
+    }
   </div>
 
   <!-- Error banner -->

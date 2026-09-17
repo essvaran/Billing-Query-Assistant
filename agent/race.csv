@@ -1,0 +1,3 @@
+system,pass_rate,p50_latency_s,total_tokens,cost_per_ticket_usd
+agent,0.90,6.367,24615,0.002215
+workflow,1.00,1.133,3816,0.000343

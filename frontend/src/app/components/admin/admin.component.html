@@ -1,0 +1,420 @@
+<div class="admin-shell">
+
+  <!-- Page header -->
+  <div class="admin-header">
+    <h2 class="admin-title">Tool Data Management</h2>
+    <p class="admin-sub">Manage tickets, orders, and customers used by agent tools. Changes take effect immediately.</p>
+  </div>
+
+  <!-- Toast notifications -->
+  <div class="toast-stack" aria-live="polite">
+    @for (t of toasts; track t.id) {
+      <div class="toast" [class.toast--success]="t.kind === 'success'" [class.toast--error]="t.kind === 'error'">
+        <span>{{ t.message }}</span>
+        <button class="toast__close" (click)="dismissToast(t.id)" aria-label="Dismiss">✕</button>
+      </div>
+    }
+  </div>
+
+  <!-- Confirm modal -->
+  @if (confirmModal) {
+    <div class="modal-backdrop" (click)="dismissModal()" role="dialog" aria-modal="true">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <p class="modal-msg">{{ confirmModal.message }}</p>
+        <div class="modal-actions">
+          <button class="btn btn--danger" (click)="executeModal()" [disabled]="saving">
+            @if (saving) { <span class="spinner spinner--sm"></span> } Delete
+          </button>
+          <button class="btn btn--ghost" (click)="dismissModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Tabs -->
+  <div class="tabs" role="tablist">
+    <button class="tab-btn" role="tab" [class.active]="activeTab === 'tickets'"
+            (click)="setTab('tickets')" [attr.aria-selected]="activeTab === 'tickets'">
+      Tickets <span class="tab-count">{{ tickets.length }}</span>
+    </button>
+    <button class="tab-btn" role="tab" [class.active]="activeTab === 'orders'"
+            (click)="setTab('orders')" [attr.aria-selected]="activeTab === 'orders'">
+      Orders <span class="tab-count">{{ orders.length }}</span>
+    </button>
+    <button class="tab-btn" role="tab" [class.active]="activeTab === 'customers'"
+            (click)="setTab('customers')" [attr.aria-selected]="activeTab === 'customers'">
+      Customers <span class="tab-count">{{ customers.length }}</span>
+    </button>
+    <button class="tab-btn" role="tab" [class.active]="activeTab === 'documents'"
+            (click)="setTab('documents')" [attr.aria-selected]="activeTab === 'documents'">
+      Documents
+    </button>
+    <button class="tab-btn" role="tab" [class.active]="activeTab === 'users'"
+            (click)="setTab('users')" [attr.aria-selected]="activeTab === 'users'">
+      Users <span class="tab-count">{{ users.length }}</span>
+    </button>
+  </div>
+
+  <!-- ===== TICKETS ===== -->
+  @if (activeTab === 'tickets') {
+    <div class="section">
+      <div class="section-bar">
+        <button class="btn btn--primary" (click)="showNewTicketForm = !showNewTicketForm">
+          {{ showNewTicketForm ? '✕ Cancel' : '+ New Ticket' }}
+        </button>
+      </div>
+
+      @if (showNewTicketForm) {
+        <div class="form-card">
+          <h3 class="form-title">New Ticket</h3>
+          <div class="form-grid">
+            <label class="form-field">
+              <span>Ticket ID <span class="required">*</span></span>
+              <input [(ngModel)]="newTicket.ticket_id" placeholder="T011" />
+            </label>
+            <label class="form-field">
+              <span>Customer ID <span class="required">*</span></span>
+              <input [(ngModel)]="newTicket.customer_id" placeholder="C101" />
+            </label>
+            <label class="form-field">
+              <span>Order ID <span class="required">*</span></span>
+              <input [(ngModel)]="newTicket.order_id" placeholder="O201" />
+            </label>
+            <label class="form-field">
+              <span>Expected Verdict</span>
+              <select [(ngModel)]="newTicket.expected_verdict">
+                <option value="">-- none --</option>
+                @for (v of verdictOptions; track v) { <option [value]="v">{{ v }}</option> }
+              </select>
+            </label>
+            <label class="form-field form-field--full">
+              <span>Ticket Text <span class="required">*</span></span>
+              <textarea [(ngModel)]="newTicket.text" rows="3" placeholder="Describe the issue…"></textarea>
+            </label>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn--primary" (click)="createTicket()" [disabled]="saving">
+              @if (saving) { <span class="spinner spinner--sm"></span> } Create
+            </button>
+            <button class="btn btn--ghost" (click)="showNewTicketForm = false">Cancel</button>
+          </div>
+        </div>
+      }
+
+      @if (loading) {
+        <div class="table-loading"><span class="spinner"></span> Loading…</div>
+      } @else {
+        <div class="table-wrap">
+          <table class="data-table" role="grid">
+            <thead>
+              <tr>
+                <th>ID</th><th>Customer</th><th>Order</th><th>Verdict</th><th>Text</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (t of tickets; track t.ticket_id) {
+                @if (editingTicket?.ticket_id === t.ticket_id) {
+                  <tr class="editing-row">
+                    <td><span class="badge">{{ t.ticket_id }}</span></td>
+                    <td><input [(ngModel)]="editingTicket!.customer_id" class="cell-input" /></td>
+                    <td><input [(ngModel)]="editingTicket!.order_id" class="cell-input" /></td>
+                    <td>
+                      <select [(ngModel)]="editingTicket!.expected_verdict" class="cell-select">
+                        <option value="">--</option>
+                        @for (v of verdictOptions; track v) { <option [value]="v">{{ v }}</option> }
+                      </select>
+                    </td>
+                    <td><textarea [(ngModel)]="editingTicket!.text" class="cell-textarea" rows="2"></textarea></td>
+                    <td class="action-cell">
+                      <button class="btn btn--sm btn--primary" (click)="saveTicket()" [disabled]="saving">Save</button>
+                      <button class="btn btn--sm btn--ghost" (click)="cancelEditTicket()">Cancel</button>
+                    </td>
+                  </tr>
+                } @else {
+                  <tr>
+                    <td><span class="badge">{{ t.ticket_id }}</span></td>
+                    <td class="mono">{{ t.customer_id }}</td>
+                    <td class="mono">{{ t.order_id }}</td>
+                    <td>
+                      @if (t.expected_verdict) {
+                        <span class="chip chip--{{ t.expected_verdict === 'approve' ? 'success' : t.expected_verdict === 'deny' ? 'danger' : 'warning' }}">
+                          {{ t.expected_verdict }}
+                        </span>
+                      } @else { <span class="muted">--</span> }
+                    </td>
+                    <td class="text-cell">{{ t.text }}</td>
+                    <td class="action-cell">
+                      <button class="btn btn--sm btn--ghost" (click)="startEditTicket(t)">Edit</button>
+                      <button class="btn btn--sm btn--danger" (click)="confirmDeleteTicket(t.ticket_id)">Delete</button>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ===== ORDERS ===== -->
+  @if (activeTab === 'orders') {
+    <div class="section">
+      <div class="section-bar">
+        <button class="btn btn--primary" (click)="showNewOrderForm = !showNewOrderForm">
+          {{ showNewOrderForm ? '✕ Cancel' : '+ New Order' }}
+        </button>
+      </div>
+
+      @if (showNewOrderForm) {
+        <div class="form-card">
+          <h3 class="form-title">New Order</h3>
+          <div class="form-grid">
+            <label class="form-field">
+              <span>Order ID <span class="required">*</span></span>
+              <input [(ngModel)]="newOrder.order_id" placeholder="O211" />
+            </label>
+            <label class="form-field">
+              <span>Purchase Date <span class="required">*</span></span>
+              <input type="date" [(ngModel)]="newOrder.purchase_date" />
+            </label>
+            <label class="form-field">
+              <span>Amount (USD) <span class="required">*</span></span>
+              <input type="number" [(ngModel)]="newOrder.amount_usd" placeholder="49.99" step="0.01" min="0" />
+            </label>
+            <label class="form-field">
+              <span>Status <span class="required">*</span></span>
+              <select [(ngModel)]="newOrder.status">
+                <option value="">-- select --</option>
+                @for (s of statusOptions; track s) { <option [value]="s">{{ s }}</option> }
+              </select>
+            </label>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn--primary" (click)="createOrder()" [disabled]="saving">
+              @if (saving) { <span class="spinner spinner--sm"></span> } Create
+            </button>
+            <button class="btn btn--ghost" (click)="showNewOrderForm = false">Cancel</button>
+          </div>
+        </div>
+      }
+
+      <div class="table-wrap">
+        <table class="data-table" role="grid">
+          <thead>
+            <tr><th>Order ID</th><th>Purchase Date</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            @for (o of orders; track o.order_id) {
+              @if (editingOrder?.order_id === o.order_id) {
+                <tr class="editing-row">
+                  <td><span class="badge">{{ o.order_id }}</span></td>
+                  <td><input type="date" [(ngModel)]="editingOrder!.purchase_date" class="cell-input" /></td>
+                  <td><input type="number" [(ngModel)]="editingOrder!.amount_usd" class="cell-input" step="0.01" min="0" /></td>
+                  <td>
+                    <select [(ngModel)]="editingOrder!.status" class="cell-select">
+                      @for (s of statusOptions; track s) { <option [value]="s">{{ s }}</option> }
+                    </select>
+                  </td>
+                  <td class="action-cell">
+                    <button class="btn btn--sm btn--primary" (click)="saveOrder()" [disabled]="saving">Save</button>
+                    <button class="btn btn--sm btn--ghost" (click)="cancelEditOrder()">Cancel</button>
+                  </td>
+                </tr>
+              } @else {
+                <tr>
+                  <td><span class="badge">{{ o.order_id }}</span></td>
+                  <td class="mono">{{ o.purchase_date }}</td>
+                  <td>${{ o.amount_usd | number:'1.2-2' }}</td>
+                  <td>
+                    <span class="chip chip--{{ o.status === 'delivered' ? 'success' : o.status === 'pending' ? 'warning' : o.status === 'cancelled' ? 'danger' : 'purple' }}">
+                      {{ o.status }}
+                    </span>
+                  </td>
+                  <td class="action-cell">
+                    <button class="btn btn--sm btn--ghost" (click)="startEditOrder(o)">Edit</button>
+                    <button class="btn btn--sm btn--danger" (click)="confirmDeleteOrder(o.order_id)">Delete</button>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- ===== CUSTOMERS ===== -->
+  @if (activeTab === 'customers') {
+    <div class="section">
+      <div class="section-bar">
+        <button class="btn btn--primary" (click)="showNewCustomerForm = !showNewCustomerForm">
+          {{ showNewCustomerForm ? '✕ Cancel' : '+ New Customer' }}
+        </button>
+      </div>
+
+      @if (showNewCustomerForm) {
+        <div class="form-card">
+          <h3 class="form-title">New Customer</h3>
+          <div class="form-grid">
+            <label class="form-field">
+              <span>Customer ID <span class="required">*</span></span>
+              <input [(ngModel)]="newCustomer.customer_id" placeholder="C111" />
+            </label>
+            <label class="form-field">
+              <span>Tier <span class="required">*</span></span>
+              <select [(ngModel)]="newCustomer.tier">
+                <option value="">-- select --</option>
+                @for (t of tierOptions; track t) { <option [value]="t">{{ t }}</option> }
+              </select>
+            </label>
+            <label class="form-field">
+              <span>Refund Days <span class="required">*</span></span>
+              <input type="number" [(ngModel)]="newCustomer.refund_days" placeholder="30" min="1" />
+            </label>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn--primary" (click)="createCustomer()" [disabled]="saving">
+              @if (saving) { <span class="spinner spinner--sm"></span> } Create
+            </button>
+            <button class="btn btn--ghost" (click)="showNewCustomerForm = false">Cancel</button>
+          </div>
+        </div>
+      }
+
+      <div class="table-wrap">
+        <table class="data-table" role="grid">
+          <thead>
+            <tr><th>Customer ID</th><th>Tier</th><th>Refund Days</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            @for (c of customers; track c.customer_id) {
+              @if (editingCustomer?.customer_id === c.customer_id) {
+                <tr class="editing-row">
+                  <td><span class="badge">{{ c.customer_id }}</span></td>
+                  <td>
+                    <select [(ngModel)]="editingCustomer!.tier" class="cell-select">
+                      @for (t of tierOptions; track t) { <option [value]="t">{{ t }}</option> }
+                    </select>
+                  </td>
+                  <td><input type="number" [(ngModel)]="editingCustomer!.refund_days" class="cell-input" min="1" /></td>
+                  <td class="action-cell">
+                    <button class="btn btn--sm btn--primary" (click)="saveCustomer()" [disabled]="saving">Save</button>
+                    <button class="btn btn--sm btn--ghost" (click)="cancelEditCustomer()">Cancel</button>
+                  </td>
+                </tr>
+              } @else {
+                <tr>
+                  <td><span class="badge">{{ c.customer_id }}</span></td>
+                  <td>
+                    <span class="chip chip--{{ c.tier === 'standard' ? 'neutral' : c.tier === 'premium' ? 'info' : 'purple' }}">
+                      {{ c.tier }}
+                    </span>
+                  </td>
+                  <td>{{ c.refund_days }}d</td>
+                  <td class="action-cell">
+                    <button class="btn btn--sm btn--ghost" (click)="startEditCustomer(c)">Edit</button>
+                    <button class="btn btn--sm btn--danger" (click)="confirmDeleteCustomer(c.customer_id)">Delete</button>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- ===== USERS ===== -->
+  @if (activeTab === 'users') {
+    <div class="section">
+      <div class="section-bar">
+        <div>
+          <h3 class="form-title" style="margin:0">User Management</h3>
+          <p style="margin:0.25rem 0 0; font-size:0.8rem; color:#6c7086">
+            Users are added automatically on first login. Change roles here — the primary admin account cannot be demoted.
+          </p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table" role="grid">
+          <thead>
+            <tr><th>Email</th><th>Role</th><th>Joined</th><th>Change Role</th></tr>
+          </thead>
+          <tbody>
+            @for (u of users; track u.id) {
+              <tr>
+                <td>{{ u.email }}</td>
+                <td>
+                  <span class="chip chip--{{ u.role === 'admin' ? 'info' : 'neutral' }}">
+                    {{ u.role }}
+                  </span>
+                </td>
+                <td class="muted" style="font-size:0.8rem">{{ u.created_at | slice:0:10 }}</td>
+                <td class="action-cell">
+                  @if (u.role !== 'admin') {
+                    <button class="btn btn--sm btn--primary" (click)="setUserRole(u, 'admin')" [disabled]="saving">
+                      Make Admin
+                    </button>
+                  } @else {
+                    <button class="btn btn--sm btn--ghost" (click)="setUserRole(u, 'user')" [disabled]="saving">
+                      Demote to User
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- ===== DOCUMENTS ===== -->
+  @if (activeTab === 'documents') {
+    <div class="section">
+      <div class="section-bar">
+        <div>
+          <h3 class="form-title" style="margin:0">Knowledge Base Documents</h3>
+          <p style="margin:0.25rem 0 0; font-size:0.8rem; color:#6c7086">
+            Upload PDF, Markdown, TXT, DOCX, or XLSX files to index them into the RAG corpus.
+          </p>
+        </div>
+      </div>
+
+      <div class="upload-card">
+        <label class="upload-drop" [class.upload-drop--busy]="uploadState === 'uploading'">
+          <input
+            type="file"
+            accept=".pdf,.md,.txt,.docx,.xlsx,.xls"
+            (change)="onFileSelected($event)"
+            [disabled]="uploadState === 'uploading'"
+            style="display:none"
+          />
+          <span class="upload-drop__icon">📄</span>
+          @if (uploadState === 'idle') {
+            <span class="upload-drop__label">Click to choose a file</span>
+            <span class="upload-drop__hint">PDF · MD · TXT · DOCX · XLSX — max 20 MB</span>
+          } @else if (uploadState === 'uploading') {
+            <span class="spinner"></span>
+            <span class="upload-drop__label">Indexing {{ uploadedFileName }}…</span>
+          } @else if (uploadState === 'success') {
+            <span class="upload-drop__label upload-drop__label--success">✓ {{ uploadMessage }}</span>
+            <span class="upload-drop__hint">{{ uploadedFileName }}</span>
+          } @else if (uploadState === 'error') {
+            <span class="upload-drop__label upload-drop__label--error">✗ {{ uploadMessage }}</span>
+            <span class="upload-drop__hint">{{ uploadedFileName }}</span>
+          }
+        </label>
+
+        @if (uploadState !== 'idle') {
+          <button class="btn btn--ghost" style="margin-top:0.75rem" (click)="resetUpload()">
+            Upload another file
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+</div>

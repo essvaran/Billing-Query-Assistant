@@ -1,0 +1,244 @@
+<div class="race-page">
+
+  <!-- Header -->
+  <div class="race-header">
+    <div class="header-text">
+      <h1>Agent vs Workflow Race</h1>
+      <p class="subtitle">Week 7 Task Set A &mdash; does this task need an agent loop?</p>
+    </div>
+    <div class="header-actions">
+      <a [href]="langfuseUrl" target="_blank" rel="noopener" class="btn btn-outline">
+        Langfuse Dashboard
+      </a>
+      <button
+        class="btn btn-primary"
+        (click)="startRace()"
+        [disabled]="raceStatus === 'running'">
+        @if (raceStatus === 'running') { Running&hellip; } @else { Run Race }
+      </button>
+    </div>
+  </div>
+
+  <!-- Status bar -->
+  <div class="status-bar" [class]="'status-' + raceStatus">
+    @switch (raceStatus) {
+      @case ('idle') { <span>No results yet. Click <strong>Run Race</strong> to start the race (~3-5 min).</span> }
+      @case ('running') { <span class="pulse">&#9679;</span> <span>Race in progress &mdash; polling every 5 s&hellip;</span> }
+      @case ('done') { <span>&#10003; Results from {{ results?.run_at | date:'medium' }} &mdash; model: {{ results?.model }}</span> }
+      @case ('error') { <span>&#10007; Error: {{ statusError }}</span> }
+    }
+  </div>
+
+  <!-- Loading -->
+  @if (loadingResults) {
+    <div class="loading-bar">Loading results&hellip;</div>
+  }
+
+  <!-- Results -->
+  @if (results) {
+
+    <!-- Summary metrics -->
+    <section class="section">
+      <h2 class="section-title">Race Summary</h2>
+      <div class="metrics-grid">
+        @for (m of metrics; track m.label) {
+          <div class="metric-card">
+            <div class="metric-label">{{ m.label }}</div>
+            <div class="metric-row">
+              <div class="metric-half agent" [class.winner]="m.agentWins">
+                <span class="sys-label">Agent</span>
+                <span class="sys-value">{{ m.agentValue }}</span>
+                @if (m.agentWins) { <span class="win-badge">WIN</span> }
+              </div>
+              <div class="metric-divider"></div>
+              <div class="metric-half workflow" [class.winner]="m.workflowWins">
+                <span class="sys-label">Workflow</span>
+                <span class="sys-value">{{ m.workflowValue }}</span>
+                @if (m.workflowWins) { <span class="win-badge">WIN</span> }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Verdict -->
+    <section class="section">
+      <h2 class="section-title">Verdict</h2>
+      <div class="verdict-card">
+        <p>{{ results.verdict }}</p>
+      </div>
+    </section>
+
+    <!-- Budget log -->
+    <section class="section">
+      <h2 class="section-title">Budget Termination Demo</h2>
+      <div class="budget-card">
+        <pre class="budget-log">{{ results.budget_demo_log }}</pre>
+        <p class="note">
+          T008 run with MAX_ITERS=2 (tight). The loop raised
+          <code>BudgetExceeded</code>, logged the line above, and returned cleanly.
+          All four budgets (iters, tokens, cost, wall-clock) are checked each lap.
+        </p>
+      </div>
+    </section>
+
+    <!-- Per-ticket table -->
+    <section class="section">
+      <h2 class="section-title">Per-Ticket Results <span class="branch-note">&#9733; = branching ticket</span></h2>
+      <div class="table-wrap">
+        <table class="tickets-table">
+          <thead>
+            <tr>
+              <th rowspan="2">Ticket</th>
+              <th rowspan="2">Expected</th>
+              <th rowspan="2" class="center">Branch</th>
+              <th colspan="4" class="group-agent">Agent</th>
+              <th colspan="4" class="group-workflow">Workflow</th>
+            </tr>
+            <tr>
+              <th class="group-agent">Pass</th>
+              <th class="group-agent">Latency</th>
+              <th class="group-agent">Tokens</th>
+              <th class="group-agent">Cost</th>
+              <th class="group-workflow">Pass</th>
+              <th class="group-workflow">Latency</th>
+              <th class="group-workflow">Tokens</th>
+              <th class="group-workflow">Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (ticket of results.tickets; track ticket.ticket_id) {
+              <tr
+                class="data-row"
+                [class.branching-row]="ticket.branching"
+                (click)="toggleExpand(ticket.ticket_id)"
+                title="Click to expand replies and Langfuse traces">
+                <td class="ticket-id">{{ ticket.ticket_id }}</td>
+                <td>
+                  <span class="badge" [class]="badgeClass(ticket.expected)">
+                    {{ ticket.expected }}
+                  </span>
+                </td>
+                <td class="center">{{ ticket.branching ? '&#9733;' : '' }}</td>
+
+                @if (agentByTicket[ticket.ticket_id]; as ar) {
+                  <td>
+                    <span class="pass-pill" [class.pass]="ar.passed" [class.fail]="!ar.passed">
+                      {{ ar.passed ? 'PASS' : 'FAIL' }}
+                    </span>
+                  </td>
+                  <td class="num">{{ ar.latency_s.toFixed(2) }}s</td>
+                  <td class="num">{{ ar.total_tokens.toLocaleString() }}</td>
+                  <td class="num">${{ ar.cost_usd.toFixed(5) }}</td>
+                } @else {
+                  <td colspan="4" class="center muted">-</td>
+                }
+
+                @if (workflowByTicket[ticket.ticket_id]; as wr) {
+                  <td>
+                    <span class="pass-pill" [class.pass]="wr.passed" [class.fail]="!wr.passed">
+                      {{ wr.passed ? 'PASS' : 'FAIL' }}
+                    </span>
+                  </td>
+                  <td class="num">{{ wr.latency_s.toFixed(2) }}s</td>
+                  <td class="num">{{ wr.total_tokens.toLocaleString() }}</td>
+                  <td class="num">${{ wr.cost_usd.toFixed(5) }}</td>
+                } @else {
+                  <td colspan="4" class="center muted">-</td>
+                }
+              </tr>
+
+              <!-- Expanded detail row -->
+              @if (isExpanded(ticket.ticket_id)) {
+                <tr class="detail-row">
+                  <td colspan="11">
+                    <div class="detail-grid">
+                      <div class="detail-col ticket-col">
+                        <div class="detail-label">Ticket {{ ticket.ticket_id }}</div>
+                        <div class="detail-text">{{ ticket.text }}</div>
+                        <div class="detail-meta">
+                          <span class="meta-chip">Customer: {{ ticket.customer_id }}</span>
+                          <span class="meta-chip">Order: {{ ticket.order_id }}</span>
+                          <span class="meta-chip">Expected: {{ ticket.expected }}</span>
+                        </div>
+                      </div>
+
+                      <div class="detail-col">
+                        <div class="detail-label agent-label">
+                          Agent reply
+                          @if (agentByTicket[ticket.ticket_id]?.laps) {
+                            <span class="laps-chip">{{ agentByTicket[ticket.ticket_id]?.laps }} laps</span>
+                          }
+                        </div>
+                        <div class="detail-text reply-text">
+                          {{ agentByTicket[ticket.ticket_id]?.reply }}
+                        </div>
+                        @if (agentByTicket[ticket.ticket_id]?.budget_hit) {
+                          <div class="budget-hit-chip">
+                            {{ agentByTicket[ticket.ticket_id]?.budget_hit }}
+                          </div>
+                        }
+                        @if (agentByTicket[ticket.ticket_id]?.trace_url) {
+                          <a
+                            [href]="agentByTicket[ticket.ticket_id]?.trace_url"
+                            target="_blank"
+                            rel="noopener"
+                            class="trace-link">
+                            View Langfuse trace &rarr;
+                          </a>
+                        }
+                      </div>
+
+                      <div class="detail-col">
+                        <div class="detail-label workflow-label">Workflow reply</div>
+                        <div class="detail-text reply-text">
+                          {{ workflowByTicket[ticket.ticket_id]?.reply }}
+                        </div>
+                        @if (workflowByTicket[ticket.ticket_id]?.trace_url) {
+                          <a
+                            [href]="workflowByTicket[ticket.ticket_id]?.trace_url"
+                            target="_blank"
+                            rel="noopener"
+                            class="trace-link">
+                            View Langfuse trace &rarr;
+                          </a>
+                        }
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  } @else if (!loadingResults && raceStatus !== 'running') {
+    <!-- Empty state -->
+    <div class="empty-state">
+      <div class="empty-icon">&#9654;</div>
+      <h3>No race results yet</h3>
+      <p>
+        Click <strong>Run Race</strong> to run the agent and workflow over all 10 tickets.
+        The race takes ~3-5 minutes (Groq rate limits apply).
+      </p>
+      <div class="tools-preview">
+        <div class="tool-card">
+          <div class="tool-name">get_ticket</div>
+          <div class="tool-desc">Retrieve a ticket by ID &mdash; returns text, customer ID, order ID</div>
+        </div>
+        <div class="tool-card">
+          <div class="tool-name">get_order</div>
+          <div class="tool-desc">Fetch an order record &mdash; returns purchase date, amount, status</div>
+        </div>
+        <div class="tool-card new-tool">
+          <div class="tool-name">get_customer_tier <span class="new-badge">NEW</span></div>
+          <div class="tool-desc">Return the SLA tier &mdash; used exclusively to select the refund window</div>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>
