@@ -96,10 +96,10 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
       label: 'Standard Tickets',
       mode: 'agent',
       questions: [
-        { id: 'T001', text: 'Please resolve ticket T001 for customer C101.' },
         { id: 'T002', text: 'Please resolve ticket T002 for customer C102.' },
         { id: 'T003', text: 'Please resolve ticket T003 for customer C103.' },
         { id: 'T004', text: 'Please resolve ticket T004 for customer C104.' },
+        { id: 'T007', text: 'Please resolve ticket T007 for customer C107.' },
       ],
     },
     {
@@ -109,6 +109,15 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
         { id: 'T008', text: 'Please resolve ticket T008 for customer C108.' },
         { id: 'T009', text: 'Please resolve ticket T009 for customer C109.' },
         { id: 'T010', text: 'Please resolve ticket T010 for customer C110.' },
+      ],
+    },
+    {
+      label: 'Adversarial Tickets ⚠',
+      mode: 'agent',
+      questions: [
+        { id: 'T011', text: 'Please resolve ticket T011 for customer C111.' },
+        { id: 'T012', text: 'Please resolve ticket T012 for customer C112.' },
+        { id: 'T013', text: 'Please resolve ticket T013 for customer C113.' },
       ],
     },
     {

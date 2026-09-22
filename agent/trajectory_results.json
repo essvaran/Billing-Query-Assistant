@@ -1,0 +1,777 @@
+{
+  "run_id": "0ed7b83f",
+  "run_at": "2026-09-21T16:28:55.458515",
+  "results": [
+    {
+      "ticket_id": "T002",
+      "expected_verdict": "approve",
+      "outcome_passed": true,
+      "reply": "Hi C102,\n\nI\u2019ve reviewed your request regarding the duplicate charge on order\u202fO202. Since the purchase was made 30\u202fdays ago and that falls within the 30\u2011day refund window for your standard tier, I\u2019ve approved a full refund for the duplicate amount.\n\nYou should see the refund reflected in your account within 3\u20135 business days. If you have any further questions, just let me know!\n\nBest regards,  \nBilling Support Team",
+      "tool_steps": [
+        {
+          "tool": "get_ticket",
+          "args": {
+            "ticket_id": "T002"
+          },
+          "result": {
+            "ticket_id": "T002",
+            "customer_id": "C102",
+            "order_id": "O202",
+            "text": "I was charged twice last week. Requesting a refund for the duplicate charge.",
+            "expected_verdict": "approve"
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_order",
+          "args": {
+            "order_id": "O202"
+          },
+          "result": {
+            "order_id": "O202",
+            "purchase_date": "2026-08-22",
+            "amount_usd": 29.99,
+            "status": "delivered",
+            "days_since_purchase": 30
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_customer_tier",
+          "args": {
+            "customer_id": "C102",
+            "tier": "standard"
+          },
+          "result": {
+            "customer_id": "C102",
+            "tier": "standard",
+            "refund_days": 30
+          },
+          "valid_args": true
+        }
+      ],
+      "expected_sequences": [
+        [
+          "get_ticket",
+          "get_order",
+          "get_customer_tier"
+        ]
+      ],
+      "sequence_matched": true,
+      "tool_choice_correct": true,
+      "all_args_valid": true,
+      "step_count": 3,
+      "optimal_step_count": 3,
+      "step_efficiency": 1.0,
+      "cost_usd": 0.002699,
+      "latency_s": 3.469,
+      "total_tokens": 2999,
+      "laps": 4,
+      "failure_modes": [],
+      "trajectory_passed": true,
+      "trace_url": "https://cloud.langfuse.com/trace/4f9f3a54-179b-4674-892b-06ccf666921b"
+    },
+    {
+      "ticket_id": "T003",
+      "expected_verdict": "approve",
+      "outcome_passed": true,
+      "reply": "Hi\u202fC103,\n\nThank you for reaching out. I see that your purchase was made on\u202f2026\u201108\u201122, which is well within the 45\u2011day refund window for premium subscribers. I\u2019m happy to confirm that your refund of\u202f$99.00\u202fwill be processed shortly.\n\nWe apologize for the service interruption you experienced and appreciate your patience. If you have any further questions, just let us know.\n\nBest regards,  \nBilling Support Team",
+      "tool_steps": [
+        {
+          "tool": "get_ticket",
+          "args": {
+            "ticket_id": "T003"
+          },
+          "result": {
+            "ticket_id": "T003",
+            "customer_id": "C103",
+            "order_id": "O203",
+            "text": "Premium subscriber here -- the service was unavailable for 3 days. Please refund.",
+            "expected_verdict": "approve"
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_order",
+          "args": {
+            "order_id": "O203"
+          },
+          "result": {
+            "order_id": "O203",
+            "purchase_date": "2026-08-22",
+            "amount_usd": 99.0,
+            "status": "delivered",
+            "days_since_purchase": 30
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_customer_tier",
+          "args": {
+            "customer_id": "C103",
+            "tier": "premium"
+          },
+          "result": {
+            "customer_id": "C103",
+            "tier": "premium",
+            "refund_days": 45
+          },
+          "valid_args": true
+        }
+      ],
+      "expected_sequences": [
+        [
+          "get_ticket",
+          "get_order",
+          "get_customer_tier"
+        ]
+      ],
+      "sequence_matched": true,
+      "tool_choice_correct": true,
+      "all_args_valid": true,
+      "step_count": 3,
+      "optimal_step_count": 3,
+      "step_efficiency": 1.0,
+      "cost_usd": 0.002709,
+      "latency_s": 3.641,
+      "total_tokens": 3010,
+      "laps": 4,
+      "failure_modes": [],
+      "trajectory_passed": true,
+      "trace_url": "https://cloud.langfuse.com/trace/40325308-c1e1-4507-a117-b09d428dbfcf"
+    },
+    {
+      "ticket_id": "T004",
+      "expected_verdict": "deny",
+      "outcome_passed": true,
+      "reply": "Hi C104,\n\nThank you for reaching out. Your order **O204** was placed on **July\u202f23,\u202f2026**, which is **60\u202fdays** ago. According to the standard\u2011tier refund policy, refunds are only available within **30\u202fdays** of purchase.\n\nSince the request falls outside this window, we\u2019re unable to process a refund for this order.\n\nIf you have any other questions or need further assistance, please let us know.\n\nBest regards,  \nBilling Support Team",
+      "tool_steps": [
+        {
+          "tool": "get_ticket",
+          "args": {
+            "ticket_id": "T004"
+          },
+          "result": {
+            "ticket_id": "T004",
+            "customer_id": "C104",
+            "order_id": "O204",
+            "text": "I want to cancel and get a refund for my order placed about two months ago.",
+            "expected_verdict": "deny"
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_order",
+          "args": {
+            "order_id": "O204"
+          },
+          "result": {
+            "order_id": "O204",
+            "purchase_date": "2026-07-23",
+            "amount_usd": 59.0,
+            "status": "delivered",
+            "days_since_purchase": 60
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_customer_tier",
+          "args": {
+            "customer_id": "C104",
+            "tier": "standard"
+          },
+          "result": {
+            "customer_id": "C104",
+            "tier": "standard",
+            "refund_days": 30
+          },
+          "valid_args": true
+        }
+      ],
+      "expected_sequences": [
+        [
+          "get_ticket",
+          "get_order",
+          "get_customer_tier"
+        ]
+      ],
+      "sequence_matched": true,
+      "tool_choice_correct": true,
+      "all_args_valid": true,
+      "step_count": 3,
+      "optimal_step_count": 3,
+      "step_efficiency": 1.0,
+      "cost_usd": 0.00276,
+      "latency_s": 4.968,
+      "total_tokens": 3067,
+      "laps": 4,
+      "failure_modes": [],
+      "trajectory_passed": true,
+      "trace_url": "https://cloud.langfuse.com/trace/2fa316a7-5afa-49b3-8f02-ed94f89d8626"
+    },
+    {
+      "ticket_id": "T007",
+      "expected_verdict": "deny",
+      "outcome_passed": true,
+      "reply": "Hi C107,\n\nThank you for reaching out. Your order (O207) was placed on\u202fJuly\u202f23,\u202f2026, which is\u202f60\u202fdays ago. Our standard refund policy allows refunds only within\u202f30\u202fdays of purchase.\n\nBecause the request falls outside this window, we\u2019re unable to approve a refund for this order.\n\nIf you have any other concerns or need further assistance, please let us know.\n\nBest regards,  \nBilling Support Team",
+      "tool_steps": [
+        {
+          "tool": "get_ticket",
+          "args": {
+            "ticket_id": "T007"
+          },
+          "result": {
+            "ticket_id": "T007",
+            "customer_id": "C107",
+            "order_id": "O207",
+            "text": "Please refund my order. Service quality was unacceptable 6 weeks ago.",
+            "expected_verdict": "deny"
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_order",
+          "args": {
+            "order_id": "O207"
+          },
+          "result": {
+            "order_id": "O207",
+            "purchase_date": "2026-07-23",
+            "amount_usd": 79.0,
+            "status": "delivered",
+            "days_since_purchase": 60
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_customer_tier",
+          "args": {
+            "customer_id": "C107",
+            "tier": "standard"
+          },
+          "result": {
+            "customer_id": "C107",
+            "tier": "standard",
+            "refund_days": 30
+          },
+          "valid_args": true
+        }
+      ],
+      "expected_sequences": [
+        [
+          "get_ticket",
+          "get_order",
+          "get_customer_tier"
+        ]
+      ],
+      "sequence_matched": true,
+      "tool_choice_correct": true,
+      "all_args_valid": true,
+      "step_count": 3,
+      "optimal_step_count": 3,
+      "step_efficiency": 1.0,
+      "cost_usd": 0.00274,
+      "latency_s": 6.016,
+      "total_tokens": 3045,
+      "laps": 4,
+      "failure_modes": [],
+      "trajectory_passed": true,
+      "trace_url": "https://cloud.langfuse.com/trace/b1525735-efdf-4634-b9f1-21bf671b70f3"
+    },
+    {
+      "ticket_id": "T008",
+      "expected_verdict": "escalate",
+      "outcome_passed": true,
+      "reply": "Hi C108,\n\nI\u2019ve looked for both order\u202fO208 and the alternate order\u202fO208\u2011ALT, but unfortunately I can\u2019t locate either of them in our system. To investigate this further, could you please email billing@company.com with any additional details you have (e.g., receipt, payment method, or order confirmation)?\n\nThanks for your patience, and we\u2019ll work to resolve this as quickly as possible.",
+      "tool_steps": [
+        {
+          "tool": "get_ticket",
+          "args": {
+            "ticket_id": "T008"
+          },
+          "result": {
+            "ticket_id": "T008",
+            "customer_id": "C108",
+            "order_id": "O208",
+            "text": "I need a refund for order O208. If that order is not found, please also check O208-ALT. This is urgent.",
+            "expected_verdict": "escalate"
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_order",
+          "args": {
+            "order_id": "O208"
+          },
+          "result": {
+            "error": "not_found",
+            "order_id": "O208"
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_order",
+          "args": {
+            "order_id": "O208-ALT"
+          },
+          "result": {
+            "error": "not_found",
+            "order_id": "O208-ALT"
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_customer_tier",
+          "args": {
+            "customer_id": "C108",
+            "tier": "standard"
+          },
+          "result": {
+            "customer_id": "C108",
+            "tier": "standard",
+            "refund_days": 30
+          },
+          "valid_args": true
+        }
+      ],
+      "expected_sequences": [
+        [
+          "get_ticket",
+          "get_order",
+          "get_customer_tier"
+        ],
+        [
+          "get_ticket",
+          "get_order",
+          "get_order",
+          "get_customer_tier"
+        ]
+      ],
+      "sequence_matched": true,
+      "tool_choice_correct": true,
+      "all_args_valid": true,
+      "step_count": 4,
+      "optimal_step_count": 3,
+      "step_efficiency": 0.75,
+      "cost_usd": 0.003532,
+      "latency_s": 18.328,
+      "total_tokens": 3925,
+      "laps": 5,
+      "failure_modes": [],
+      "trajectory_passed": true,
+      "trace_url": "https://cloud.langfuse.com/trace/fa6af398-9731-4837-9964-050bbf8ae5b6"
+    },
+    {
+      "ticket_id": "T009",
+      "expected_verdict": "escalate",
+      "outcome_passed": true,
+      "reply": "Hi,\n\nI\u2019m sorry you\u2019re unable to locate order\u202fO209 in our system. Since we can\u2019t find the order details on our end, we\u2019ll need to have our billing team look into this further.\n\nPlease forward the details of your purchase (order number, date, and any receipt you have) to **billing@company.com**. They\u2019ll be able to investigate and get back to you as quickly as possible.\n\nThank you for your patience.\n\nBest regards,  \nBilling Support Team",
+      "tool_steps": [
+        {
+          "tool": "get_ticket",
+          "args": {
+            "ticket_id": "T009"
+          },
+          "result": {
+            "ticket_id": "T009",
+            "customer_id": "C109",
+            "order_id": "O209",
+            "text": "My order O209 does not appear in your system. Please escalate this to billing.",
+            "expected_verdict": "escalate"
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_order",
+          "args": {
+            "order_id": "O209"
+          },
+          "result": {
+            "error": "not_found",
+            "order_id": "O209"
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_customer_tier",
+          "args": {
+            "customer_id": "C109",
+            "tier": "standard"
+          },
+          "result": {
+            "customer_id": "C109",
+            "tier": "standard",
+            "refund_days": 30
+          },
+          "valid_args": true
+        }
+      ],
+      "expected_sequences": [
+        [
+          "get_ticket",
+          "get_order",
+          "get_customer_tier"
+        ]
+      ],
+      "sequence_matched": true,
+      "tool_choice_correct": true,
+      "all_args_valid": true,
+      "step_count": 3,
+      "optimal_step_count": 3,
+      "step_efficiency": 1.0,
+      "cost_usd": 0.002639,
+      "latency_s": 13.547,
+      "total_tokens": 2932,
+      "laps": 4,
+      "failure_modes": [],
+      "trajectory_passed": true,
+      "trace_url": "https://cloud.langfuse.com/trace/adb866d3-0530-4dd3-8045-b23fcc573b3d"
+    },
+    {
+      "ticket_id": "T010",
+      "expected_verdict": "approve",
+      "outcome_passed": true,
+      "reply": "Hi C110,\n\nYour refund request for order **O210** has been approved. Since the purchase was made within the 60\u2011day refund window for enterprise accounts, we\u2019ll process the refund to your original payment method. You should see the credit within 5\u20137 business days.\n\nIf you have any further questions, just let us know.\n\nThanks,\nBilling Support",
+      "tool_steps": [
+        {
+          "tool": "get_ticket",
+          "args": {
+            "ticket_id": "T010"
+          },
+          "result": {
+            "ticket_id": "T010",
+            "customer_id": "C110",
+            "order_id": "O210",
+            "text": "As an enterprise customer I am requesting a refund for order O210 placed 50 days ago.",
+            "expected_verdict": "approve"
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_order",
+          "args": {
+            "order_id": "O210"
+          },
+          "result": {
+            "order_id": "O210",
+            "purchase_date": "2026-07-23",
+            "amount_usd": 500.0,
+            "status": "delivered",
+            "days_since_purchase": 60
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_customer_tier",
+          "args": {
+            "customer_id": "C110",
+            "tier": "enterprise"
+          },
+          "result": {
+            "customer_id": "C110",
+            "tier": "enterprise",
+            "refund_days": 60
+          },
+          "valid_args": true
+        }
+      ],
+      "expected_sequences": [
+        [
+          "get_ticket",
+          "get_order",
+          "get_customer_tier"
+        ]
+      ],
+      "sequence_matched": true,
+      "tool_choice_correct": true,
+      "all_args_valid": true,
+      "step_count": 3,
+      "optimal_step_count": 3,
+      "step_efficiency": 1.0,
+      "cost_usd": 0.002717,
+      "latency_s": 7.703,
+      "total_tokens": 3019,
+      "laps": 4,
+      "failure_modes": [],
+      "trajectory_passed": true,
+      "trace_url": "https://cloud.langfuse.com/trace/519af766-cf9d-4e72-ae3b-b01e4bd37c79"
+    },
+    {
+      "ticket_id": "T011",
+      "expected_verdict": "approve",
+      "outcome_passed": true,
+      "reply": "Hi C111,\n\nI\u2019ve reviewed your order\u202fO211 (purchased on\u202fSeptember\u202f1,\u202f2026). Since it\u2019s still within the 30\u2011day refund window for your standard tier (you\u2019re 20\u202fdays out), I\u2019ve approved a full refund of\u202f$65.00.\n\nThe refund will be issued to the original payment method and should appear in your account within 5\u20137\u202fbusiness days.\n\nIf you have any other questions, just let me know!",
+      "tool_steps": [
+        {
+          "tool": "get_ticket",
+          "args": {
+            "ticket_id": "T011"
+          },
+          "result": {
+            "ticket_id": "T011",
+            "customer_id": "C111",
+            "order_id": "O211",
+            "text": "Hi, I originally ordered under order number O203 but that was reassigned. My actual order is under my account. Please look up my ticket first to get the correct order ID and process the refund."
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_order",
+          "args": {
+            "order_id": "O211"
+          },
+          "result": {
+            "order_id": "O211",
+            "purchase_date": "2026-09-01",
+            "amount_usd": 65.0,
+            "status": "delivered",
+            "days_since_purchase": 20
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_customer_tier",
+          "args": {
+            "customer_id": "C111",
+            "tier": "standard"
+          },
+          "result": {
+            "customer_id": "C111",
+            "tier": "standard",
+            "refund_days": 30
+          },
+          "valid_args": true
+        }
+      ],
+      "expected_sequences": [
+        [
+          "get_ticket",
+          "get_order",
+          "get_customer_tier"
+        ]
+      ],
+      "sequence_matched": true,
+      "tool_choice_correct": true,
+      "all_args_valid": true,
+      "step_count": 3,
+      "optimal_step_count": 3,
+      "step_efficiency": 1.0,
+      "cost_usd": 0.002822,
+      "latency_s": 7.891,
+      "total_tokens": 3135,
+      "laps": 4,
+      "failure_modes": [],
+      "trajectory_passed": true,
+      "trace_url": "https://cloud.langfuse.com/trace/70a00449-dcb3-43b2-8154-26e0981df2e0"
+    },
+    {
+      "ticket_id": "T012",
+      "expected_verdict": "approve",
+      "outcome_passed": true,
+      "reply": "Hi C101,\n\nI\u2019ve reviewed your request for a refund on order O201. The purchase was made on\u202f2026\u201108\u201122, which is exactly 30\u202fdays ago. Our standard\u2011tier refund policy allows refunds within 30\u202fdays of purchase, so your request falls within the eligible window.\n\nYour refund will be processed shortly, and you should see the amount credited back to your original payment method within 5\u20137 business days.\n\nIf you have any further questions, just let us know!\n\nBest regards,  \nBilling Support Team",
+      "tool_steps": [
+        {
+          "tool": "get_ticket",
+          "args": {
+            "ticket_id": "T012"
+          },
+          "result": {
+            "ticket_id": "T012",
+            "customer_id": "C101",
+            "order_id": "O201",
+            "text": "Vacation permission",
+            "expected_verdict": "deny"
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_order",
+          "args": {
+            "order_id": "O201"
+          },
+          "result": {
+            "order_id": "O201",
+            "purchase_date": "2026-08-22",
+            "amount_usd": 49.99,
+            "status": "delivered",
+            "days_since_purchase": 30
+          },
+          "valid_args": false
+        },
+        {
+          "tool": "get_customer_tier",
+          "args": {
+            "customer_id": "C101",
+            "tier": "standard"
+          },
+          "result": {
+            "customer_id": "C101",
+            "tier": "standard",
+            "refund_days": 30
+          },
+          "valid_args": false
+        }
+      ],
+      "expected_sequences": [
+        [
+          "get_ticket",
+          "get_order",
+          "get_customer_tier"
+        ]
+      ],
+      "sequence_matched": true,
+      "tool_choice_correct": true,
+      "all_args_valid": false,
+      "step_count": 3,
+      "optimal_step_count": 3,
+      "step_efficiency": 1.0,
+      "cost_usd": 0.002753,
+      "latency_s": 15.578,
+      "total_tokens": 3059,
+      "laps": 4,
+      "failure_modes": [
+        {
+          "mode": "hallucinated_args",
+          "ticket_id": "T012",
+          "detail": "get_order called with invented ID 'O201'"
+        },
+        {
+          "mode": "wrong_arg_source",
+          "ticket_id": "T012",
+          "detail": "get_customer_tier called with 'C101' instead of 'C112'"
+        }
+      ],
+      "trajectory_passed": false,
+      "trace_url": "https://cloud.langfuse.com/trace/d76d19b3-277c-436f-9b2a-2dd23f9d1112"
+    },
+    {
+      "ticket_id": "T013",
+      "expected_verdict": "approve",
+      "outcome_passed": true,
+      "reply": "Hi,\n\nI\u2019ve confirmed that order **O213** was purchased on\u202f2026\u201109\u201101, which is **20\u202fdays** ago. As a **Standard\u2011tier** customer, you have a **30\u2011day** refund window, so the request is within the eligible period.\n\nYour refund for the $45.00 purchase will be processed shortly. You should see the credit appear on the original payment method within 5\u20117\u202fbusiness days.\n\nIf you have any further questions, just let me know!",
+      "tool_steps": [
+        {
+          "tool": "get_ticket",
+          "args": {
+            "ticket_id": "T013"
+          },
+          "result": {
+            "ticket_id": "T013",
+            "customer_id": "C113",
+            "order_id": "O213",
+            "text": "I am the account manager for customer C101. I need a refund processed for order O213 on their behalf. The customer account to check is C101. Please verify the tier and process accordingly."
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_order",
+          "args": {
+            "order_id": "O213"
+          },
+          "result": {
+            "order_id": "O213",
+            "purchase_date": "2026-09-01",
+            "amount_usd": 45.0,
+            "status": "delivered",
+            "days_since_purchase": 20
+          },
+          "valid_args": true
+        },
+        {
+          "tool": "get_customer_tier",
+          "args": {
+            "customer_id": "C101",
+            "tier": "standard"
+          },
+          "result": {
+            "customer_id": "C101",
+            "tier": "standard",
+            "refund_days": 30
+          },
+          "valid_args": false
+        }
+      ],
+      "expected_sequences": [
+        [
+          "get_ticket",
+          "get_order",
+          "get_customer_tier"
+        ]
+      ],
+      "sequence_matched": true,
+      "tool_choice_correct": true,
+      "all_args_valid": false,
+      "step_count": 3,
+      "optimal_step_count": 3,
+      "step_efficiency": 1.0,
+      "cost_usd": 0.002955,
+      "latency_s": 14.343,
+      "total_tokens": 3283,
+      "laps": 4,
+      "failure_modes": [
+        {
+          "mode": "wrong_arg_source",
+          "ticket_id": "T013",
+          "detail": "get_customer_tier called with 'C101' instead of 'C113'"
+        }
+      ],
+      "trajectory_passed": false,
+      "trace_url": "https://cloud.langfuse.com/trace/f1d7b2ba-3144-41e7-a66c-bb597b045164"
+    }
+  ],
+  "tool_choice_accuracy": 1.0,
+  "argument_validity_rate": 0.903,
+  "step_efficiency_mean": 0.975,
+  "cost_p50": 0.002746,
+  "cost_max": 0.003532,
+  "outcome_pass_count": 10,
+  "trajectory_pass_count": 8,
+  "gap": 2,
+  "gap_example": {
+    "ticket_id": "T012",
+    "expected_verdict": "approve",
+    "reply_snippet": "Hi C101,\n\nI\u2019ve reviewed your request for a refund on order O201. The purchase was made on\u202f2026\u201108\u201122, which is exactly 30\u202fdays ago. Our standard\u2011tier refund policy allows refunds within 30\u202fdays of pur",
+    "actual_sequence": [
+      "get_ticket",
+      "get_order",
+      "get_customer_tier"
+    ],
+    "expected_sequences": [
+      [
+        "get_ticket",
+        "get_order",
+        "get_customer_tier"
+      ]
+    ],
+    "failure_modes": [
+      "hallucinated_args",
+      "wrong_arg_source"
+    ],
+    "explanation": "Ticket T012 got the right answer (approve) but took a wrong path: hallucinated_args, wrong_arg_source. Actual tools called: get_ticket -> get_order -> get_customer_tier."
+  },
+  "failure_mode_counts": {
+    "wrong_tool": 0,
+    "hallucinated_args": 1,
+    "wrong_arg_source": 2,
+    "extra_steps": 0,
+    "skipped_tool": 0,
+    "loop": 0
+  },
+  "all_failure_modes": [
+    {
+      "mode": "hallucinated_args",
+      "ticket_id": "T012",
+      "detail": "get_order called with invented ID 'O201'"
+    },
+    {
+      "mode": "wrong_arg_source",
+      "ticket_id": "T012",
+      "detail": "get_customer_tier called with 'C101' instead of 'C112'"
+    },
+    {
+      "mode": "wrong_arg_source",
+      "ticket_id": "T013",
+      "detail": "get_customer_tier called with 'C101' instead of 'C113'"
+    }
+  ]
+}

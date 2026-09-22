@@ -62,7 +62,7 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "allowedHosts": "all"
+            "allowedHosts": [".localhost", "localhost", ".ngrok-free.dev"]
           },
           "configurations": {
             "production": {

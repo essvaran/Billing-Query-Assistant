@@ -162,6 +162,7 @@ def run_agent(
     on_step=None,  # callable(dict) -- receives live step events for streaming UIs
     user_message: str | None = None,       # free-form text; overrides ticket_id user turn
     system_prompt_override: str | None = None,  # replaces SYSTEM_PROMPT when set
+    dispatch_override=None,  # callable(name, args_json) -- replaces dispatch_tool when set
 ) -> AgentResult:
     t_start = time.monotonic()
     cumulative_tokens = 0
@@ -344,7 +345,8 @@ def run_agent(
                 except Exception:
                     args_dict_emit = {"raw": fn_args}
                 _emit({"type": "tool_call", "lap": laps, "tool": fn_name, "args": args_dict_emit})
-                result_str = dispatch_tool(fn_name, fn_args)
+                _dispatch = dispatch_override if dispatch_override else dispatch_tool
+                result_str = _dispatch(fn_name, fn_args)
                 try:
                     result_dict_emit = json.loads(result_str)
                 except Exception:

@@ -1,0 +1,627 @@
+<div class="traj-page">
+  <!-- Header -->
+  <div class="traj-header">
+    <div>
+      <h1>Trajectory Evaluation</h1>
+      <p class="subtitle">Score the agent's path, not just its answer. Week 8 -- Agent Failure Modes & Trajectory Evals.</p>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-bar">
+    @for (tab of tabs; track tab.key) {
+      <button
+        class="tab-btn"
+        [class.active]="activeTab === tab.key"
+        (click)="selectTab(tab.key)">
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <!-- ====== TAB 1: Expected Sequences ====== -->
+  @if (activeTab === 'sequences') {
+    <div class="section">
+      <h2 class="section-title">Expected Tool Sequences ({{ sequences.length }} Tickets)</h2>
+      <p class="section-desc">Each ticket has one or more valid tool-call sequences. Branching tickets accept multiple paths.</p>
+
+      <div class="table-wrap">
+        <table class="tickets-table">
+          <thead>
+            <tr>
+              <th>Ticket</th>
+              <th>Verdict</th>
+              <th>Branching</th>
+              <th>Valid Sequence(s)</th>
+              <th>Expected Args</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (seq of sequences; track seq.ticket_id) {
+              <tr class="data-row" [class.branching-row]="seq.branching" [class.adversarial-row]="seq.adversarial">
+                <td>
+                  <span class="ticket-id">{{ seq.ticket_id }}</span>
+                  @if (seq.adversarial) {
+                    <span class="adversarial-badge">ADV</span>
+                  }
+                </td>
+                <td>
+                  <span class="badge"
+                    [class.badge-approve]="seq.expected_verdict === 'approve'"
+                    [class.badge-deny]="seq.expected_verdict === 'deny'"
+                    [class.badge-escalate]="seq.expected_verdict === 'escalate'">
+                    {{ seq.expected_verdict }}
+                  </span>
+                </td>
+                <td>
+                  @if (seq.branching) {
+                    <span class="pass-pill pass">YES</span>
+                  } @else {
+                    <span class="muted">No</span>
+                  }
+                </td>
+                <td>
+                  @for (path of seq.sequences; track $index) {
+                    <div class="tool-sequence">
+                      @if (seq.sequences.length > 1) {
+                        <span class="path-label">Path {{ $index + 1 }}:</span>
+                      }
+                      @for (tool of path; track $index) {
+                        <span class="tool-pill" [style.background]="getToolColor(tool)">{{ tool }}</span>
+                        @if ($index < path.length - 1) {
+                          <span class="arrow">-></span>
+                        }
+                      }
+                    </div>
+                  }
+                </td>
+                <td class="args-cell">
+                  @for (entry of seq.expected_args | keyvalue; track entry.key) {
+                    <span class="meta-chip">{{ entry.key }}({{ entry.value | json }})</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- ====== TAB 2: Results ====== -->
+  @if (activeTab === 'results') {
+    <div class="section">
+      <div class="header-actions">
+        <button class="btn btn-primary" (click)="startEval()" [disabled]="evalStatus.status === 'running'">
+          @if (evalStatus.status === 'running') {
+            Running...
+          } @else {
+            Run Trajectory Eval
+          }
+        </button>
+      </div>
+
+      <!-- Status bar -->
+      <div class="status-bar" [class]="'status-' + evalStatus.status">
+        @if (evalStatus.status === 'idle') { Ready to run trajectory evaluation. }
+        @if (evalStatus.status === 'running') {
+          <span class="pulse">*</span>
+          Evaluating agent trajectories...
+          @if (evalStatus.progress) {
+            ({{ evalStatus.progress['ticket_id'] ?? '' }} - {{ $any(evalStatus.progress['index'] ?? 0) | number }}/{{ $any(evalStatus.progress['total'] ?? 10) | number }})
+          }
+        }
+        @if (evalStatus.status === 'done') { Trajectory evaluation complete. }
+        @if (evalStatus.status === 'error') { Error: {{ evalStatus.error }} }
+      </div>
+
+      @if (report) {
+        <!-- Metric cards -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">Tool-Choice Accuracy</div>
+            <div class="metric-value-big">{{ formatPercent(report.tool_choice_accuracy) }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Argument Validity Rate</div>
+            <div class="metric-value-big">{{ formatPercent(report.argument_validity_rate) }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Step Efficiency (Mean)</div>
+            <div class="metric-value-big">{{ formatPercent(report.step_efficiency_mean) }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Cost</div>
+            <div class="metric-row-inner">
+              <div>
+                <span class="metric-sublabel">p50</span>
+                <span class="metric-value">{{ formatCost(report.cost_p50) }}</span>
+              </div>
+              <div>
+                <span class="metric-sublabel">max</span>
+                <span class="metric-value">{{ formatCost(report.cost_max) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Per-ticket table -->
+        <h2 class="section-title" style="margin-top: 24px;">Per-Ticket Results</h2>
+        <div class="table-wrap">
+          <table class="tickets-table">
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Verdict</th>
+                <th>Outcome</th>
+                <th>Seq Match</th>
+                <th>Tool Choice</th>
+                <th>Args Valid</th>
+                <th>Steps</th>
+                <th>Efficiency</th>
+                <th>Cost</th>
+                <th>Trajectory</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of report.results; track r.ticket_id) {
+                <tr class="data-row" (click)="toggleTicket(r.ticket_id)">
+                  <td><span class="ticket-id">{{ r.ticket_id }}</span></td>
+                  <td>
+                    <span class="badge"
+                      [class.badge-approve]="r.expected_verdict === 'approve'"
+                      [class.badge-deny]="r.expected_verdict === 'deny'"
+                      [class.badge-escalate]="r.expected_verdict === 'escalate'">
+                      {{ r.expected_verdict }}
+                    </span>
+                  </td>
+                  <td><span class="pass-pill" [class.pass]="r.outcome_passed" [class.fail]="!r.outcome_passed">{{ r.outcome_passed ? 'PASS' : 'FAIL' }}</span></td>
+                  <td><span class="pass-pill" [class.pass]="r.sequence_matched" [class.fail]="!r.sequence_matched">{{ r.sequence_matched ? 'YES' : 'NO' }}</span></td>
+                  <td><span class="pass-pill" [class.pass]="r.tool_choice_correct" [class.fail]="!r.tool_choice_correct">{{ r.tool_choice_correct ? 'OK' : 'BAD' }}</span></td>
+                  <td><span class="pass-pill" [class.pass]="r.all_args_valid" [class.fail]="!r.all_args_valid">{{ r.all_args_valid ? 'OK' : 'BAD' }}</span></td>
+                  <td><span class="num">{{ r.step_count }}/{{ r.optimal_step_count }}</span></td>
+                  <td><span class="num">{{ formatPercent(r.step_efficiency) }}</span></td>
+                  <td><span class="num">{{ formatCost(r.cost_usd) }}</span></td>
+                  <td><span class="pass-pill" [class.pass]="r.trajectory_passed" [class.fail]="!r.trajectory_passed">{{ r.trajectory_passed ? 'PASS' : 'FAIL' }}</span></td>
+                </tr>
+                @if (expandedTickets.has(r.ticket_id)) {
+                  <tr class="detail-row">
+                    <td colspan="10">
+                      <div class="detail-content">
+                        <div class="detail-section">
+                          <div class="detail-label">Actual Tool Sequence</div>
+                          <div class="tool-sequence">
+                            @for (step of r.tool_steps; track $index) {
+                              <span class="tool-pill" [style.background]="getToolColor(step.tool)">{{ step.tool }}</span>
+                              <span class="tool-args">({{ step.args | json }})</span>
+                              @if (!step.valid_args) {
+                                <span class="pass-pill fail" style="font-size: 0.6rem;">INVALID</span>
+                              }
+                              @if ($index < r.tool_steps.length - 1) {
+                                <span class="arrow">-></span>
+                              }
+                            }
+                          </div>
+                        </div>
+                        @if (r.failure_modes.length > 0) {
+                          <div class="detail-section">
+                            <div class="detail-label">Failure Modes</div>
+                            @for (f of r.failure_modes; track $index) {
+                              <div class="failure-item">
+                                <span class="failure-mode-badge">{{ f.mode }}</span>
+                                <span class="failure-detail">{{ f.detail }}</span>
+                              </div>
+                            }
+                          </div>
+                        }
+                        <div class="detail-section">
+                          <div class="detail-label">Agent Reply</div>
+                          <div class="reply-text">{{ r.reply }}</div>
+                        </div>
+                        @if (r.trace_url) {
+                          <a class="trace-link" [href]="r.trace_url" target="_blank">View Langfuse Trace</a>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else if (evalStatus.status !== 'running') {
+        <div class="empty-state">
+          <div class="empty-icon">~</div>
+          <h3>No results yet</h3>
+          <p>Click "Run Trajectory Eval" to evaluate the agent's tool-call paths across all tickets.</p>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ====== TAB 3: Gap Analysis ====== -->
+  @if (activeTab === 'gap') {
+    <div class="section">
+      <h2 class="section-title">Outcome vs Trajectory Gap</h2>
+
+      @if (report) {
+        <div class="gap-hero">
+          <div class="gap-card">
+            <div class="gap-label">Outcome Pass</div>
+            <div class="gap-value pass-color">{{ report.outcome_pass_count }}/{{ report.results.length }}</div>
+          </div>
+          <div class="gap-minus">-</div>
+          <div class="gap-card">
+            <div class="gap-label">Trajectory Pass</div>
+            <div class="gap-value traj-color">{{ report.trajectory_pass_count }}/{{ report.results.length }}</div>
+          </div>
+          <div class="gap-equals">=</div>
+          <div class="gap-card gap-result">
+            <div class="gap-label">Gap</div>
+            <div class="gap-value gap-color">{{ report.gap }}</div>
+          </div>
+        </div>
+
+        <p class="gap-explanation">
+          {{ report.gap }} ticket(s) passed the outcome eval (right answer) but failed the trajectory eval (wrong path).
+          These are time bombs -- correct today by luck, wrong tomorrow in production.
+        </p>
+
+        <!-- Per-mode breakdown -->
+        <h3 class="section-title" style="margin-top: 24px;">Failure Mode Distribution</h3>
+        <div class="table-wrap">
+          <table class="tickets-table">
+            <thead>
+              <tr>
+                <th>Failure Mode</th>
+                <th>Count</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of report.failure_mode_counts | keyvalue; track entry.key) {
+                <tr class="data-row">
+                  <td><span class="failure-mode-badge">{{ entry.key }}</span></td>
+                  <td><span class="num">{{ entry.value }}</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Right-answer-wrong-path examples -->
+        @if (report.gap_example) {
+          <h3 class="section-title" style="margin-top: 24px;">Right-Answer-Wrong-Path Example</h3>
+          <div class="gap-example-card">
+            <div class="gap-example-header">
+              <span class="ticket-id">{{ report.gap_example.ticket_id }}</span>
+              <span class="badge"
+                [class.badge-approve]="report.gap_example.expected_verdict === 'approve'"
+                [class.badge-deny]="report.gap_example.expected_verdict === 'deny'"
+                [class.badge-escalate]="report.gap_example.expected_verdict === 'escalate'">
+                {{ report.gap_example.expected_verdict }}
+              </span>
+              <span class="pass-pill pass">Outcome: PASS</span>
+              <span class="pass-pill fail">Trajectory: FAIL</span>
+            </div>
+            <div class="gap-example-body">
+              <p>{{ report.gap_example.explanation }}</p>
+              <div class="detail-section">
+                <div class="detail-label">Actual Sequence</div>
+                <div class="tool-sequence">
+                  @for (tool of report.gap_example.actual_sequence; track $index) {
+                    <span class="tool-pill" [style.background]="getToolColor(tool)">{{ tool }}</span>
+                    @if ($index < report.gap_example.actual_sequence.length - 1) {
+                      <span class="arrow">-></span>
+                    }
+                  }
+                </div>
+              </div>
+              <div class="detail-section">
+                <div class="detail-label">Failure Modes</div>
+                @for (m of report.gap_example.failure_modes; track $index) {
+                  <span class="failure-mode-badge">{{ m }}</span>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- All gap cases -->
+        @if (getGapExampleResults().length > 0) {
+          <h3 class="section-title" style="margin-top: 24px;">All Right-Answer-Wrong-Path Tickets</h3>
+          @for (r of getGapExampleResults(); track r.ticket_id) {
+            <div class="gap-example-card" style="margin-bottom: 12px;">
+              <div class="gap-example-header">
+                <span class="ticket-id">{{ r.ticket_id }}</span>
+                <span class="badge"
+                  [class.badge-approve]="r.expected_verdict === 'approve'"
+                  [class.badge-deny]="r.expected_verdict === 'deny'"
+                  [class.badge-escalate]="r.expected_verdict === 'escalate'">
+                  {{ r.expected_verdict }}
+                </span>
+              </div>
+              <div class="gap-example-body">
+                <div class="tool-sequence">
+                  @for (step of r.tool_steps; track $index) {
+                    <span class="tool-pill" [style.background]="getToolColor(step.tool)">{{ step.tool }}</span>
+                    @if ($index < r.tool_steps.length - 1) {
+                      <span class="arrow">-></span>
+                    }
+                  }
+                </div>
+                @for (f of r.failure_modes; track $index) {
+                  <div class="failure-item" style="margin-top: 4px;">
+                    <span class="failure-mode-badge">{{ f.mode }}</span>
+                    <span class="failure-detail">{{ f.detail }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        }
+      } @else {
+        <div class="empty-state">
+          <div class="empty-icon">~</div>
+          <h3>Run the eval first</h3>
+          <p>Go to the Results tab and run a trajectory evaluation to see the gap analysis.</p>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ====== TAB 4: Mitigation ====== -->
+  @if (activeTab === 'mitigation') {
+    <div class="section">
+      <h2 class="section-title">Mitigation: Prompt Hardening + Argument Validation</h2>
+      <p class="section-desc">
+        Two-layer mitigation targeting adversarial tickets (T011, T012, T013).
+        <strong>Layer 1 -- System Prompt Hardening:</strong> instructs the agent to always call all three tools
+        and use IDs only from get_ticket results, never from ticket text.
+        <strong>Layer 2 -- Argument Validation:</strong> wraps dispatch_tool to catch wrong IDs at runtime
+        and return structured error messages guiding self-correction.
+      </p>
+
+      <div class="header-actions">
+        <button class="btn btn-primary" (click)="startMitigation()" [disabled]="mitigationStatus.status === 'running'">
+          @if (mitigationStatus.status === 'running') {
+            Running (before + after)...
+          } @else {
+            Apply Mitigation & Re-Run
+          }
+        </button>
+      </div>
+
+      <div class="status-bar" [class]="'status-' + mitigationStatus.status">
+        @if (mitigationStatus.status === 'idle') { Ready to apply mitigation and compare. }
+        @if (mitigationStatus.status === 'running') {
+          <span class="pulse">*</span>
+          Running baseline + mitigated eval (20 total runs)...
+          @if (mitigationStatus.progress) {
+            Phase: {{ mitigationStatus.progress['phase'] ?? '' }}
+            @if (mitigationStatus.progress['ticket_id']) {
+              - {{ mitigationStatus.progress['ticket_id'] }}
+            }
+          }
+        }
+        @if (mitigationStatus.status === 'done') { Mitigation comparison complete. }
+        @if (mitigationStatus.status === 'error') { Error: {{ mitigationStatus.error }} }
+      </div>
+
+      @if (mitigationReport) {
+        <!-- Before / After comparison -->
+        <h3 class="section-title" style="margin-top: 24px;">Before vs After</h3>
+        <div class="comparison-grid">
+          <div class="comparison-card">
+            <div class="comparison-label">Tool-Choice Accuracy</div>
+            <div class="comparison-row">
+              <span class="comparison-before">{{ formatPercent(mitigationReport.before.tool_choice_accuracy) }}</span>
+              <span class="comparison-arrow">-></span>
+              <span class="comparison-after">{{ formatPercent(mitigationReport.after.tool_choice_accuracy) }}</span>
+              <span class="comparison-delta" [class.positive]="mitigationReport.deltas.tool_choice_accuracy > 0" [class.negative]="mitigationReport.deltas.tool_choice_accuracy < 0">
+                {{ formatDelta(mitigationReport.deltas.tool_choice_accuracy, true) }}
+              </span>
+            </div>
+          </div>
+          <div class="comparison-card">
+            <div class="comparison-label">Argument Validity Rate</div>
+            <div class="comparison-row">
+              <span class="comparison-before">{{ formatPercent(mitigationReport.before.argument_validity_rate) }}</span>
+              <span class="comparison-arrow">-></span>
+              <span class="comparison-after">{{ formatPercent(mitigationReport.after.argument_validity_rate) }}</span>
+              <span class="comparison-delta" [class.positive]="mitigationReport.deltas.argument_validity_rate > 0" [class.negative]="mitigationReport.deltas.argument_validity_rate < 0">
+                {{ formatDelta(mitigationReport.deltas.argument_validity_rate, true) }}
+              </span>
+            </div>
+          </div>
+          <div class="comparison-card">
+            <div class="comparison-label">Step Efficiency</div>
+            <div class="comparison-row">
+              <span class="comparison-before">{{ formatPercent(mitigationReport.before.step_efficiency_mean) }}</span>
+              <span class="comparison-arrow">-></span>
+              <span class="comparison-after">{{ formatPercent(mitigationReport.after.step_efficiency_mean) }}</span>
+              <span class="comparison-delta" [class.positive]="mitigationReport.deltas.step_efficiency_mean > 0" [class.negative]="mitigationReport.deltas.step_efficiency_mean < 0">
+                {{ formatDelta(mitigationReport.deltas.step_efficiency_mean, true) }}
+              </span>
+            </div>
+          </div>
+          <div class="comparison-card">
+            <div class="comparison-label">Gap (Outcome - Trajectory)</div>
+            <div class="comparison-row">
+              <span class="comparison-before">{{ mitigationReport.before.gap }}</span>
+              <span class="comparison-arrow">-></span>
+              <span class="comparison-after">{{ mitigationReport.after.gap }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top failure mode -->
+        <h3 class="section-title" style="margin-top: 24px;">Top Failure Mode: Before -> After</h3>
+        <div class="top-mode-card">
+          <span class="failure-mode-badge big">{{ mitigationReport.top_failure_mode.mode }}</span>
+          <span class="comparison-before big">{{ mitigationReport.top_failure_mode.before_count }}</span>
+          <span class="comparison-arrow">-></span>
+          <span class="comparison-after big">{{ mitigationReport.top_failure_mode.after_count }}</span>
+        </div>
+
+        <!-- Price paid -->
+        <h3 class="section-title" style="margin-top: 24px;">Price Paid</h3>
+        <div class="price-grid">
+          <div class="price-card">
+            <div class="price-label">Latency (mean delta)</div>
+            <div class="price-value">{{ mitigationReport.price_paid.latency_delta_mean_s > 0 ? '+' : '' }}{{ mitigationReport.price_paid.latency_delta_mean_s }}s</div>
+          </div>
+          <div class="price-card">
+            <div class="price-label">Tokens (mean delta)</div>
+            <div class="price-value">{{ mitigationReport.price_paid.tokens_delta_mean > 0 ? '+' : '' }}{{ mitigationReport.price_paid.tokens_delta_mean }}</div>
+          </div>
+          <div class="price-card">
+            <div class="price-label">Cost/ticket (mean delta)</div>
+            <div class="price-value">{{ mitigationReport.price_paid.cost_delta_mean_usd > 0 ? '+' : '' }}{{ formatCost(mitigationReport.price_paid.cost_delta_mean_usd) }}</div>
+          </div>
+        </div>
+      } @else if (mitigationStatus.status !== 'running') {
+        <div class="empty-state">
+          <div class="empty-icon">~</div>
+          <h3>No mitigation results yet</h3>
+          <p>Click "Apply Mitigation & Re-Run" to run the baseline and mitigated evals back-to-back.</p>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ====== TAB 5: Regression ====== -->
+  @if (activeTab === 'regression') {
+    <div class="section">
+      <h2 class="section-title">Regression Check</h2>
+      <p class="section-desc">Per-mode failure counts before and after the mitigation. Flags any mode that worsened or appeared.</p>
+
+      @if (mitigationReport) {
+        <div class="regression-summary" [class.no-regression]="!mitigationReport.regression_detected" [class.has-regression]="mitigationReport.regression_detected">
+          @if (mitigationReport.regression_detected) {
+            WARNING: {{ mitigationReport.regression_details }}
+          } @else {
+            No regressions detected. All modes checked.
+          }
+        </div>
+
+        <div class="table-wrap">
+          <table class="tickets-table">
+            <thead>
+              <tr>
+                <th>Failure Mode</th>
+                <th>Before</th>
+                <th>After</th>
+                <th>Delta</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of mitigationReport.regression_table; track row.mode) {
+                <tr class="data-row">
+                  <td><span class="failure-mode-badge">{{ row.mode }}</span></td>
+                  <td><span class="num">{{ row.before }}</span></td>
+                  <td><span class="num">{{ row.after }}</span></td>
+                  <td>
+                    <span class="num" [class.positive-text]="row.delta < 0" [class.negative-text]="row.delta > 0">
+                      {{ row.delta > 0 ? '+' : '' }}{{ row.delta }}
+                    </span>
+                  </td>
+                  <td>
+                    @if (row.status === 'improved') {
+                      <span class="pass-pill pass">IMPROVED</span>
+                    } @else if (row.status === 'unchanged') {
+                      <span class="meta-chip">UNCHANGED</span>
+                    } @else if (row.status === 'worsened') {
+                      <span class="pass-pill fail">WORSENED</span>
+                    } @else if (row.status === 'new') {
+                      <span class="pass-pill fail">NEW</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="empty-state">
+          <div class="empty-icon">~</div>
+          <h3>Run mitigation first</h3>
+          <p>Go to the Mitigation tab and apply the mitigation to see the regression check.</p>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ====== TAB 6: Security (Bonus) ====== -->
+  @if (activeTab === 'security') {
+    <div class="section">
+      <h2 class="section-title">Prompt Injection Testing (Bonus)</h2>
+      <p class="section-desc">
+        Plant a hidden instruction in a ticket's text, watch the agent obey it, then apply defenses.
+        Tests both undefended and defended runs.
+      </p>
+
+      <div class="header-actions">
+        <button class="btn btn-primary" (click)="startInjectionTest()" [disabled]="injectionStatus.status === 'running'">
+          @if (injectionStatus.status === 'running') {
+            Running injection tests...
+          } @else {
+            Run Injection Tests
+          }
+        </button>
+      </div>
+
+      <div class="status-bar" [class]="'status-' + injectionStatus.status">
+        @if (injectionStatus.status === 'idle') { Ready to run injection tests. }
+        @if (injectionStatus.status === 'running') {
+          <span class="pulse">*</span> Running undefended and defended injection tests...
+        }
+        @if (injectionStatus.status === 'done') { Injection tests complete. }
+        @if (injectionStatus.status === 'error') { Error: {{ injectionStatus.error }} }
+      </div>
+
+      @if (injectionResults.length > 0) {
+        @for (result of injectionResults; track result.payload_id) {
+          <div class="injection-card">
+            <div class="injection-header">
+              <span class="ticket-id">{{ result.payload_id }}</span>
+              <span class="injection-name">{{ result.payload_name }}</span>
+            </div>
+            <div class="injection-payload">
+              <div class="detail-label">Injected Payload</div>
+              <div class="reply-text" style="font-size: 0.8rem;">{{ result.payload_text }}</div>
+            </div>
+            <div class="injection-results">
+              <div class="injection-side">
+                <div class="injection-side-label">Undefended</div>
+                <div class="injection-verdict" [class.vulnerable]="result.undefended.injection_succeeded" [class.safe]="!result.undefended.injection_succeeded">
+                  {{ result.undefended.injection_succeeded ? 'VULNERABLE' : 'SAFE' }}
+                </div>
+                <div class="reply-text" style="max-height: 120px;">{{ result.undefended.reply }}</div>
+              </div>
+              <div class="injection-side">
+                <div class="injection-side-label">Defended</div>
+                <div class="injection-verdict" [class.vulnerable]="result.defended.injection_succeeded" [class.safe]="!result.defended.injection_succeeded">
+                  {{ result.defended.defense_held ? 'DEFENDED' : 'BYPASSED' }}
+                </div>
+                <div class="reply-text" style="max-height: 120px;">{{ result.defended.reply }}</div>
+              </div>
+            </div>
+            @if (result.what_still_gets_through) {
+              <div class="still-through">
+                <div class="detail-label">What still gets through</div>
+                <p>{{ result.what_still_gets_through }}</p>
+              </div>
+            }
+          </div>
+        }
+      } @else if (injectionStatus.status !== 'running') {
+        <div class="empty-state">
+          <div class="empty-icon">~</div>
+          <h3>No injection results yet</h3>
+          <p>Click "Run Injection Tests" to test prompt injection attacks against your agent.</p>
+        </div>
+      }
+    </div>
+  }
+</div>

@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule, DatePipe, DecimalPipe, PercentPipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { RaceService, RaceResults, TicketInfo, TicketResult, RaceStatus } from '../../services/race.service';
 
 interface MetricRow {
@@ -13,7 +13,7 @@ interface MetricRow {
 @Component({
   selector: 'app-race',
   standalone: true,
-  imports: [CommonModule, DatePipe, DecimalPipe, PercentPipe],
+  imports: [CommonModule, DatePipe],
   templateUrl: './race.component.html',
   styleUrl: './race.component.scss',
 })

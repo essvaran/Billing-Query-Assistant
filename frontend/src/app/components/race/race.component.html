@@ -167,21 +167,21 @@
                       <div class="detail-col">
                         <div class="detail-label agent-label">
                           Agent reply
-                          @if (agentByTicket[ticket.ticket_id]?.laps) {
-                            <span class="laps-chip">{{ agentByTicket[ticket.ticket_id]?.laps }} laps</span>
+                          @if (agentByTicket[ticket.ticket_id].laps) {
+                            <span class="laps-chip">{{ agentByTicket[ticket.ticket_id].laps }} laps</span>
                           }
                         </div>
                         <div class="detail-text reply-text">
-                          {{ agentByTicket[ticket.ticket_id]?.reply }}
+                          {{ agentByTicket[ticket.ticket_id].reply }}
                         </div>
-                        @if (agentByTicket[ticket.ticket_id]?.budget_hit) {
+                        @if (agentByTicket[ticket.ticket_id].budget_hit) {
                           <div class="budget-hit-chip">
-                            {{ agentByTicket[ticket.ticket_id]?.budget_hit }}
+                            {{ agentByTicket[ticket.ticket_id].budget_hit }}
                           </div>
                         }
-                        @if (agentByTicket[ticket.ticket_id]?.trace_url) {
+                        @if (agentByTicket[ticket.ticket_id].trace_url) {
                           <a
-                            [href]="agentByTicket[ticket.ticket_id]?.trace_url"
+                            [href]="agentByTicket[ticket.ticket_id].trace_url"
                             target="_blank"
                             rel="noopener"
                             class="trace-link">
@@ -193,11 +193,11 @@
                       <div class="detail-col">
                         <div class="detail-label workflow-label">Workflow reply</div>
                         <div class="detail-text reply-text">
-                          {{ workflowByTicket[ticket.ticket_id]?.reply }}
+                          {{ workflowByTicket[ticket.ticket_id].reply }}
                         </div>
-                        @if (workflowByTicket[ticket.ticket_id]?.trace_url) {
+                        @if (workflowByTicket[ticket.ticket_id].trace_url) {
                           <a
-                            [href]="workflowByTicket[ticket.ticket_id]?.trace_url"
+                            [href]="workflowByTicket[ticket.ticket_id].trace_url"
                             target="_blank"
                             rel="noopener"
                             class="trace-link">

@@ -46,6 +46,11 @@ export const routes: Routes = [
     loadComponent: () => import('./components/race/race.component').then(m => m.RaceComponent),
   },
   {
+    path: 'trajectory',
+    canActivate: [authGuard],
+    loadComponent: () => import('./components/trajectory/trajectory.component').then(m => m.TrajectoryComponent),
+  },
+  {
     path: 'agent-chat',
     canActivate: [authGuard],
     loadComponent: () => import('./components/agent-chat/agent-chat.component').then(m => m.AgentChatComponent),

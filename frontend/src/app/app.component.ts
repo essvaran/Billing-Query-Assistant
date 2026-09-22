@@ -26,6 +26,7 @@ import { AuthService } from './services/auth.service';
           <a class="nav__link" routerLink="/taxonomy" routerLinkActive="nav__link--active" role="menuitem">Taxonomy</a>
           <a class="nav__link" routerLink="/eval" routerLinkActive="nav__link--active" role="menuitem">Eval</a>
           <a class="nav__link" routerLink="/race" routerLinkActive="nav__link--active" role="menuitem">Race</a>
+          <a class="nav__link" routerLink="/trajectory" routerLinkActive="nav__link--active" role="menuitem">Trajectory</a>
           @if (isAdmin) {
             <a class="nav__link nav__link--admin" routerLink="/admin"
                routerLinkActive="nav__link--active" role="menuitem">Admin</a>
