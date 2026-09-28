@@ -25,13 +25,16 @@ from dataclasses import dataclass
 import requests
 from dotenv import load_dotenv
 
-from agent.tools import TOOL_SCHEMAS, dispatch_tool
+from agent.mcp_client import MCPManager
 from agent.tickets import score_reply
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 load_dotenv()
+
+_mcp = MCPManager("mcp_config.json", log_wire=True)
+_mcp.connect()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
@@ -59,8 +62,13 @@ SYSTEM_PROMPT = (
     "4. Draft a concise reply: approve the refund if days_since_purchase is within "
     "refund_days, deny it if outside, or escalate (tell the customer to email "
     "billing@company.com) if the order could not be found.\n"
-    "You also have search_knowledge_base -- use it if the ticket mentions a specific "
-    "error code, policy question, or procedure you need to look up.\n"
+    "You also have search_knowledge_base, but it is NOT needed for ordinary refund "
+    "requests (duplicate charge, wrong amount, order not found, etc.) -- those are "
+    "resolved from get_ticket/get_order/get_customer_tier alone. Only call "
+    "search_knowledge_base if the ticket text contains an explicit error code "
+    "(format like ERR-nnnn or PAY-nnnn) or explicitly asks about a named policy, "
+    "migration procedure, or account-role rule you cannot answer from the ticket/order "
+    "data. When in doubt, do not call it.\n"
     "Do not guess -- always call all three tools before drafting the reply."
 )
 
@@ -73,11 +81,16 @@ FREEFORM_SYSTEM_PROMPT = (
     "- get_order(order_id): look up an order by ID (e.g. O201)\n"
     "- get_customer_tier(customer_id, tier): look up a customer's service tier and refund window\n\n"
     "RULES -- follow these strictly, do not skip:\n"
-    "1. If the question mentions an error code (e.g. ERR-4032, PAY-1001), a policy, a procedure, "
-    "or any billing concept -- you MUST call search_knowledge_base first. "
-    "Never answer knowledge questions from memory.\n"
-    "2. If the question mentions a ticket ID (T001...) -- call get_ticket, then get_order, then get_customer_tier.\n"
+    "1. Only call search_knowledge_base if the question contains an explicit error code "
+    "(format like ERR-nnnn or PAY-nnnn) or explicitly names a documented policy, migration "
+    "procedure, or account-role rule you cannot answer from ticket/order data. Do NOT call it "
+    "for ordinary refund, order-status, or ticket-history questions. Call it at most once per "
+    "question -- never repeat it with a reworded query.\n"
+    "2. If the question mentions a ticket ID (T001...) -- call get_ticket, then get_order, then "
+    "get_customer_tier, unless the question is only asking about ticket history or escalation "
+    "(in which case use the history tools instead and skip get_order/get_customer_tier).\n"
     "3. Only answer directly (without tools) for purely conversational messages like greetings.\n"
+    "4. Never call the same tool with the same arguments more than once.\n"
     "After retrieving results, give a concise, grounded answer based only on what the tools returned."
 )
 
@@ -203,6 +216,7 @@ def run_agent(
         {"role": "system", "content": active_system},
         {"role": "user", "content": active_user},
     ]
+    _seen_calls: set[tuple[str, str]] = set()
 
     def _check_budgets():
         elapsed = time.monotonic() - t_start
@@ -244,7 +258,7 @@ def run_agent(
                 except Exception:
                     lf_lap_span = None
 
-            data = _groq_call(messages, TOOL_SCHEMAS)
+            data = _groq_call(messages, _mcp.get_tool_schemas())
             choice = data["choices"][0]
             usage = data.get("usage", {})
             lap_tokens = usage.get("total_tokens", 0)
@@ -344,14 +358,28 @@ def run_agent(
                     args_dict_emit = json.loads(fn_args)
                 except Exception:
                     args_dict_emit = {"raw": fn_args}
-                _emit({"type": "tool_call", "lap": laps, "tool": fn_name, "args": args_dict_emit})
-                _dispatch = dispatch_override if dispatch_override else dispatch_tool
-                result_str = _dispatch(fn_name, fn_args)
+                mcp_server = _mcp.get_server_for_tool(fn_name)
+                _emit({"type": "tool_call", "lap": laps, "tool": fn_name, "args": args_dict_emit, "mcp_server": mcp_server})
+
+                call_key = (fn_name, fn_args)
+                if call_key in _seen_calls:
+                    # Same tool + same arguments already ran this turn -- refuse to
+                    # re-dispatch (prevents an unproductive retry loop from burning
+                    # the iteration/token budget) and tell the model to move on.
+                    result_str = json.dumps({
+                        "error": "duplicate_call",
+                        "hint": f"{fn_name} was already called with these exact arguments. "
+                                "Use the earlier result -- do not repeat this call.",
+                    })
+                else:
+                    _seen_calls.add(call_key)
+                    _dispatch = dispatch_override if dispatch_override else _mcp.dispatch_tool
+                    result_str = _dispatch(fn_name, fn_args)
                 try:
                     result_dict_emit = json.loads(result_str)
                 except Exception:
                     result_dict_emit = {"raw": result_str}
-                _emit({"type": "tool_result", "lap": laps, "tool": fn_name, "result": result_dict_emit})
+                _emit({"type": "tool_result", "lap": laps, "tool": fn_name, "result": result_dict_emit, "mcp_server": mcp_server})
 
                 if verbose:
                     args_short = fn_args[:60].replace("\n", " ")

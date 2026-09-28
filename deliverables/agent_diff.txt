@@ -1,0 +1,32 @@
+## git diff proof: agent_loop.py shows ZERO changed lines between
+## "one server" and "one server + two servers"
+##
+## The only change between adding the second server was:
+##   - mcp_config.json (added "ticket-history" server entry)
+##   - mcp_servers/ticket_history_server.py (new file)
+##
+## agent/agent_loop.py: 0 lines changed
+## agent/mcp_client.py: 0 lines changed
+## agent/tools.py: 0 lines changed
+
+$ git diff -- agent/agent_loop.py
+(empty -- no changes)
+
+$ git diff -- agent/mcp_client.py
+(empty -- no changes)
+
+## Only the config file changed:
+$ git diff -- mcp_config.json
+
+--- a/mcp_config.json
++++ b/mcp_config.json
+@@ -4,5 +4,9 @@
+       "command": "python",
+       "args": ["mcp_servers/billing_tools_server.py"]
++    },
++    "ticket-history": {
++      "command": "python",
++      "args": ["mcp_servers/ticket_history_server.py"]
+     }
+   }
+ }

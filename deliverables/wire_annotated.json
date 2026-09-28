@@ -1,0 +1,144 @@
+{
+  "_annotation": "Raw JSON-RPC exchange against the ticket-history MCP server, with field annotations.",
+  "_model_call_location": "The model call happens BETWEEN tools/list and tools/call. The host sends discovered tool schemas to the LLM (Groq API), the LLM decides which tool to call, and THEN the host sends tools/call to the MCP server. No model call happens during initialize or tools/list -- those are pure protocol negotiation and discovery.",
+
+  "exchanges": [
+    {
+      "_step": "1. initialize -- client and server introduce themselves and agree on protocol version",
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "initialize",
+        "params": {
+          "protocolVersion": "2024-11-05",
+          "capabilities": {},
+          "clientInfo": {
+            "name": "billing-agent",
+            "version": "1.0.0"
+          }
+        }
+      },
+      "_request_annotations": {
+        "jsonrpc": "Always '2.0' -- identifies JSON-RPC version 2.0",
+        "id": "Correlation id -- the response must carry the same id so client can match reply to request",
+        "method": "'initialize' -- the RPC method: start the handshake",
+        "params.protocolVersion": "Which MCP protocol version the client speaks",
+        "params.capabilities": "What the client can handle (empty = basic tool calling only)",
+        "params.clientInfo": "Self-identification: name and version of the calling agent"
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "protocolVersion": "2025-11-25",
+          "serverInfo": {
+            "name": "ticket-history",
+            "version": ""
+          }
+        }
+      },
+      "_response_annotations": {
+        "id": "Same id as the request -- proves this response belongs to that request",
+        "result.protocolVersion": "The protocol version the server agreed to use",
+        "result.serverInfo.name": "The server's self-identified name"
+      },
+      "_model_call_here": "NO -- this is pure protocol negotiation, no AI involved"
+    },
+
+    {
+      "_step": "2. tools/list -- client asks the server what tools it offers (like requesting a menu)",
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/list",
+        "params": {}
+      },
+      "_request_annotations": {
+        "method": "'tools/list' -- asks the server to enumerate all available tools",
+        "params": "Empty -- no filtering, return everything"
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "tools": [
+            {
+              "name": "lookup_ticket_history",
+              "description": "Look up the full lifecycle history of a support ticket by ticket_id (format: Tnnn, e.g. T002, T008). Returns the creation timestamp, status change timeline, and list of assigned agents.",
+              "inputSchema": {
+                "type": "object",
+                "properties": {
+                  "ticket_id": { "type": "string", "title": "Ticket Id" }
+                },
+                "required": ["ticket_id"]
+              }
+            },
+            {
+              "name": "get_escalation_history",
+              "description": "Get the escalation chain for a support ticket by ticket_id (format: Tnnn, e.g. T003, T008). Returns escalation events with timestamps, agents, reasons, and level.",
+              "inputSchema": {
+                "type": "object",
+                "properties": {
+                  "ticket_id": { "type": "string", "title": "Ticket Id" }
+                },
+                "required": ["ticket_id"]
+              }
+            }
+          ]
+        }
+      },
+      "_response_annotations": {
+        "result.tools": "Array of tool definitions the server exposes",
+        "tools[].name": "The tool name the model will reference in tool_use blocks",
+        "tools[].description": "The docstring the model reads to decide when to call this tool -- acts as a prompt",
+        "tools[].inputSchema": "JSON Schema describing the arguments the tool accepts"
+      },
+      "_model_call_here": "NO -- this is discovery. The host collects the tool list and will pass it to the LLM next."
+    },
+
+    {
+      "_step": ">>> MODEL CALL HAPPENS HERE <<<",
+      "_explanation": "The host takes the discovered tool schemas from tools/list, converts them to OpenAI format, and sends them to the LLM (Groq API) along with the user's message. The LLM decides which tool to call and outputs a tool_use block with the tool name and arguments. The host then sends that as a tools/call request to the MCP server."
+    },
+
+    {
+      "_step": "3. tools/call -- host sends the tool call the LLM chose to the server for execution",
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "get_escalation_history",
+          "arguments": {
+            "ticket_id": "T008"
+          }
+        }
+      },
+      "_request_annotations": {
+        "method": "'tools/call' -- execute a specific tool on the server",
+        "params.name": "Which tool to invoke (chosen by the LLM, not hard-coded)",
+        "params.arguments": "The arguments the LLM provided for this tool call"
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"ticket_id\": \"T008\", \"escalations\": [{\"ticket_id\": \"T008\", \"escalated_at\": \"2025-06-13T12:00:00Z\", \"from_agent\": \"agent-D\", \"to_agent\": \"agent-E\", \"reason\": \"Order O208 not found in system -- possible data integrity issue\", \"level\": 2}]}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "_response_annotations": {
+        "result.content": "Array of content blocks returned by the tool (text, images, etc.)",
+        "result.content[].type": "'text' -- this block contains plain text (the tool result as JSON)",
+        "result.content[].text": "The actual tool output -- fed back to the LLM for the next turn",
+        "result.isError": "false = the result is valid and the model can use it; true = hard failure"
+      },
+      "_model_call_here": "NO at this step -- but the host sends this result BACK to the LLM for another model call to produce the final answer."
+    }
+  ]
+}

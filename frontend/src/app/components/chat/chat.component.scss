@@ -804,6 +804,19 @@
 
 .ac-tool-name-muted { font-size: 10px; color: #555; font-family: monospace; }
 
+.ac-mcp-badge {
+  font-size: 9px;
+  font-weight: 600;
+  font-family: monospace;
+  color: #22d3ee;
+  background: rgba(34, 211, 238, 0.1);
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-left: 6px;
+  letter-spacing: 0.02em;
+}
+
 .ac-args {
   font-size: 10px;
   color: #555;

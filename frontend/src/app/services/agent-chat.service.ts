@@ -14,6 +14,7 @@ export interface AgentStep {
   tool?: string;
   args?: Record<string, unknown>;
   result?: Record<string, unknown>;
+  mcp_server?: string | null;
   // done
   reply?: string;
   laps?: number;

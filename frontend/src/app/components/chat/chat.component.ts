@@ -210,7 +210,12 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
 
   private _sendAgentMessage(msg: string): void {
     const ticketMatch = msg.match(/\bT\d{3}\b/i);
-    const ticketId = ticketMatch ? ticketMatch[0].toUpperCase() : undefined;
+    // Only auto-route to ticket-resolution mode for short references (e.g. "T008",
+    // "resolve ticket T008"). A longer natural-language question that happens to
+    // mention a ticket ID (e.g. "show me the escalation history for T008") should
+    // stay freeform so the agent can reach for tools beyond the refund verdict flow.
+    const wordCount = msg.trim().split(/\s+/).length;
+    const ticketId = ticketMatch && wordCount <= 4 ? ticketMatch[0].toUpperCase() : undefined;
 
     const agentTurn: AgentTurn = {
       steps: [],

@@ -197,6 +197,9 @@
                       <span class="ac-step-icon">→</span>
                       <span class="ac-step-body">
                         <span class="ac-tool-name" [class]="toolColor(step.tool ?? '')">{{ step.tool }}</span>
+                        @if (step.mcp_server) {
+                          <span class="ac-mcp-badge" [title]="'Served by MCP server: ' + step.mcp_server">MCP · {{ step.mcp_server }}</span>
+                        }
                         <code class="ac-args">{{ step.args | json }}</code>
                       </span>
                     </div>
@@ -206,6 +209,9 @@
                       <span class="ac-step-icon">←</span>
                       <span class="ac-step-body">
                         <span class="ac-tool-name-muted">{{ step.tool }}</span>
+                        @if (step.mcp_server) {
+                          <span class="ac-mcp-badge" [title]="'Served by MCP server: ' + step.mcp_server">MCP · {{ step.mcp_server }}</span>
+                        }
                         <button class="ac-expand-btn" (click)="toggleAgentResult(msg.agentTurn!, si + '')" type="button">
                           {{ msg.agentTurn!.expandedResults.has(si + '') ? 'collapse' : 'expand' }}
                         </button>

@@ -59,7 +59,13 @@ def get_ticket(ticket_id: str) -> dict:
         from agent.tickets import TICKETS
         record = TICKETS.get(ticket_id)
     if record is None:
-        return {"error": "not_found", "ticket_id": ticket_id}
+        from agent.tickets import TICKETS
+        available = sorted(TICKETS.keys())[:5]
+        return {
+            "error": "not_found",
+            "ticket_id": ticket_id,
+            "hint": f"Ticket {ticket_id} not found -- IDs look like Tnnn (e.g. {', '.join(available)}). Ask the user to verify.",
+        }
     return dict(record)
 
 
@@ -98,7 +104,7 @@ def search_knowledge_base(query: str, top_k: int = 3, **kwargs) -> dict:
                     "article_id": h["article_id"],
                     "section": h.get("section"),
                     "score": h["score"],
-                    "text": h["text"],
+                    "text": h["text"][:300],
                 }
                 for h in hits
             ],

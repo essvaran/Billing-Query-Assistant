@@ -1,0 +1,276 @@
+[
+  {
+    "server": "billing-tools",
+    "step": "initialize",
+    "request": {
+      "jsonrpc": "2.0",
+      "method": "initialize",
+      "params": {
+        "protocolVersion": "2024-11-05",
+        "capabilities": {},
+        "clientInfo": {
+          "name": "billing-agent",
+          "version": "1.0.0"
+        }
+      }
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "result": {
+        "protocolVersion": "2025-11-25",
+        "serverInfo": {
+          "name": "billing-tools",
+          "version": ""
+        }
+      }
+    }
+  },
+  {
+    "server": "billing-tools",
+    "step": "tools/list",
+    "request": {
+      "jsonrpc": "2.0",
+      "method": "tools/list",
+      "params": {}
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "result": {
+        "tools": [
+          {
+            "name": "get_ticket",
+            "description": "Look up a support ticket by ticket_id (format: Tnnn, e.g. T002, T008).\n\n    Returns the ticket text, customer_id, and linked order_id.\n    If the ticket is not found, returns a message with the expected ID format\n    so you can ask the user to double-check rather than retrying the same call.\n    ",
+            "inputSchema": {
+              "properties": {
+                "ticket_id": {
+                  "title": "Ticket Id",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "ticket_id"
+              ],
+              "type": "object",
+              "title": "get_ticketArguments"
+            }
+          },
+          {
+            "name": "get_order",
+            "description": "Fetch an order record by order ID (format: Onnn, e.g. O201, O210).\n\n    Returns purchase date, amount, currency, fulfilment status,\n    and days_since_purchase. If not found, returns a not_found message\n    with the expected format so you can ask the user to verify.\n    ",
+            "inputSchema": {
+              "properties": {
+                "order_id": {
+                  "title": "Order Id",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "order_id"
+              ],
+              "type": "object",
+              "title": "get_orderArguments"
+            }
+          },
+          {
+            "name": "get_customer_tier",
+            "description": "Return the SLA tier for a customer account (format: Cnnn, e.g. C101).\n\n    Used to select the applicable refund window. The tier parameter is a\n    caller hint only; the record's actual tier is always authoritative.\n    If not found, returns a not_found message with the expected format.\n    ",
+            "inputSchema": {
+              "properties": {
+                "customer_id": {
+                  "title": "Customer Id",
+                  "type": "string"
+                },
+                "tier": {
+                  "default": "standard",
+                  "title": "Tier",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "customer_id"
+              ],
+              "type": "object",
+              "title": "get_customer_tierArguments"
+            }
+          },
+          {
+            "name": "search_knowledge_base",
+            "description": "Search the billing support knowledge base using hybrid retrieval\n    (BM25 + dense vector RRF fusion).\n\n    Use this to look up billing policies, error code explanations,\n    migration procedures, account roles, or any question that requires\n    documented knowledge rather than live order/ticket data.\n\n    query: a natural-language search string.\n    top_k: number of results to return (1-5, default 3).\n    ",
+            "inputSchema": {
+              "properties": {
+                "query": {
+                  "title": "Query",
+                  "type": "string"
+                },
+                "top_k": {
+                  "default": 3,
+                  "title": "Top K",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "query"
+              ],
+              "type": "object",
+              "title": "search_knowledge_baseArguments"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "server": "ticket-history",
+    "step": "initialize",
+    "request": {
+      "jsonrpc": "2.0",
+      "method": "initialize",
+      "params": {
+        "protocolVersion": "2024-11-05",
+        "capabilities": {},
+        "clientInfo": {
+          "name": "billing-agent",
+          "version": "1.0.0"
+        }
+      }
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "result": {
+        "protocolVersion": "2025-11-25",
+        "serverInfo": {
+          "name": "ticket-history",
+          "version": ""
+        }
+      }
+    }
+  },
+  {
+    "server": "ticket-history",
+    "step": "tools/list",
+    "request": {
+      "jsonrpc": "2.0",
+      "method": "tools/list",
+      "params": {}
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "result": {
+        "tools": [
+          {
+            "name": "lookup_ticket_history",
+            "description": "Look up the full lifecycle history of a support ticket by ticket_id\n    (format: Tnnn, e.g. T002, T008).\n\n    Returns the creation timestamp, status change timeline, and\n    list of assigned agents. If the ticket has no recorded history,\n    returns a clear message so you can tell the user rather than\n    retrying the same call.\n    ",
+            "inputSchema": {
+              "properties": {
+                "ticket_id": {
+                  "title": "Ticket Id",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "ticket_id"
+              ],
+              "type": "object",
+              "title": "lookup_ticket_historyArguments"
+            }
+          },
+          {
+            "name": "get_escalation_history",
+            "description": "Get the escalation chain for a support ticket by ticket_id\n    (format: Tnnn, e.g. T003, T008).\n\n    Returns a list of escalation events with timestamps, the agents\n    involved, the reason for escalation, and the escalation level.\n    If no escalations exist for this ticket, returns an empty list\n    with a note that the ticket was never escalated.\n    ",
+            "inputSchema": {
+              "properties": {
+                "ticket_id": {
+                  "title": "Ticket Id",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "ticket_id"
+              ],
+              "type": "object",
+              "title": "get_escalation_historyArguments"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "server": "billing-tools",
+    "step": "tools/call",
+    "request": {
+      "jsonrpc": "2.0",
+      "method": "tools/call",
+      "params": {
+        "name": "get_ticket",
+        "arguments": {
+          "ticket_id": "T002"
+        }
+      }
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"ticket_id\": \"T002\", \"customer_id\": \"C102\", \"order_id\": \"O202\", \"text\": \"I was charged twice last week. Requesting a refund for the duplicate charge.\", \"expected_verdict\": \"approve\"}"
+          }
+        ],
+        "isError": false
+      }
+    }
+  },
+  {
+    "server": "ticket-history",
+    "step": "tools/call",
+    "request": {
+      "jsonrpc": "2.0",
+      "method": "tools/call",
+      "params": {
+        "name": "get_escalation_history",
+        "arguments": {
+          "ticket_id": "T008"
+        }
+      }
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"ticket_id\": \"T008\", \"escalations\": [{\"ticket_id\": \"T008\", \"escalated_at\": \"2025-06-13T12:00:00Z\", \"from_agent\": \"agent-D\", \"to_agent\": \"agent-E\", \"reason\": \"Order O208 not found in system -- possibl"
+          }
+        ],
+        "isError": false
+      }
+    }
+  },
+  {
+    "server": "ticket-history",
+    "step": "tools/call",
+    "request": {
+      "jsonrpc": "2.0",
+      "method": "tools/call",
+      "params": {
+        "name": "lookup_ticket_history",
+        "arguments": {
+          "ticket_id": "T008"
+        }
+      }
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"ticket_id\": \"T008\", \"created\": \"2025-06-13T10:30:00Z\", \"status_changes\": [{\"from\": \"open\", \"to\": \"in_progress\", \"at\": \"2025-06-13T10:45:00Z\", \"by\": \"agent-D\"}, {\"from\": \"in_progress\", \"to\": \"escalat"
+          }
+        ],
+        "isError": false
+      }
+    }
+  }
+]
