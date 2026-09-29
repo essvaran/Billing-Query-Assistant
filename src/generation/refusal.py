@@ -1,1 +1,1 @@
-REFUSAL_MESSAGE = "I cannot answer that from the indexed help-centre articles."
+REFUSAL_MESSAGE = "I don't have enough information to answer that. For further help, please contact our support team or check our help centre."

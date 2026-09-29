@@ -6,9 +6,9 @@ Endpoints:
   GET  /api/agent/status/{job_id} -- poll status (authenticated)
 """
 
+import json
 import logging
 import threading
-import time
 import uuid
 from typing import Any
 
@@ -16,23 +16,60 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from api.auth import UserOut, get_current_user
+from api.database import get_db
 
 log = logging.getLogger("api.agent")
 router = APIRouter(prefix="/api/agent", tags=["agent"])
 
+
 # ---------------------------------------------------------------------------
-# In-memory job store with TTL cleanup (60-minute retention)
+# SQLite-backed job store
 # ---------------------------------------------------------------------------
-_JOB_TTL_SECS = 3600
-_jobs: dict[str, dict[str, Any]] = {}
-_jobs_lock = threading.Lock()
+
+def _create_job(job_id: str, user_email: str) -> None:
+    with get_db() as conn:
+        conn.execute(
+            "INSERT INTO jobs (job_id, user_email, status) VALUES (?,?,'running')",
+            (job_id, user_email),
+        )
 
 
-def _evict_old_jobs() -> None:
-    cutoff = time.monotonic() - _JOB_TTL_SECS
-    stale = [jid for jid, j in _jobs.items() if j.get("_created", 0) < cutoff]
-    for jid in stale:
-        del _jobs[jid]
+def _append_step(job_id: str, step: dict) -> None:
+    with get_db() as conn:
+        row = conn.execute("SELECT steps FROM jobs WHERE job_id=?", (job_id,)).fetchone()
+        if row:
+            steps = json.loads(row["steps"])
+            steps.append(step)
+            conn.execute("UPDATE jobs SET steps=? WHERE job_id=?", (json.dumps(steps), job_id))
+
+
+def _finish_job(job_id: str, result: dict) -> None:
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE jobs SET status='done', result=? WHERE job_id=?",
+            (json.dumps(result), job_id),
+        )
+
+
+def _fail_job(job_id: str, error: str) -> None:
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE jobs SET status='error', error=? WHERE job_id=?",
+            (error, job_id),
+        )
+
+
+def _get_job(job_id: str) -> dict[str, Any] | None:
+    with get_db() as conn:
+        row = conn.execute("SELECT * FROM jobs WHERE job_id=?", (job_id,)).fetchone()
+    if not row:
+        return None
+    return {
+        "status": row["status"],
+        "steps": json.loads(row["steps"]),
+        "result": json.loads(row["result"]) if row["result"] else None,
+        "error": row["error"],
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -53,7 +90,6 @@ class RunRequest(BaseModel):
 def list_tickets(_user: UserOut = Depends(get_current_user)):
     """Return the current ticket fixtures (reads from SQLite, falls back to hardcoded)."""
     try:
-        from api.database import get_db
         with get_db() as conn:
             rows = conn.execute("SELECT * FROM tickets ORDER BY ticket_id").fetchall()
         if rows:
@@ -92,16 +128,7 @@ def run_agent_job(req: RunRequest, user: UserOut = Depends(get_current_user)):
         raise HTTPException(400, "Provide ticket_id or message")
 
     job_id = str(uuid.uuid4())
-    with _jobs_lock:
-        _evict_old_jobs()
-        _jobs[job_id] = {
-            "status": "running",
-            "steps": [],
-            "result": None,
-            "error": None,
-            "_created": time.monotonic(),
-            "_owner": user.email,
-        }
+    _create_job(job_id, user.email)
 
     def _worker():
         try:
@@ -110,9 +137,7 @@ def run_agent_job(req: RunRequest, user: UserOut = Depends(get_current_user)):
             from dataclasses import asdict
 
             def on_step(step: dict):
-                with _jobs_lock:
-                    if job_id in _jobs:
-                        _jobs[job_id]["steps"].append(step)
+                _append_step(job_id, step)
 
             freeform = bool(req.message and not req.ticket_id)
             result = run_agent(
@@ -123,26 +148,21 @@ def run_agent_job(req: RunRequest, user: UserOut = Depends(get_current_user)):
                 user_message=req.message if freeform else None,
                 system_prompt_override=FREEFORM_SYSTEM_PROMPT if freeform else None,
             )
-            with _jobs_lock:
-                if job_id in _jobs:
-                    _jobs[job_id]["status"] = "done"
-                    _jobs[job_id]["result"] = asdict(result)
+            if result.error or result.reply in ("[error]", "") or not result.reply.strip():
+                _fail_job(job_id, result.error or "The agent did not produce a response. Please try again.")
+            else:
+                _finish_job(job_id, asdict(result))
         except Exception as exc:
             log.error("Agent job %s failed: %s", job_id, exc)
-            with _jobs_lock:
-                if job_id in _jobs:
-                    _jobs[job_id]["status"] = "error"
-                    _jobs[job_id]["error"] = "Agent run failed — please try again"
+            _fail_job(job_id, "Agent run failed -- please try again")
 
     threading.Thread(target=_worker, daemon=True).start()
     return {"job_id": job_id}
 
 
 @router.get("/status/{job_id}")
-def get_job_status(job_id: str, user: UserOut = Depends(get_current_user)):
-    with _jobs_lock:
-        job = _jobs.get(job_id)
+def get_job_status(job_id: str, _user: UserOut = Depends(get_current_user)):
+    job = _get_job(job_id)
     if not job:
-        raise HTTPException(404, "Job not found or expired")
-    # Sanitise internal fields before returning
-    return {k: v for k, v in job.items() if not k.startswith("_")}
+        raise HTTPException(404, "Job not found")
+    return job

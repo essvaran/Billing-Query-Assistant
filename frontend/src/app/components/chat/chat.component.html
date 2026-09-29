@@ -7,71 +7,6 @@
       <span class="logo-text">Billing Support</span>
     </div>
     <p class="sidebar-hint">Ask anything about billing migrations, errors, or account roles.</p>
-
-    <!-- Retrieval mode toggle (RAG only) -->
-    @if (chatMode === 'rag') {
-      <div class="retrieval-section" [class.hybrid-active]="hybridMode">
-        <span class="retrieval-label">Retrieval mode</span>
-        <div class="toggle-row">
-          <span class="mode-name" [class.active]="!hybridMode">Dense</span>
-          <label class="toggle-switch">
-            <input type="checkbox" [(ngModel)]="hybridMode" />
-            <span class="toggle-track">
-              <span class="toggle-thumb"></span>
-            </span>
-          </label>
-          <span class="mode-name" [class.active]="hybridMode">BM25 + RRF</span>
-        </div>
-        <p class="mode-desc">
-          @if (!hybridMode) { Vector similarity — cosine distance on embeddings }
-          @else { Dense top-25 + BM25 top-25, fused by RRF (k=60) }
-        </p>
-        <div class="mode-badge" [class.hybrid-badge]="hybridMode">
-          {{ hybridMode ? 'BM25 + RRF ON' : 'Dense only' }}
-        </div>
-      </div>
-    }
-
-    <!-- Agent options (Agent mode only) -->
-    @if (chatMode === 'agent') {
-      <div class="agent-sidebar-section">
-        <span class="retrieval-label">Agent Options</span>
-        <label class="tight-label">
-          <input type="checkbox" [(ngModel)]="tightBudget" />
-          <span>Tight budget (2 laps max)</span>
-        </label>
-        <p class="mode-desc">Agent uses ReAct loop — calls tools until it has enough data to answer.</p>
-      </div>
-    }
-
-    <!-- Question bank -->
-    <div class="qbank">
-      <span class="qbank-title">Golden Set</span>
-      @for (group of visibleGroups; track group.label) {
-        <div class="qbank-group">
-          <button class="qbank-header" (click)="toggleGroup(group.label)">
-            <span class="qbank-arrow" [class.open]="isGroupOpen(group.label)">›</span>
-            <span class="qbank-group-label">{{ group.label }}</span>
-            <span class="qbank-count">{{ group.questions.length }}</span>
-          </button>
-          @if (isGroupOpen(group.label)) {
-            <div class="qbank-list">
-              @for (q of group.questions; track q.id) {
-                <button
-                  class="qbank-item"
-                  (click)="useQuestion(q.text)"
-                  [class.nic-item]="q.notInCorpus"
-                  title="Click to load into input"
-                >
-                  <span class="qid">{{ q.id }}</span>
-                  <span class="qtext">{{ q.text }}</span>
-                </button>
-              }
-            </div>
-          }
-        </div>
-      }
-    </div>
   </aside>
 
   <!-- Main area -->
@@ -84,7 +19,7 @@
         <div class="empty-state">
           <div class="empty-icon">💬</div>
           <h2>How can I help you today?</h2>
-          <p>Ask a billing question or switch to <strong>Agent</strong> mode to resolve tickets with tool calls.</p>
+          <p>Ask a billing question or switch to <strong>Agent</strong> mode to resolve a ticket.</p>
         </div>
       }
 
@@ -100,58 +35,28 @@
 
           <!-- RAG assistant bubble -->
           @if (msg.role === 'assistant' && !msg.agentTurn) {
-            <div class="bubble assistant-bubble"
-              [class.dense-bubble]="msg.response?.retriever !== 'hybrid-bm25-rrf'"
-              [class.hybrid-bubble]="msg.response?.retriever === 'hybrid-bm25-rrf'"
-            >
-              <p class="bubble-text">{{ msg.text }}</p>
+            <div class="bubble assistant-bubble">
+              <p class="bubble-text">{{ msg.text || 'No answer available. Please try again.' }}</p>
 
-              @if (msg.response) {
-                <div class="meta-bar">
-                  <div class="meta-pills">
-                    <span class="pill retriever-pill" [class.hybrid-pill]="msg.response.retriever === 'hybrid-bm25-rrf'">
-                      {{ msg.response.retriever === 'hybrid-bm25-rrf' ? '⚡ BM25 + RRF' : '● Dense' }}
-                    </span>
-                    <span class="pill" [class.valid-pill]="msg.response.citations_valid" [class.invalid-pill]="!msg.response.citations_valid">
-                      {{ msg.response.citations_valid ? 'Citations OK' : 'No valid citation' }}
-                    </span>
-                    <span class="pill neutral-pill">{{ msg.response.chunks.length }} sources</span>
-                  </div>
-                  <button class="chunks-toggle" (click)="toggleChunks(i)">
-                    {{ isExpanded(i) ? 'Hide sources' : 'Show sources' }}
+              @if (msg.response && msg.response.chunks.length > 0) {
+                <div class="sources-bar">
+                  <button class="sources-toggle" (click)="toggleChunks(i)">
+                    {{ isExpanded(i) ? 'Hide sources' : 'Sources (' + msg.response.chunks.length + ')' }}
                   </button>
-                </div>
-
-                <div class="timing-row">
-                  <div class="timing-cell">
-                    <span class="timing-label">Retrieval</span>
-                    <span class="timing-value">{{ msg.response.retrieval_ms }} ms</span>
-                  </div>
-                  <div class="timing-divider"></div>
-                  <div class="timing-cell">
-                    <span class="timing-label">Generation</span>
-                    <span class="timing-value">{{ msg.response.generation_ms }} ms</span>
-                  </div>
-                  <div class="timing-divider"></div>
-                  <div class="timing-cell">
-                    <span class="timing-label">Total</span>
-                    <span class="timing-value total-timing">{{ msg.response.total_ms }} ms</span>
-                  </div>
                 </div>
 
                 @if (isExpanded(i)) {
                   <div class="chunks-panel">
                     @for (chunk of msg.response.chunks; track chunk.chunk_id) {
                       <div class="chunk-card">
-                        <div class="chunk-header">
-                          <span class="chunk-rank">#{{ chunk.rank }}</span>
-                          <span class="chunk-id">{{ chunk.chunk_id }}</span>
-                          <span class="chunk-score">{{ scoreLabel(msg.response.retriever) }} {{ chunk.score | number:'1.4-4' }}</span>
+                        <div class="chunk-meta">
+                          @if (chunk.section) {
+                            <span>{{ chunk.article_id }} › {{ chunk.section }}</span>
+                          } @else {
+                            <span>{{ chunk.article_id }}</span>
+                          }
                         </div>
-                        @if (chunk.section) {
-                          <div class="chunk-meta"><span>{{ chunk.article_id }} › {{ chunk.section }}</span></div>
-                        }
-                        <p class="chunk-text">{{ chunk.text }}</p>
+                        <p class="chunk-excerpt">{{ chunk.text | slice:0:200 }}{{ chunk.text.length > 200 ? '…' : '' }}</p>
                       </div>
                     }
                   </div>
@@ -163,114 +68,62 @@
           <!-- Agent assistant bubble -->
           @if (msg.role === 'assistant' && msg.agentTurn) {
             <div class="bubble assistant-bubble agent-bubble">
-              <div class="agent-mode-badge">Agent</div>
 
-              <!-- Steps -->
-              @for (step of msg.agentTurn.steps; track $index; let si = $index) {
-                @switch (step.type) {
-                  @case ('thinking') {
-                    <div class="ac-step ac-step-thinking">
-                      <span class="ac-step-icon">
-                        @if (msg.agentTurn.status === 'running' && si === msg.agentTurn.steps.length - 1) {
-                          <span class="ac-pulse">●</span>
-                        } @else { ● }
-                      </span>
-                      <span class="ac-step-body">Lap {{ step.lap }} — calling LLM...</span>
-                    </div>
-                  }
-                  @case ('llm_response') {
-                    <div class="ac-step ac-step-llm">
-                      <span class="ac-step-icon ac-icon-llm">LLM</span>
-                      <span class="ac-step-body">
-                        Lap {{ step.lap }}
-                        @if (step.finish_reason === 'tool_calls') {
-                          — <span class="ac-finish-chip ac-chip-tools">tool_calls</span>
-                        } @else {
-                          — <span class="ac-finish-chip ac-chip-stop">{{ step.finish_reason }}</span>
+              <!-- Live tool call progress -->
+              @if (toolPairs(msg.agentTurn.steps).length > 0 || msg.agentTurn.status === 'running') {
+                <div class="tool-progress-list">
+                  @for (pair of toolPairs(msg.agentTurn.steps); track $index; let pi = $index) {
+                    <div class="tool-call-group">
+                      <div class="tool-progress-item">
+                        <span class="tool-check">✓</span>
+                        <span class="tool-label">{{ friendlyTool(pair.call.tool ?? '') }}</span>
+                        @if (toolArg(pair.call)) {
+                          <span class="tool-arg">{{ toolArg(pair.call) }}</span>
                         }
-                        <span class="ac-tok">{{ step.lap_tokens }} tok ({{ step.cumulative_tokens }} total)</span>
-                      </span>
-                    </div>
-                  }
-                  @case ('tool_call') {
-                    <div class="ac-step ac-step-tool-call">
-                      <span class="ac-step-icon">→</span>
-                      <span class="ac-step-body">
-                        <span class="ac-tool-name" [class]="toolColor(step.tool ?? '')">{{ step.tool }}</span>
-                        @if (step.mcp_server) {
-                          <span class="ac-mcp-badge" [title]="'Served by MCP server: ' + step.mcp_server">MCP · {{ step.mcp_server }}</span>
+                        @if (pair.result && resultSummary(pair.result)) {
+                          <span class="tool-result-summary">{{ resultSummary(pair.result) }}</span>
                         }
-                        <code class="ac-args">{{ step.args | json }}</code>
-                      </span>
-                    </div>
-                  }
-                  @case ('tool_result') {
-                    <div class="ac-step ac-step-tool-result">
-                      <span class="ac-step-icon">←</span>
-                      <span class="ac-step-body">
-                        <span class="ac-tool-name-muted">{{ step.tool }}</span>
-                        @if (step.mcp_server) {
-                          <span class="ac-mcp-badge" [title]="'Served by MCP server: ' + step.mcp_server">MCP · {{ step.mcp_server }}</span>
+                        @if (pair.result) {
+                          <button class="tool-expand-btn" (click)="toggleToolResult(i, pi)">
+                            {{ isToolExpanded(i, pi) ? '▲' : '▼' }}
+                          </button>
                         }
-                        <button class="ac-expand-btn" (click)="toggleAgentResult(msg.agentTurn!, si + '')" type="button">
-                          {{ msg.agentTurn!.expandedResults.has(si + '') ? 'collapse' : 'expand' }}
-                        </button>
-                        @if (msg.agentTurn!.expandedResults.has(si + '')) {
-                          <pre class="ac-result-json">{{ resultFull(step.result ?? {}) }}</pre>
-                        } @else {
-                          <code class="ac-result-preview">{{ resultPreview(step.result ?? {}) }}</code>
-                        }
-                      </span>
+                      </div>
+                      @if (pair.result && isToolExpanded(i, pi)) {
+                        <div class="tool-result-panel">
+                          <pre class="tool-result-pre">{{ formatResultJson(pair.result) }}</pre>
+                        </div>
+                      }
                     </div>
                   }
-                  @case ('budget_hit') {
-                    <div class="ac-step ac-step-budget">
-                      <span class="ac-step-icon">!!</span>
-                      <span class="ac-step-body">Budget hit: {{ step.budget }} = {{ step.value }} / {{ step.limit }}</span>
+                  @if (msg.agentTurn.status === 'running') {
+                    <div class="tool-progress-item tool-progress-item--thinking">
+                      <span class="ac-pulse">●</span>
+                      <span class="thinking-label">Thinking...</span>
                     </div>
                   }
-                }
-              }
-
-              <!-- Starting indicator -->
-              @if (msg.agentTurn.status === 'running' && msg.agentTurn.steps.length === 0) {
-                <div class="ac-step ac-step-thinking">
-                  <span class="ac-step-icon"><span class="ac-pulse">●</span></span>
-                  <span class="ac-step-body">Starting agent...</span>
                 </div>
               }
 
-              <!-- Final result -->
+              <!-- Final answer -->
               @if (msg.agentTurn.status === 'done' && msg.agentTurn.result) {
-                <div class="ac-reply-block">
-                  <div class="ac-reply-stats">
-                    <span class="ac-stat-chip">{{ msg.agentTurn.result.laps }} laps</span>
-                    <span class="ac-stat-chip">{{ msg.agentTurn.result.total_tokens.toLocaleString() }} tokens</span>
-                    <span class="ac-stat-chip">${{ msg.agentTurn.result.cost_usd.toFixed(5) }}</span>
-                    <span class="ac-stat-chip">{{ msg.agentTurn.result.latency_s.toFixed(2) }}s</span>
-                    @if (msg.agentTurn.result.passed !== null) {
-                      <span class="ac-pass-pill"
-                        [class.ac-pass]="msg.agentTurn.result.passed"
-                        [class.ac-fail]="!msg.agentTurn.result.passed">
-                        {{ msg.agentTurn.result.passed ? 'PASS' : 'FAIL' }}
-                      </span>
-                    }
-                    @if (msg.agentTurn.result.trace_url) {
-                      <a [href]="msg.agentTurn.result.trace_url" target="_blank" rel="noopener" class="ac-trace-link">
-                        Langfuse →
-                      </a>
-                    }
-                  </div>
-                  <div class="ac-reply-text">{{ msg.agentTurn.result.reply }}</div>
-                  @if (msg.agentTurn.result.budget_hit) {
-                    <div class="ac-budget-note">{{ msg.agentTurn.result.budget_hit }}</div>
-                  }
-                </div>
+                @if (toolSteps(msg.agentTurn.steps).length > 0) {
+                  <div class="ac-reply-divider"></div>
+                }
+                <div class="ac-reply-text">{{ msg.agentTurn.result.reply || 'No response was generated. Please try again.' }}</div>
               }
 
               <!-- Error -->
               @if (msg.agentTurn.status === 'error') {
-                <div class="ac-error-block">{{ msg.agentTurn.error }}</div>
+                <div class="ac-error-block">
+                  <span class="ac-error-icon">⚠</span>
+                  <div class="ac-error-body">
+                    <span class="ac-error-title">Something went wrong</span>
+                    <span class="ac-error-detail">
+                      {{ msg.agentTurn.error || 'The agent encountered an error. Please try again.' }}
+                    </span>
+                  </div>
+                </div>
               }
             </div>
           }

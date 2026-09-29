@@ -733,6 +733,137 @@
   margin-bottom: 10px;
 }
 
+// ── Agent thinking state ─────────────────────────────────────────────────────
+
+.agent-thinking {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.thinking-label {
+  font-size: 12px;
+  color: #a78bfa;
+  font-style: italic;
+}
+
+// ── Live tool progress list ───────────────────────────────────────────────────
+
+.tool-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 4px;
+}
+
+.tool-call-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tool-progress-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+
+.tool-check {
+  color: #a6e3a1;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.tool-label {
+  color: #a6adc8;
+}
+
+.tool-arg {
+  color: #6c7086;
+  font-family: monospace;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid #2a2a2a;
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+.tool-result-summary {
+  color: #89b4fa;
+  font-size: 11px;
+  margin-left: 2px;
+}
+
+.tool-expand-btn {
+  background: none;
+  border: none;
+  color: #6c7086;
+  cursor: pointer;
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1;
+  margin-left: auto;
+  &:hover { color: #a6adc8; background: rgba(255,255,255,0.06); }
+}
+
+.tool-result-panel {
+  margin-left: 18px;
+  border-left: 2px solid #2a2a2a;
+  padding-left: 8px;
+}
+
+.tool-result-pre {
+  font-family: 'Cascadia Code', 'Fira Code', monospace;
+  font-size: 10px;
+  color: #6c7086;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 4px 0;
+  line-height: 1.5;
+}
+
+.tool-progress-item--thinking {
+  color: #a78bfa;
+  font-style: italic;
+  margin-top: 2px;
+}
+
+.ac-reply-divider {
+  height: 1px;
+  background: #2a2a2a;
+  margin: 10px 0;
+}
+
+// ── Steps summary (tool chain breadcrumb -- kept for backwards compat) ────────
+
+.steps-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.step-name {
+  font-size: 11px;
+  color: #7c9cbf;
+  background: rgba(124, 156, 191, 0.1);
+  border: 1px solid rgba(124, 156, 191, 0.2);
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+
+.step-arrow {
+  font-size: 11px;
+  color: #444;
+}
+
 // ── Agent steps ───────────────────────────────────────────────────────────────
 
 .ac-step {
@@ -924,9 +1055,39 @@
 }
 
 .ac-error-block {
-  font-size: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-top: 4px;
+}
+
+.ac-error-icon {
+  font-size: 1rem;
   color: #f87171;
-  padding: 6px 0;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.ac-error-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ac-error-title {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #f87171;
+}
+
+.ac-error-detail {
+  font-size: 0.78rem;
+  color: #a6adc8;
+  line-height: 1.4;
 }
 
 // ── Input bar ─────────────────────────────────────────────────────────────────

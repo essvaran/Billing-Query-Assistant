@@ -53,6 +53,33 @@
             (click)="setTab('users')" [attr.aria-selected]="activeTab === 'users'">
       Users <span class="tab-count">{{ users.length }}</span>
     </button>
+
+    <span class="tab-divider" aria-hidden="true"></span>
+
+    <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'traces'"
+            (click)="setTab('traces')" [attr.aria-selected]="activeTab === 'traces'">
+      Traces
+    </button>
+    <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'sample'"
+            (click)="setTab('sample')" [attr.aria-selected]="activeTab === 'sample'">
+      Sample
+    </button>
+    <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'taxonomy'"
+            (click)="setTab('taxonomy')" [attr.aria-selected]="activeTab === 'taxonomy'">
+      Taxonomy
+    </button>
+    <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'eval'"
+            (click)="setTab('eval')" [attr.aria-selected]="activeTab === 'eval'">
+      Eval
+    </button>
+    <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'race'"
+            (click)="setTab('race')" [attr.aria-selected]="activeTab === 'race'">
+      Race
+    </button>
+    <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'trajectory'"
+            (click)="setTab('trajectory')" [attr.aria-selected]="activeTab === 'trajectory'">
+      Trajectory
+    </button>
   </div>
 
   <!-- ===== TICKETS ===== -->
@@ -370,6 +397,14 @@
       </div>
     </div>
   }
+
+  <!-- ===== DEV / RESEARCH TOOLS ===== -->
+  @if (activeTab === 'traces')     { <app-traces></app-traces> }
+  @if (activeTab === 'sample')     { <app-sample></app-sample> }
+  @if (activeTab === 'taxonomy')   { <app-taxonomy></app-taxonomy> }
+  @if (activeTab === 'eval')       { <app-eval></app-eval> }
+  @if (activeTab === 'race')       { <app-race></app-race> }
+  @if (activeTab === 'trajectory') { <app-trajectory></app-trajectory> }
 
   <!-- ===== DOCUMENTS ===== -->
   @if (activeTab === 'documents') {

@@ -12,6 +12,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 import re as _re
 
@@ -80,6 +83,8 @@ async def lifespan(app: FastAPI):
 # ---------------------------------------------------------------------------
 # Application
 # ---------------------------------------------------------------------------
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(
     title="Billing Support RAG API",
     version="1.0.0",
@@ -88,6 +93,8 @@ app = FastAPI(
     openapi_url="/api/openapi.json",
     lifespan=lifespan,
 )
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # ---------------------------------------------------------------------------
 # Routers
@@ -148,15 +155,16 @@ def health():
 # ---------------------------------------------------------------------------
 
 @app.post("/api/ask", response_model=AskResponse)
-def ask(request: AskRequest, _user=Depends(get_current_user)) -> AskResponse:
-    if not request.question.strip():
+@limiter.limit("10/minute")
+def ask(body: AskRequest, request: Request, _user=Depends(get_current_user)) -> AskResponse:
+    if not body.question.strip():
         raise HTTPException(status_code=400, detail="Question must not be empty.")
 
     from src.generation.answer import answer_question
     from src.generation.llm_client import LLMRequestError
 
     try:
-        result = answer_question(request.question, use_hybrid=request.use_hybrid)
+        result = answer_question(body.question, use_hybrid=body.use_hybrid)
     except LLMRequestError as exc:
         log.error("LLM error on ask: %s", exc)
         raise HTTPException(status_code=502, detail="LLM service unavailable — please retry") from exc

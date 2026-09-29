@@ -3,10 +3,6 @@
     "billing-tools": {
       "command": "python",
       "args": ["mcp_servers/billing_tools_server.py"]
-    },
-    "ticket-history": {
-      "command": "python",
-      "args": ["mcp_servers/ticket_history_server.py"]
     }
   }
 }

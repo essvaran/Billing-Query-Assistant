@@ -29,3 +29,5 @@ Thumbs.db
 # ── Logs & temp ───────────────────────────────────────────────────────────────
 *.log
 *.patch
+wire.json
+debug_langfuse.py

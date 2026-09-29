@@ -20,13 +20,6 @@ import { AuthService } from './services/auth.service';
         <div class="nav__links" role="menubar">
           <a class="nav__link" routerLink="/" routerLinkActive="nav__link--active"
              [routerLinkActiveOptions]="{exact:true}" role="menuitem">Chat</a>
-          <a class="nav__link" routerLink="/agent-chat" routerLinkActive="nav__link--active" role="menuitem">Agent</a>
-          <a class="nav__link" routerLink="/traces" routerLinkActive="nav__link--active" role="menuitem">Traces</a>
-          <a class="nav__link" routerLink="/sample" routerLinkActive="nav__link--active" role="menuitem">Sample</a>
-          <a class="nav__link" routerLink="/taxonomy" routerLinkActive="nav__link--active" role="menuitem">Taxonomy</a>
-          <a class="nav__link" routerLink="/eval" routerLinkActive="nav__link--active" role="menuitem">Eval</a>
-          <a class="nav__link" routerLink="/race" routerLinkActive="nav__link--active" role="menuitem">Race</a>
-          <a class="nav__link" routerLink="/trajectory" routerLinkActive="nav__link--active" role="menuitem">Trajectory</a>
           @if (isAdmin) {
             <a class="nav__link nav__link--admin" routerLink="/admin"
                routerLinkActive="nav__link--active" role="menuitem">Admin</a>

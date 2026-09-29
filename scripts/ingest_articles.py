@@ -13,6 +13,7 @@ from src.chunking.structure_aware import structure_aware_chunk_articles
 from src.config import (
     ARTICLES_DIR,
     BASELINE_COLLECTION,
+    MARKDOWN_ARTICLES_DIR,
     SEMANTIC_COLLECTION,
     STRUCTURE_AWARE_COLLECTION,
 )
@@ -25,8 +26,12 @@ def main() -> None:
     print(f"Loaded articles: {len(articles)}")
     print(f"Metadata validation passed: {len(articles)}/{len(articles)}")
 
+    # Structure-aware chunker needs ## headings -- use Markdown source files.
+    # Baseline and semantic chunkers work on the PDFs directly.
+    md_articles = load_articles(MARKDOWN_ARTICLES_DIR) if MARKDOWN_ARTICLES_DIR.exists() else articles
+
     baseline_chunks = baseline_chunk_articles(articles)
-    structure_chunks = structure_aware_chunk_articles(articles)
+    structure_chunks = structure_aware_chunk_articles(md_articles)
     semantic_chunks = semantic_chunk_articles(articles)
 
     print(f"Baseline chunk count:        {len(baseline_chunks)}")

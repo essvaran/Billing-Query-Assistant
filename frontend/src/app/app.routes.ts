@@ -9,54 +9,49 @@ export const routes: Routes = [
     loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent),
   },
 
-  // Authenticated — lazy-loaded for smaller initial bundle
+  // Authenticated user routes
   {
     path: '',
     canActivate: [authGuard],
     loadComponent: () => import('./components/chat/chat.component').then(m => m.ChatComponent),
   },
+
+  // Admin-only routes (dev/research tools)
   {
     path: 'traces',
-    canActivate: [authGuard],
+    canActivate: [adminGuard],
     loadComponent: () => import('./components/traces/traces.component').then(m => m.TracesComponent),
   },
   {
     path: 'sample',
-    canActivate: [authGuard],
+    canActivate: [adminGuard],
     loadComponent: () => import('./components/sample/sample.component').then(m => m.SampleComponent),
   },
   {
     path: 'replay/:traceId',
-    canActivate: [authGuard],
+    canActivate: [adminGuard],
     loadComponent: () => import('./components/replay/replay.component').then(m => m.ReplayComponent),
   },
   {
     path: 'taxonomy',
-    canActivate: [authGuard],
+    canActivate: [adminGuard],
     loadComponent: () => import('./components/taxonomy/taxonomy.component').then(m => m.TaxonomyComponent),
   },
   {
     path: 'eval',
-    canActivate: [authGuard],
+    canActivate: [adminGuard],
     loadComponent: () => import('./components/eval/eval.component').then(m => m.EvalComponent),
   },
   {
     path: 'race',
-    canActivate: [authGuard],
+    canActivate: [adminGuard],
     loadComponent: () => import('./components/race/race.component').then(m => m.RaceComponent),
   },
   {
     path: 'trajectory',
-    canActivate: [authGuard],
+    canActivate: [adminGuard],
     loadComponent: () => import('./components/trajectory/trajectory.component').then(m => m.TrajectoryComponent),
   },
-  {
-    path: 'agent-chat',
-    canActivate: [authGuard],
-    loadComponent: () => import('./components/agent-chat/agent-chat.component').then(m => m.AgentChatComponent),
-  },
-
-  // Admin only
   {
     path: 'admin',
     canActivate: [adminGuard],

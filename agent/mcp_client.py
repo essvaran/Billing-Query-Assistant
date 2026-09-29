@@ -1,4 +1,4 @@
-"""MCP client bridge for the agent loop.
+﻿"""MCP client bridge for the agent loop.
 
 Connects to every server listed in mcp_config.json, discovers tools via
 tools/list, and exposes them in OpenAI-compatible format (what Groq expects).
@@ -111,10 +111,10 @@ class MCPManager:
                 "response": {
                     "jsonrpc": "2.0",
                     "result": {
-                        "protocolVersion": str(init_result.protocol_version),
+                        "protocolVersion": str(getattr(init_result, "protocolVersion", getattr(init_result, "protocol_version", "unknown"))),
                         "serverInfo": {
-                            "name": init_result.server_info.name if init_result.server_info else name,
-                            "version": init_result.server_info.version if init_result.server_info else "unknown",
+                            "name": (getattr(init_result, "serverInfo", None) or getattr(init_result, "server_info", None) or type("", (), {"name": name, "version": "unknown"})()).name,
+                            "version": (getattr(init_result, "serverInfo", None) or getattr(init_result, "server_info", None) or type("", (), {"name": name, "version": "unknown"})()).version,
                         },
                     },
                 },
@@ -181,7 +181,12 @@ class MCPManager:
     def dispatch_tool(self, name: str, arguments: str) -> str:
         """Call a tool by name and return the JSON result string."""
         if name not in self._tool_to_server:
-            return json.dumps({"error": f"unknown_tool: {name}"})
+            available = list(self._tool_to_server.keys())
+            return json.dumps({
+                "error": f"unknown_tool '{name}' does not exist.",
+                "available_tools": available,
+                "instruction": f"You must only call one of: {', '.join(available)}. Do not call '{name}' again.",
+            })
 
         try:
             args = json.loads(arguments) if arguments else {}

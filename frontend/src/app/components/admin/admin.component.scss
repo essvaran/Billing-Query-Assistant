@@ -5,7 +5,7 @@
 }
 
 .admin-shell {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
 }
@@ -150,7 +150,9 @@
 /* Tabs */
 .tabs {
   display: flex;
+  align-items: center;
   gap: 0.25rem;
+  flex-wrap: wrap;
   border-bottom: 1px solid #313244;
   margin-bottom: 1.5rem;
 }
@@ -173,6 +175,26 @@
     border-bottom-color: #89b4fa;
     font-weight: 500;
   }
+
+  &--dev {
+    color: #585b70;
+    font-size: 0.8rem;
+
+    &:hover { color: #a6adc8; }
+
+    &.active {
+      color: #cba6f7;
+      border-bottom-color: #cba6f7;
+    }
+  }
+}
+
+.tab-divider {
+  width: 1px;
+  height: 1.2rem;
+  background: #313244;
+  margin: 0 0.5rem;
+  flex-shrink: 0;
 }
 
 /* Section */

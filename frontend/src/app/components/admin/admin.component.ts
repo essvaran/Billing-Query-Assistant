@@ -3,15 +3,24 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService, AppUser, Customer, Order, Ticket } from '../../services/admin.service';
 import { UploadService } from '../../services/upload.service';
+import { TracesComponent } from '../traces/traces.component';
+import { SampleComponent } from '../sample/sample.component';
+import { TaxonomyComponent } from '../taxonomy/taxonomy.component';
+import { EvalComponent } from '../eval/eval.component';
+import { RaceComponent } from '../race/race.component';
+import { TrajectoryComponent } from '../trajectory/trajectory.component';
 
-type Tab = 'tickets' | 'orders' | 'customers' | 'users' | 'documents';
+type Tab = 'tickets' | 'orders' | 'customers' | 'users' | 'documents'
+         | 'traces' | 'sample' | 'taxonomy' | 'eval' | 'race' | 'trajectory';
 
 interface Toast { message: string; kind: 'success' | 'error'; id: number }
 
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule,
+    TracesComponent, SampleComponent, TaxonomyComponent,
+    EvalComponent, RaceComponent, TrajectoryComponent],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss',
 })

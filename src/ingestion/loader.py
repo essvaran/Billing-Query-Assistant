@@ -126,8 +126,14 @@ def _extract_text(file_path: Path) -> str:
         if _PdfReader is None:
             raise ValueError("pypdf is required for .pdf files: pip install pypdf")
         try:
-            reader = _PdfReader(str(file_path))
-            return "\n".join(page.extract_text() or "" for page in reader.pages)
+            reader = _PdfReader(str(file_path), strict=False)
+            pages = []
+            for page in reader.pages:
+                try:
+                    pages.append(page.extract_text() or "")
+                except Exception:
+                    pages.append("")
+            return "\n".join(pages)
         except Exception as e:
             raise ValueError(
                 f"Failed to extract text from PDF {file_path.name}: {e}. "

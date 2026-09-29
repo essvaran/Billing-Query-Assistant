@@ -54,6 +54,15 @@ def init_db() -> None:
                                       CHECK(tier IN ('standard','premium','enterprise')),
                 refund_days  INTEGER  NOT NULL CHECK(refund_days > 0)
             );
+            CREATE TABLE IF NOT EXISTS jobs (
+                job_id     TEXT PRIMARY KEY,
+                user_email TEXT NOT NULL,
+                status     TEXT NOT NULL CHECK(status IN ('running','done','error')),
+                steps      TEXT NOT NULL DEFAULT '[]',
+                result     TEXT,
+                error      TEXT,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
         """)
         _seed_if_empty(conn)
 

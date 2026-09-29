@@ -7,7 +7,7 @@ langchain==0.3.12
 langchain-community==0.3.12
 langchain-text-splitters==0.3.3
 langchain-huggingface==0.1.2
-chromadb==0.5.23
+chromadb==1.5.9
 sentence-transformers==3.3.1
 transformers==4.47.1
 torch==2.5.1

@@ -33,8 +33,16 @@ if hasattr(sys.stdout, "reconfigure"):
 
 load_dotenv()
 
-_mcp = MCPManager("mcp_config.json", log_wire=True)
-_mcp.connect()
+_mcp: MCPManager | None = None
+
+
+def _get_mcp() -> MCPManager:
+    """Lazily connect the MCP manager on first use; retry if previous connect discovered no tools."""
+    global _mcp
+    if _mcp is None or not _mcp.get_tool_schemas():
+        _mcp = MCPManager("mcp_config.json", log_wire=True)
+        _mcp.connect()
+    return _mcp
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
@@ -54,6 +62,10 @@ DEMO_MAX_ITERS = 2   # tight budget used for the budget-demo run
 
 SYSTEM_PROMPT = (
     "You are a billing support agent resolving refund requests. "
+    "You have EXACTLY FOUR tools available -- no others exist:\n"
+    "  get_ticket, get_order, get_customer_tier, search_knowledge_base\n"
+    "NEVER call any tool not listed above. If you generate a call to any other tool "
+    "it will be rejected as an error.\n\n"
     "For each ticket, call the tools in this order:\n"
     "1. get_ticket -- retrieve the ticket text, customer ID, and order ID.\n"
     "2. get_order -- fetch purchase date, amount, and fulfilment status. "
@@ -74,12 +86,16 @@ SYSTEM_PROMPT = (
 
 FREEFORM_SYSTEM_PROMPT = (
     "You are a helpful billing support agent for an e-commerce company. "
-    "You have access to four tools:\n"
+    "You have EXACTLY FOUR tools available -- no others exist:\n"
+    "  search_knowledge_base, get_ticket, get_order, get_customer_tier\n"
+    "NEVER call any tool not listed above. If you generate a call to any other tool "
+    "it will be rejected as an error.\n\n"
+    "Tool descriptions:\n"
     "- search_knowledge_base(query): search the billing knowledge base for policies, error codes, "
     "migration procedures, and documented answers\n"
     "- get_ticket(ticket_id): look up a support ticket by ID (e.g. T001)\n"
     "- get_order(order_id): look up an order by ID (e.g. O201)\n"
-    "- get_customer_tier(customer_id, tier): look up a customer's service tier and refund window\n\n"
+    "- get_customer_tier(customer_id): look up a customer's service tier and refund window\n\n"
     "RULES -- follow these strictly, do not skip:\n"
     "1. Only call search_knowledge_base if the question contains an explicit error code "
     "(format like ERR-nnnn or PAY-nnnn) or explicitly names a documented policy, migration "
@@ -87,8 +103,7 @@ FREEFORM_SYSTEM_PROMPT = (
     "for ordinary refund, order-status, or ticket-history questions. Call it at most once per "
     "question -- never repeat it with a reworded query.\n"
     "2. If the question mentions a ticket ID (T001...) -- call get_ticket, then get_order, then "
-    "get_customer_tier, unless the question is only asking about ticket history or escalation "
-    "(in which case use the history tools instead and skip get_order/get_customer_tier).\n"
+    "get_customer_tier, unless the question is only asking about ticket history or escalation.\n"
     "3. Only answer directly (without tools) for purely conversational messages like greetings.\n"
     "4. Never call the same tool with the same arguments more than once.\n"
     "After retrieving results, give a concise, grounded answer based only on what the tools returned."
@@ -121,6 +136,11 @@ class BudgetExceeded(Exception):
 def _groq_call(messages: list[dict], tools: list[dict]) -> dict:
     if not GROQ_API_KEY:
         raise RuntimeError("GROQ_API_KEY not set in .env")
+    if not tools:
+        raise RuntimeError(
+            "No MCP tools available -- MCP server is not connected. "
+            "Restart the backend server to reconnect."
+        )
 
     payload = {
         "model": MODEL,
@@ -153,6 +173,37 @@ def _groq_call(messages: list[dict], tools: list[dict]) -> dict:
             time.sleep(retry_after)
             wait = min(wait * 2, 60)
             continue
+
+        if resp.status_code == 400:
+            try:
+                err_body = resp.json().get("error", {})
+                if err_body.get("code") == "tool_use_failed":
+                    import re as _re
+                    failed_gen = err_body.get("failed_generation", "{}")
+                    m = _re.search(r'"name"\s*:\s*"([^"]+)"', failed_gen)
+                    unknown_name = m.group(1) if m else "unknown_tool"
+                    # Return a synthetic response so the agent loop can feed back
+                    # "unknown tool" to the model and let it retry with a real tool.
+                    return {
+                        "choices": [{
+                            "finish_reason": "tool_calls",
+                            "message": {
+                                "role": "assistant",
+                                "content": None,
+                                "tool_calls": [{
+                                    "id": "call_hallucinated_0",
+                                    "type": "function",
+                                    "function": {
+                                        "name": unknown_name,
+                                        "arguments": "{}",
+                                    },
+                                }],
+                            },
+                        }],
+                        "usage": {"total_tokens": 50, "prompt_tokens": 50, "completion_tokens": 0},
+                    }
+            except Exception:
+                pass
 
         try:
             resp.raise_for_status()
@@ -258,7 +309,7 @@ def run_agent(
                 except Exception:
                     lf_lap_span = None
 
-            data = _groq_call(messages, _mcp.get_tool_schemas())
+            data = _groq_call(messages, _get_mcp().get_tool_schemas())
             choice = data["choices"][0]
             usage = data.get("usage", {})
             lap_tokens = usage.get("total_tokens", 0)
@@ -301,6 +352,13 @@ def run_agent(
 
             if finish_reason == "stop" or not tool_calls:
                 reply = (msg.get("content") or "").strip()
+                if not reply:
+                    # Model returned stop with empty/null content -- treat as error
+                    # so the job is marked failed rather than silently showing a blank bubble.
+                    raise RuntimeError(
+                        "The model returned an empty response. "
+                        "Try rephrasing your question or including a ticket ID."
+                    )
                 cost = (cumulative_tokens / 1_000_000) * COST_PER_1M_TOKENS
                 latency = time.monotonic() - t_start
                 passed = score_reply(reply, expected_verdict)
@@ -358,7 +416,7 @@ def run_agent(
                     args_dict_emit = json.loads(fn_args)
                 except Exception:
                     args_dict_emit = {"raw": fn_args}
-                mcp_server = _mcp.get_server_for_tool(fn_name)
+                mcp_server = _get_mcp().get_server_for_tool(fn_name)
                 _emit({"type": "tool_call", "lap": laps, "tool": fn_name, "args": args_dict_emit, "mcp_server": mcp_server})
 
                 call_key = (fn_name, fn_args)
@@ -373,7 +431,7 @@ def run_agent(
                     })
                 else:
                     _seen_calls.add(call_key)
-                    _dispatch = dispatch_override if dispatch_override else _mcp.dispatch_tool
+                    _dispatch = dispatch_override if dispatch_override else _get_mcp().dispatch_tool
                     result_str = _dispatch(fn_name, fn_args)
                 try:
                     result_dict_emit = json.loads(result_str)

@@ -5,13 +5,18 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
-from src.config import DEFAULT_COLLECTION, MIN_SCORE_DENSE, MIN_SCORE_HYBRID, TOP_K
+import re as _re
+
+from src.config import DEFAULT_COLLECTION, MIN_SCORE_DENSE, MIN_SCORE_HYBRID, MIN_QUERY_RELEVANCE, TOP_K
 from src.generation.citations import extract_citations, validate_citations
 from src.generation.langfuse_client import get_langfuse
 from src.generation.llm_client import LLM_PROVIDER, GROQ_MODEL, OLLAMA_MODEL, ask_llm
 from src.generation.prompts import SYSTEM_PROMPT, build_user_prompt
 from src.generation.refusal import REFUSAL_MESSAGE
+from src.retrieval.query_filter import is_query_relevant
 from src.retrieval.search import search
+
+_CITATION_BRACKET_RE = _re.compile(r"\[([A-Za-z0-9]+(?:-[A-Za-z0-9]+)*--[A-Za-z0-9-]+--[A-Za-z0-9-]+)\]")
 
 _TRACES_PATH = Path(__file__).resolve().parents[2] / "evaluation" / "traces.jsonl"
 
@@ -98,6 +103,31 @@ def answer_question(
             )
         except Exception:
             trace = None
+
+    # ── Pre-retrieval query relevance gate ────────────────────────────────
+    try:
+        if not is_query_relevant(question, collection_name, MIN_QUERY_RELEVANCE):
+            ans = Answer(
+                question=question,
+                retrieved_chunks=[],
+                raw_answer=REFUSAL_MESSAGE,
+                final_answer=REFUSAL_MESSAGE,
+                citations=set(),
+                citations_valid=False,
+                retrieval_ms=0.0,
+                generation_ms=0.0,
+                retriever=retriever_label,
+            )
+            if trace:
+                trace.update(
+                    output={"final_answer": REFUSAL_MESSAGE, "reason": "off_topic_query"},
+                    metadata={"citations_valid": False},
+                )
+                lf.flush()
+            _write_trace(ans, question, k, collection_name)
+            return ans
+    except Exception:
+        pass  # if the gate fails, proceed to retrieval rather than blocking
 
     # ── Retrieval ──────────────────────────────────────────────────────────
     retrieval_span = (
@@ -217,7 +247,31 @@ def answer_question(
 
     citations = extract_citations(raw_answer)
     citations_valid = validate_citations(citations, retrieved_ids)
-    final_answer = raw_answer if citations_valid else REFUSAL_MESSAGE
+
+    if citations_valid:
+        final_answer = raw_answer
+    elif not citations:
+        # No citations at all -- keep the answer as-is (model answered without citing)
+        final_answer = raw_answer
+    else:
+        # Some citations are invalid: strip the hallucinated ones and keep the rest.
+        normalised_retrieved = {rid.lower() for rid in retrieved_ids}
+        invalid_ids = citations - normalised_retrieved
+
+        cleaned = raw_answer
+        for inv_id in invalid_ids:
+            cleaned = _CITATION_BRACKET_RE.sub(
+                lambda m, bad=inv_id: "" if m.group(1).lower() == bad else m.group(0),
+                cleaned,
+            )
+        remaining = extract_citations(cleaned)
+        if remaining:
+            final_answer = cleaned
+            citations = remaining
+            citations_valid = True
+        else:
+            # All citations were hallucinated -- return the refusal
+            final_answer = REFUSAL_MESSAGE
 
     ans = Answer(
         question=question,

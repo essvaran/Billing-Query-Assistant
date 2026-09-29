@@ -37,7 +37,7 @@ JWT_EXPIRE_DAYS: int = 7
 # ---------------------------------------------------------------------------
 # Roles
 # ---------------------------------------------------------------------------
-ADMIN_EMAIL: str = _get("ADMIN_EMAIL", "essvaransekar2410@gmail.com")
+ADMIN_EMAIL: str = _require("ADMIN_EMAIL")
 
 # ---------------------------------------------------------------------------
 # CORS  —  comma-separated origins, e.g.  http://localhost:4200,https://app.example.com

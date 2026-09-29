@@ -1,6 +1,6 @@
 # Billing Support RAG
 
-A Retrieval-Augmented Generation (RAG) system for answering billing migration questions. Ingests help-centre articles in multiple formats, indexes them with three chunking strategies, and serves grounded answers through a FastAPI backend and Angular chat UI.
+A production-ready Retrieval-Augmented Generation (RAG) system for answering billing questions and resolving support tickets. Supports both a conversational RAG chat interface and an agentic ReAct loop that resolves tickets by calling structured tools via the Model Context Protocol (MCP).
 
 ---
 
@@ -11,48 +11,64 @@ A Retrieval-Augmented Generation (RAG) system for answering billing migration qu
 3. [Folder Structure](#3-folder-structure)
 4. [Prerequisites](#4-prerequisites)
 5. [Setup](#5-setup)
-6. [API Keys and LLM Models](#6-api-keys-and-llm-models)
-7. [Running the Pipeline](#7-running-the-pipeline)
+6. [Environment Variables](#6-environment-variables)
+7. [Building the Knowledge Base](#7-building-the-knowledge-base)
 8. [Running the Application](#8-running-the-application)
-9. [Sharing via ngrok](#9-sharing-via-ngrok)
-10. [CLI Usage](#10-cli-usage)
-11. [Supported File Formats](#11-supported-file-formats)
-12. [Chunking Strategies](#12-chunking-strategies)
-13. [Evaluation](#13-evaluation)
-14. [Running Tests](#14-running-tests)
+9. [Authentication](#9-authentication)
+10. [Chat Modes](#10-chat-modes)
+11. [Admin Panel](#11-admin-panel)
+12. [Supported File Formats](#12-supported-file-formats)
+13. [Chunking Strategies](#13-chunking-strategies)
+14. [Evaluation](#14-evaluation)
+15. [Running Tests](#15-running-tests)
+16. [CLI Usage](#16-cli-usage)
 
 ---
 
 ## 1. Project Overview
 
-This system answers questions about billing migrations by:
+This system answers billing questions and resolves support tickets by:
 
-- **Ingesting** help-centre articles (PDF, Word, Excel, Markdown, plain text)
-- **Chunking** them with three strategies and embedding with `BAAI/bge-base-en-v1.5`
-- **Storing** embeddings in ChromaDB (local, no server needed)
-- **Retrieving** the most relevant chunks at query time
-- **Generating** grounded, cited answers via a cloud or local LLM
+- **Ingesting** help-centre articles (PDF, Markdown, Word, Excel, plain text) into three local vector store collections
+- **Retrieving** relevant chunks via hybrid search (BM25 + dense vector, fused by Reciprocal Rank Fusion)
+- **Generating** grounded, cited answers via a cloud (Groq) or local (Ollama) LLM
 - **Refusing** questions the indexed articles cannot answer
-
-The default chunking strategy is **structure-aware**, which achieves 8/8 Hit@5 on the evaluation set including all table-dependent questions.
+- **Resolving tickets** with a ReAct agent that calls billing tools via MCP servers
+- **Tracking** every trace with Langfuse observability (optional)
 
 ---
 
 ## 2. Architecture
 
 ```
-Browser / ngrok
-      │
-      ▼
-Angular UI  (port 4200)
-      │  /api/* proxy
-      ▼
+Browser
+    |
+    v
+Angular 19 UI  (port 4200)
+    |  /api/* proxy
+    v
 FastAPI server  (port 8000)
-      │
-      ├── ChromaDB  (chroma_db/ — local disk)
-      │       └── billing_structure_aware collection (default)
-      │
-      └── LLM  (Groq cloud  OR  local Ollama)
+    |
+    |-- Google OAuth + JWT auth
+    |
+    |-- RAG pipeline
+    |       |-- Local vector store (chroma_db/ -- numpy + JSON on disk)
+    |       |       -- billing_structure_aware (default)
+    |       |       -- billing_baseline
+    |       |       -- billing_semantic
+    |       |
+    |       -- LLM (Groq cloud OR local Ollama)
+    |
+    |-- Agent (ReAct loop)
+    |       |-- MCP client
+    |               -- billing-tools MCP server
+    |                       -- get_ticket
+    |                       -- get_order
+    |                       -- get_customer_tier
+    |                       -- search_knowledge_base
+    |
+    -- SQLite (data/app.db)
+            -- users, tickets, orders, customers, jobs
 ```
 
 **Tech stack**
@@ -60,11 +76,18 @@ FastAPI server  (port 8000)
 | Layer | Technology |
 |---|---|
 | Embeddings | `BAAI/bge-base-en-v1.5` via `sentence-transformers` |
-| Vector store | ChromaDB (persistent, in-process) |
-| LLM | Groq (`llama-3.1-8b-instant`) or Ollama (local) |
+| Vector store | Local numpy store (persistent JSON + .npy files) |
+| Keyword search | BM25 (`rank-bm25`) |
+| Fusion | Reciprocal Rank Fusion (RRF, k=60) |
+| LLM (RAG) | Groq `llama-3.1-8b-instant` or Ollama |
+| LLM (Agent) | Groq `llama-3.3-70b-versatile` or Ollama |
+| Tool protocol | Model Context Protocol (MCP) over stdio |
 | API | FastAPI + Uvicorn |
+| Auth | Google OAuth 2.0 + JWT |
+| Rate limiting | slowapi (10 req/min on /api/ask) |
+| Observability | Langfuse (optional) |
+| Database | SQLite |
 | UI | Angular 19 |
-| Tunnelling | ngrok (optional, for remote sharing) |
 
 ---
 
@@ -72,44 +95,77 @@ FastAPI server  (port 8000)
 
 ```
 rag-billing-support/
-├── api/                        FastAPI server
-│   ├── main.py                 App entrypoint, CORS, /api/ask endpoint
-│   └── models.py               Pydantic request/response models
-│
-├── data/
-│   ├── billing_articles/       Source PDFs (ingested by default pipeline)
-│   └── markdown/               Markdown versions (used for structure-aware chunking)
-│
-├── evaluation/                 Evaluation datasets and results
-│   ├── questions.json          Frozen test questions with evidence terms
-│   ├── hit_at_5_results.json   Hit@5 scores per strategy
-│   └── results.md              Full evaluation write-up
-│
-├── frontend/                   Angular 19 chat UI
-│   ├── src/app/
-│   │   ├── components/chat/    Chat bubble UI, sources panel, timing bar
-│   │   └── services/           HTTP client to FastAPI
-│   └── proxy.conf.json         Dev proxy: /api → localhost:8000
-│
-├── scripts/                    CLI tools (run in order)
-│   ├── ingest_articles.py      Load, chunk, embed, store in ChromaDB
-│   ├── run_search.py           Dump retrieval results for all strategies
-│   ├── run_evaluation.py       Compute Hit@5 scores
-│   ├── run_filter_demo.py      Demo metadata filtering by product_area
-│   ├── run_generation_tests.py Run answerable + refusal Q&A tests
-│   └── ask.py                  Interactive CLI assistant
-│
-├── src/                        Core RAG pipeline (Python package)
-│   ├── config.py               All paths and constants
-│   ├── chunking/               baseline, structure_aware, semantic chunkers
-│   ├── generation/             LLM client, prompts, citations, refusal
-│   ├── ingestion/              File loaders (PDF, DOCX, Excel, MD, TXT)
-│   └── retrieval/              ChromaDB queries, metadata filters
-│
-├── tests/                      pytest test suite
-├── .env                        Your local secrets (gitignored)
-├── .env.example                Template — copy to .env and fill in
-└── requirements.txt            Python dependencies
+|
+|-- api/                        FastAPI backend
+|   |-- main.py                 App entrypoint, CORS, rate limiting, /api/ask
+|   |-- auth.py                 Google OAuth token verification + JWT issuance
+|   |-- config.py               Environment-based configuration
+|   |-- database.py             SQLite schema + seed data
+|   |-- models.py               Pydantic request/response models
+|   |-- admin_router.py         Admin CRUD: tickets, orders, customers, users
+|   |-- agent_router.py         Agent job queue (SQLite-backed, daemon threads)
+|   |-- race_router.py          Agent-vs-workflow race endpoint
+|   `-- trajectory_router.py    Trajectory evaluation endpoints
+|
+|-- agent/                      ReAct agentic loop
+|   |-- agent_loop.py           Main loop: budgets, MCP dispatch, Langfuse tracing
+|   |-- tools.py                Tool implementations (get_ticket, get_order, etc.)
+|   |-- tickets.py              Fixture data: 13 tickets, orders, customers
+|   |-- mcp_client.py           MCP stdio client manager
+|   |-- workflow.py             Deterministic workflow (for race comparison)
+|   |-- trajectory_eval.py      Trajectory evaluation logic
+|   |-- mitigations.py          Prompt hardening + argument validation
+|   `-- injection_test.py       Prompt injection test cases
+|
+|-- mcp_servers/
+|   `-- billing_tools_server.py MCP server: get_ticket, get_order, get_customer_tier, search_knowledge_base
+|
+|-- src/                        Core RAG library
+|   |-- config.py               Paths, model names, score thresholds
+|   |-- chunking/               baseline, structure_aware, semantic chunkers
+|   |-- ingestion/              File loaders (PDF, DOCX, Excel, MD, TXT)
+|   |-- retrieval/              Dense search, BM25, hybrid RRF, query filter
+|   `-- generation/             LLM client, prompts, citations, refusal, Langfuse
+|
+|-- frontend/                   Angular 19 SPA
+|   |-- src/app/
+|   |   |-- app.routes.ts       Routes (/ for users; admin routes for admins)
+|   |   |-- components/
+|   |   |   |-- login/          Google OAuth sign-in
+|   |   |   |-- chat/           RAG + Agent chat (unified)
+|   |   |   |-- admin/          Admin CRUD panel (admin only)
+|   |   |   |-- traces/         Trace browser (admin only)
+|   |   |   |-- eval/           Eval dashboard (admin only)
+|   |   |   |-- race/           Agent vs Workflow race (admin only)
+|   |   |   `-- trajectory/     Trajectory eval + security (admin only)
+|   |   |-- services/           HTTP service wrappers
+|   |   |-- guards/             auth.guard.ts, admin.guard.ts
+|   |   `-- interceptors/       auth.interceptor.ts (attaches JWT)
+|   `-- proxy.conf.json         Dev proxy: /api -> localhost:8000
+|
+|-- data/
+|   |-- billing_articles/       Source PDFs (6 billing help articles -- add more here)
+|   |-- markdown/               Markdown versions of articles
+|   `-- app.db                  SQLite database
+|
+|-- evaluation/                 Eval artifacts
+|   |-- traces.jsonl            All RAG traces (append-only log)
+|   |-- golden_set.jsonl        25-question golden eval set
+|   |-- labels_25.json          Human labels for 25 cases
+|   `-- judge.py                LLM-as-judge runner
+|
+|-- scripts/                    Utility scripts
+|   |-- bootstrap.py            Build ChromaDB collections from scratch
+|   |-- ingest_articles.py      Ingest all billing articles
+|   |-- ask.py                  CLI ask utility
+|   `-- run_evaluation.py       Run evaluation pipeline
+|
+|-- tests/                      pytest test suite
+|-- docs/                       Internal project notes and weekly writeups
+|-- mcp_config.json             MCP server process configuration
+|-- .env                        Local secrets (gitignored)
+|-- .env.example                Template -- copy to .env and fill in
+`-- requirements.txt            Python dependencies
 ```
 
 ---
@@ -121,8 +177,7 @@ rag-billing-support/
 | Python | 3.11+ | |
 | Node.js | 18+ | For the Angular UI |
 | npm | 9+ | Comes with Node |
-| Angular CLI | 19+ | Installed automatically via `npx` |
-| ngrok | Any | Only needed for remote sharing |
+| Google Cloud account | -- | For OAuth credentials |
 
 ---
 
@@ -146,7 +201,7 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-> **First run note:** `ingest_articles.py` downloads the `BAAI/bge-base-en-v1.5` model (~440 MB) from Hugging Face and caches it locally. Subsequent runs skip the download.
+> **First run note:** ingestion downloads the `BAAI/bge-base-en-v1.5` embedding model (~440 MB) from Hugging Face and caches it locally.
 
 ### 3. Configure environment variables
 
@@ -154,7 +209,7 @@ pip install -r requirements.txt
 copy .env.example .env
 ```
 
-Open `.env` and fill in your values — see [Section 6](#6-api-keys-and-llm-models) for how to get them.
+Open `.env` and fill in all values. See [Section 6](#6-environment-variables) for details.
 
 ### 4. Install Angular dependencies
 
@@ -166,143 +221,87 @@ cd ..
 
 ---
 
-## 6. API Keys and LLM Models
+## 6. Environment Variables
 
-### Groq (recommended — free, cloud)
-
-Groq provides fast, free inference for open-weight models.
-
-1. Go to [console.groq.com](https://console.groq.com) and create a free account
-2. Navigate to **API Keys** → **Create API Key**
-3. Copy the key and paste it into `.env`:
+All required variables must be set in `.env`. The server exits with a clear error message if any required variable is missing.
 
 ```env
-LLM_PROVIDER=groq
-GROQ_API_KEY=gsk_...your_key_here...
-LLM_MODEL=llama-3.1-8b-instant
-```
+# ── LLM Provider ──────────────────────────────────────────────────────────────
+LLM_PROVIDER=groq                         # "groq" or "ollama"
 
-**Available Groq models** (set as `LLM_MODEL`):
+# ── Groq (cloud, recommended) ─────────────────────────────────────────────────
+# Get a free key at https://console.groq.com -> API Keys
+GROQ_API_KEY=gsk_your_key_here
+LLM_MODEL=llama-3.1-8b-instant            # RAG model; agent uses llama-3.3-70b-versatile
 
-| Model | Speed | Quality | Notes |
-|---|---|---|---|
-| `llama-3.1-8b-instant` | Very fast | Good | Default — best for this use case |
-| `llama-3.3-70b-versatile` | Moderate | Excellent | Better reasoning, higher latency |
-| `gemma2-9b-it` | Fast | Good | Google Gemma alternative |
-| `mixtral-8x7b-32768` | Fast | Good | Long context window |
-
-> Free tier limits: 14,400 requests/day, 500,000 tokens/minute. More than enough for development.
-
----
-
-### Ollama (alternative — fully local, no API key)
-
-Run models locally with no internet dependency.
-
-1. Download and install Ollama from [ollama.com](https://ollama.com)
-2. Pull a model:
-
-```powershell
-ollama pull llama3.2:latest       # 2 GB — fast, good quality
-ollama pull llama3.2:1b           # 0.8 GB — very fast, smaller
-ollama pull mistral:latest        # 4 GB — strong reasoning
-```
-
-3. Start the Ollama server (runs in the background automatically after install):
-
-```powershell
-ollama serve
-```
-
-4. Set `.env`:
-
-```env
-LLM_PROVIDER=ollama
-LLM_MODEL=llama3.2:latest
-OLLAMA_BASE_URL=http://localhost:11434
-```
-
----
-
-### Full `.env` reference
-
-```env
-# ── LLM Provider ─────────────────────────────────────────────────────────────
-# Set to "groq" for cloud inference or "ollama" for local inference
-LLM_PROVIDER=groq
-
-# ── Groq (cloud) ─────────────────────────────────────────────────────────────
-# Required when LLM_PROVIDER=groq
-# Get your key at: https://console.groq.com → API Keys
-GROQ_API_KEY=gsk_...
-
-# Model name — see table above for options
-LLM_MODEL=llama-3.1-8b-instant
-
-# ── Ollama (local) ────────────────────────────────────────────────────────────
-# Only needed when LLM_PROVIDER=ollama
+# ── Ollama (local, optional) ──────────────────────────────────────────────────
 # OLLAMA_BASE_URL=http://localhost:11434
+# LLM_MODEL=llama3.2:latest
+
+# ── Auth -- required ──────────────────────────────────────────────────────────
+# Google OAuth client ID (web application)
+# console.cloud.google.com > APIs & Services > Credentials > Create OAuth 2.0 Client ID
+# Add http://localhost:4200 to Authorized JavaScript origins
+GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
+
+# JWT signing secret -- generate with: python -c "import secrets; print(secrets.token_hex(32))"
+JWT_SECRET=change_me_to_a_random_secret_at_least_32_chars
+
+# Email address that receives admin role on first login (required -- no default)
+ADMIN_EMAIL=your_admin_email@example.com
+
+# ── CORS ──────────────────────────────────────────────────────────────────────
+# Comma-separated list of allowed origins (default: http://localhost:4200)
+# ALLOWED_ORIGINS=http://localhost:4200,https://your-production-domain.com
+
+# ── Langfuse observability (optional) ─────────────────────────────────────────
+# Leave blank to disable. Get keys at https://cloud.langfuse.com
+# LANGFUSE_PUBLIC_KEY=pk-...
+# LANGFUSE_SECRET_KEY=sk-...
+# LANGFUSE_HOST=https://cloud.langfuse.com
+
+# ── Upload limits ─────────────────────────────────────────────────────────────
+# MAX_UPLOAD_BYTES=20971520    # 20 MB (default)
 ```
 
 ---
 
-## 7. Running the Pipeline
+## 7. Building the Knowledge Base
 
-Run these scripts in order once before starting the application. The virtual environment must be active.
-
-### Step 1 — Ingest articles and build ChromaDB collections
+Run once before starting the application (and again whenever you add new articles).
 
 ```powershell
+python scripts\bootstrap.py
 python scripts\ingest_articles.py
 ```
 
-Reads all articles from `data/billing_articles/`, chunks them with all three strategies, embeds them, and writes three ChromaDB collections to `chroma_db/`.
+This reads all PDFs from `data/billing_articles/`, chunks them with three strategies, embeds them with `BAAI/bge-base-en-v1.5`, and writes three collections to `chroma_db/` (stored as JSON + .npy files, no C++ dependencies).
 
 ```
 Loaded articles: 6
-Metadata validation passed: 6/6
-Baseline chunk count:        41
 Structure-aware chunk count: 87
-Semantic chunk count:        53
+Built collection: billing_structure_aware  (default)
 Built collection: billing_baseline
-Built collection: billing_structure_aware
 Built collection: billing_semantic
 ```
 
-> Re-run this whenever you add or change articles. Ingestion is the only step that requires time — subsequent runs of the API and UI use the stored embeddings.
-
-### Step 2 (optional) — Run retrieval evaluation
-
-```powershell
-python scripts\run_evaluation.py
-```
-
-Outputs Hit@5 scores for all three strategies against the 8 frozen evaluation questions.
-
-### Step 3 (optional) — Run generation tests
-
-```powershell
-python scripts\run_generation_tests.py
-```
-
-Tests answerable questions and refusal behaviour. Requires `.env` to be configured with a working LLM provider.
+> Re-run after adding or removing articles from `data/billing_articles/`.
 
 ---
 
 ## 8. Running the Application
 
-Open **two terminals** in the project root, both with the virtual environment active.
+Open two terminals with the virtual environment active.
 
-### Terminal 1 — FastAPI backend
+### Terminal 1 -- FastAPI backend
 
 ```powershell
 .venv\Scripts\python.exe -m uvicorn api.main:app --port 8000
 ```
 
-API is available at `http://127.0.0.1:8000`.  
-Interactive API docs: `http://127.0.0.1:8000/docs`
+The API runs at `http://127.0.0.1:8000`. Interactive docs: `http://127.0.0.1:8000/api/docs`
 
-### Terminal 2 — Angular UI
+### Terminal 2 -- Angular UI
 
 ```powershell
 cd frontend
@@ -311,116 +310,91 @@ npx ng serve --port 4200 --proxy-config proxy.conf.json
 
 Open `http://localhost:4200` in your browser.
 
-The Angular dev server proxies all `/api/*` requests to `http://127.0.0.1:8000`, so the UI and API stay decoupled.
+---
+
+## 9. Authentication
+
+The app uses Google OAuth 2.0 for sign-in. On first login, the account matching `ADMIN_EMAIL` is granted the `admin` role; all other accounts receive the `user` role.
+
+**To set up Google OAuth:**
+
+1. Go to [console.cloud.google.com](https://console.cloud.google.com) > APIs & Services > Credentials
+2. Create an **OAuth 2.0 Client ID** (Web application)
+3. Add `http://localhost:4200` to **Authorized JavaScript origins**
+4. Copy the Client ID into `.env` as `GOOGLE_CLIENT_ID`
+5. Also paste the same Client ID into `frontend/src/app/components/login/login.component.ts`
+
+JWTs expire after 7 days. The Angular auth interceptor attaches the token automatically on every request.
 
 ---
 
-## 9. Sharing via ngrok
+## 10. Chat Modes
 
-ngrok creates a public HTTPS URL that tunnels to your local application, letting someone on a different network use your local running version.
+The chat interface has two modes, selectable from the input bar:
 
-### Install ngrok
+### RAG mode (default)
 
-Download from [ngrok.com/download](https://ngrok.com/download) or use winget:
+Answers billing questions by retrieving relevant chunks from the knowledge base and generating a cited response. Uses hybrid retrieval (BM25 + dense vector, fused by RRF).
 
-```powershell
-winget install ngrok
-```
+- If no relevant chunks are found, the system returns a friendly fallback rather than hallucinating.
+- Sources can be expanded below each answer (article name + section heading + excerpt).
 
-### (Optional) Add a free auth token to remove the interstitial page
+### Agent mode
 
-1. Create a free account at [dashboard.ngrok.com](https://dashboard.ngrok.com)
-2. Copy your authtoken from **Your Authtoken**
-3. Run:
+Resolves support tickets using a ReAct loop. The agent calls billing tools in sequence until it has enough information to reach a verdict (approve / deny / escalate).
 
-```powershell
-ngrok config add-authtoken <your-authtoken>
-```
+**Tools available:**
+- `get_ticket` -- retrieves the ticket text, customer ID, and order ID
+- `get_order` -- fetches purchase date, amount, and fulfilment status
+- `get_customer_tier` -- returns the customer's tier and refund window
+- `search_knowledge_base` -- runs a RAG search over the billing articles
 
-This removes the "Visit Site" warning page that appears for unauthenticated tunnels.
-
-### Start ngrok
-
-With both the FastAPI backend and Angular dev server already running:
-
-```powershell
-ngrok http 4200
-```
-
-ngrok will display a public URL like:
-
-```
-Forwarding   https://abc123.ngrok-free.app → http://localhost:4200
-```
-
-Share that URL. The person opening it:
-1. Sees an ngrok warning page on first visit (click **Visit Site** to continue) — not shown if you added an authtoken
-2. Gets the full chat UI, fully connected to your local RAG pipeline
-
-> **Note:** The public URL changes every time you restart ngrok (free plan). For a permanent URL, upgrade to a paid ngrok plan and use `ngrok http 4200 --domain=your-name.ngrok.app`.
+The agent shows a summary of which steps it took and its final answer.
 
 ---
 
-## 10. CLI Usage
+## 11. Admin Panel
 
-The interactive CLI assistant runs directly in the terminal without the Angular UI.
+Accessible at `/admin` for accounts with the `admin` role.
 
-```powershell
-python scripts\ask.py
-```
+**Tabs:**
 
-```
-Billing Migration Help-Centre Assistant
-Strategy: structure  |  Collection: billing_structure_aware
-Loading embedding model... ready.
+| Tab | Description |
+|---|---|
+| Tickets | CRUD for support tickets (ticket ID, customer, order, text, expected verdict) |
+| Orders | CRUD for orders (order ID, purchase date, amount, status) |
+| Customers | CRUD for customers (customer ID, tier, refund window in days) |
+| Documents | Upload new articles (PDF, MD, TXT, DOCX, XLSX -- max 20 MB) to add to the knowledge base |
+| Users | View all users and change roles (admin cannot demote the primary admin) |
 
-Ask a question about billing migration, or type 'exit' to quit.
+**Admin-only routes** (also guarded by the admin role):
 
-> What does ERR-4032 mean?
-
-According to [HC-BILL-002--error-codes--err-4032], ERR-4032 means the billing
-profile migration is incomplete because a required field was not carried over
-from the legacy platform.
-
-Cited chunks: HC-BILL-002--error-codes--err-4032
-Timings — retrieval: 43 ms | generation: 812 ms | total: 855 ms
-
-> exit
-```
-
-**Flags:**
-
-```powershell
-# Switch chunking strategy
-python scripts\ask.py --strategy baseline
-python scripts\ask.py --strategy structure    # default
-python scripts\ask.py --strategy semantic
-
-# Filter results by product area
-python scripts\ask.py --filter-product-area billing-migration
-
-# Show filtered vs unfiltered results side by side
-python scripts\ask.py --filter-product-area billing-migration --compare-filters
-```
+| Route | Description |
+|---|---|
+| `/traces` | Browse all RAG traces with filters |
+| `/sample` | Curated sample traces |
+| `/replay/:id` | Re-run LLM with original trace's chunks |
+| `/taxonomy` | Query taxonomy explorer |
+| `/eval` | Eval dashboard (25-question golden set) |
+| `/race` | Agent vs Workflow comparison |
+| `/trajectory` | Trajectory eval, mitigation analysis, and prompt injection tests |
 
 ---
 
-## 11. Supported File Formats
+## 12. Supported File Formats
 
-Drop any supported file into `data/billing_articles/` and re-run `ingest_articles.py`.
+Drop any supported file into `data/billing_articles/` and re-run `ingest_articles.py`. Files can also be uploaded through the Admin panel without restarting the server.
 
-| Format | Extension | Notes |
-|---|---|---|
-| Plain text | `.txt` | Read as-is |
-| Markdown | `.md` | YAML front matter supported; `##` headings enable structure-aware chunking |
-| Word | `.docx` | All paragraph text extracted |
-| PDF | `.pdf` | Text extracted page by page via `pypdf` |
-| Excel (modern) | `.xlsx` | Each sheet converted to a Markdown table; rows become individual chunks |
-| Excel (legacy) | `.xls` | Same as `.xlsx` using `xlrd` |
+| Format | Extension |
+|---|---|
+| Plain text | `.txt` |
+| Markdown | `.md` |
+| Word | `.docx` |
+| PDF | `.pdf` |
+| Excel (modern) | `.xlsx` |
+| Excel (legacy) | `.xls` |
 
-### Adding metadata to articles
-
-For `.md` and `.txt` files, add a YAML front matter block at the top to control how the article is indexed:
+For `.md` and `.txt` files, add YAML front matter to control indexing metadata:
 
 ```markdown
 ---
@@ -429,74 +403,72 @@ product_area: billing-migration
 last_updated: 2026-01-15
 ---
 
-# Your Article Title
+# Article Title
 
-Content goes here...
+Content here...
 ```
 
-For other formats (PDF, DOCX, Excel), the `article_id` defaults to the filename stem and `product_area` defaults to `unknown`.
-
-### Excel format tips
-
-For best results with Excel files, put column headers in the first row of each sheet. The structure-aware chunker will index each data row as a separate chunk with its column labels — ideal for lookup tables like error codes or pricing plans.
-
 ---
 
-## 12. Chunking Strategies
+## 13. Chunking Strategies
 
-Three strategies are built and evaluated. The default for the API and CLI is **structure-aware**.
+Three strategies are built. The default is **structure-aware**.
 
-| Strategy | Collection | How it works | Best for |
-|---|---|---|---|
-| **Structure-aware** | `billing_structure_aware` | Splits on `##` section headings; parses Markdown tables into one chunk per row | Articles with clear sections and lookup tables |
-| **Baseline** | `billing_baseline` | RecursiveCharacterTextSplitter (800 chars / 100 overlap) | General-purpose prose |
-| **Semantic** | `billing_semantic` | Embeds sentences in a rolling window, splits where cosine distance spikes | Dense narrative text |
-
-**Evaluation results (Hit@5 on 8 questions):**
-
-| Strategy | Hit@5 | Table questions |
+| Strategy | Collection | How it works |
 |---|---|---|
-| Structure-aware | **8 / 8** | All rank 1 |
-| Semantic | 8 / 8 | Q4 only at rank 5 |
-| Baseline | 7 / 8 | Missed Q4 entirely |
+| **Structure-aware** | `billing_structure_aware` | Splits on `##` section headings; parses Markdown tables into one chunk per row |
+| **Baseline** | `billing_baseline` | RecursiveCharacterTextSplitter (800 chars / 100 overlap) |
+| **Semantic** | `billing_semantic` | Splits where cosine distance between sentence windows spikes |
 
 ---
 
-## 13. Evaluation
+## 14. Evaluation
 
-The evaluation set is in `evaluation/questions.json` — 8 frozen questions with known answers and required evidence terms. Run the full evaluation with:
+### RAG evaluation (25-question golden set)
 
 ```powershell
-python scripts\run_search.py       # dumps retrieval results for all 3 strategies
-python scripts\run_evaluation.py   # computes Hit@5 and writes hit_at_5_results.json
+python evaluation\run_eval.py
 ```
 
-Results are written to:
+Runs 4 deterministic assertions and an LLM-as-judge across 25 labelled questions. Results are written to `evaluation/`.
 
-| File | Contents |
-|---|---|
-| `evaluation/baseline_search_dump.json` | Top-7 results per question, baseline |
-| `evaluation/structure_search_dump.json` | Top-7 results per question, structure-aware |
-| `evaluation/semantic_search_dump.json` | Top-7 results per question, semantic |
-| `evaluation/hit_at_5_results.json` | Hit@5 scores per question and strategy |
-| `evaluation/filter_comparison.json` | Filtered vs unfiltered retrieval comparison |
-| `evaluation/results.md` | Full write-up with analysis |
+### Agent trajectory evaluation
+
+Access `/trajectory` (admin only) in the UI to run trajectory evaluation, apply mitigations, and test prompt injection defence.
+
+### Langfuse traces
+
+Every RAG call and agent run is traced in Langfuse when `LANGFUSE_PUBLIC_KEY` is set. Traces are also written locally to `evaluation/traces.jsonl` regardless of Langfuse availability.
 
 ---
 
-## 14. Running Tests
+## 15. Running Tests
 
 ```powershell
 pytest
 ```
 
-Expected: **8 passed**
-
 The test suite covers:
 
-- All 6 articles load and pass metadata validation
-- Baseline and structure-aware chunks contain all required metadata fields
-- Plain text files load without front matter
-- Excel (`.xlsx`) files load and produce Markdown table output
-- Empty Excel sheets are skipped
-- Invalid metadata raises a `ValueError`
+- Article loading and metadata validation
+- Chunking (baseline, structure-aware)
+- Bootstrap script
+- API endpoints (auth, ask, upload, admin, agent)
+
+---
+
+## 16. CLI Usage
+
+Ask a billing question directly from the terminal without the UI:
+
+```powershell
+python scripts\ask.py
+```
+
+```
+> What does ERR-4032 mean?
+
+According to [HC-BILL-002--error-codes--err-4032], ERR-4032 means the billing
+profile migration is incomplete because a required field was not carried over
+from the legacy platform.
+```
