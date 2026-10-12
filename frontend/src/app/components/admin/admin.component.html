@@ -80,6 +80,10 @@
             (click)="setTab('trajectory')" [attr.aria-selected]="activeTab === 'trajectory'">
       Trajectory
     </button>
+    <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'multiagent'"
+            (click)="setTab('multiagent')" [attr.aria-selected]="activeTab === 'multiagent'">
+      Multi-Agent
+    </button>
   </div>
 
   <!-- ===== TICKETS ===== -->
@@ -405,6 +409,7 @@
   @if (activeTab === 'eval')       { <app-eval></app-eval> }
   @if (activeTab === 'race')       { <app-race></app-race> }
   @if (activeTab === 'trajectory') { <app-trajectory></app-trajectory> }
+  @if (activeTab === 'multiagent') { <app-multiagent></app-multiagent> }
 
   <!-- ===== DOCUMENTS ===== -->
   @if (activeTab === 'documents') {

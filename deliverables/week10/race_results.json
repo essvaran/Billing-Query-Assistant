@@ -1,0 +1,578 @@
+{
+  "run_at": "2026-10-12T07:24:46.120728+00:00",
+  "cases": [
+    "R01",
+    "R02",
+    "G01",
+    "G02",
+    "F01",
+    "F04",
+    "A01",
+    "A03",
+    "CE01",
+    "CE04"
+  ],
+  "single": {
+    "pass_rate": 0.8,
+    "passes": 8,
+    "p50_latency_s": 2.2071638500001427,
+    "p99_latency_s": 13.410844769000432,
+    "total_tokens": 12621,
+    "cost_per_ticket": 0.00113589,
+    "rows": [
+      {
+        "case_id": "R01",
+        "answer": "To resolve error\u202fERR\u20114040, add a new payment method to the account and set it as the default, then retry the migration.\u202f[HC\u2011BILL\u2011002--error-codes--err-4040]\u202f[HC\u2011BILL\u2011003--payment-method-errors-during-migration--err-4040]",
+        "latency_s": 10.832918600000994,
+        "tokens": 676,
+        "assertions_ok": true,
+        "judge": "GOOD",
+        "passed": true,
+        "error": null
+      },
+      {
+        "case_id": "R02",
+        "answer": "The error\u202fERR\u20114032 means the migration couldn\u2019t finish because a required field didn\u2019t transfer from the legacy system. To resolve it, reconnect the billing profile and then retry the migration from the **Billing\u202f>\u202fOverview** page\u202f[HC\u2011BILL\u2011002--error-codes--err-4032].",
+        "latency_s": 1.6742607000014686,
+        "tokens": 2449,
+        "assertions_ok": true,
+        "judge": "GOOD",
+        "passed": true,
+        "error": null
+      },
+      {
+        "case_id": "G01",
+        "answer": "I don't have enough information to answer that. For further help, please contact our support team or check our help centre.",
+        "latency_s": 2.2208785000002536,
+        "tokens": 1041,
+        "assertions_ok": true,
+        "judge": "NOT_GOOD",
+        "passed": false,
+        "error": null
+      },
+      {
+        "case_id": "G02",
+        "answer": "I don't have enough information to answer that. For further help, please contact our support team or check our help centre.",
+        "latency_s": 1.3767543000030855,
+        "tokens": 936,
+        "assertions_ok": true,
+        "judge": "NOT_GOOD",
+        "passed": false,
+        "error": null
+      },
+      {
+        "case_id": "F01",
+        "answer": "ERR\u20114032 indicates that a required field is missing from the billing profile, causing the migration to be incomplete because the field was not carried over from the legacy platform.\u202f[HC\u2011BILL\u2011001--appendix-c-migration-error-code-quick-reference--err-4032]\u202f[HC\u2011BILL\u2011002--error-codes--err-4032]",
+        "latency_s": 2.193449200000032,
+        "tokens": 1117,
+        "assertions_ok": true,
+        "judge": "GOOD",
+        "passed": true,
+        "error": null
+      },
+      {
+        "case_id": "F04",
+        "answer": "During a billing\u2011profile migration, auto\u2011pay is automatically paused. It remains paused throughout the migration window and will not restart until the account owner confirms the new default payment method after migration completes. Once the owner confirms the payment method, auto\u2011pay resumes and any invoices that were deferred during the migration are paid\u202f[HC\u2011BILL\u2011001--recurring\u2011billing\u2011and\u2011auto\u2011pay\u2011impact--prose\u2011001]\u202f[HC\u2011BILL\u2011003--auto\u2011pay\u2011behavior\u2011after\u2011migration--prose\u2011001]",
+        "latency_s": 3.2588232999987667,
+        "tokens": 926,
+        "assertions_ok": true,
+        "judge": "GOOD",
+        "passed": true,
+        "error": null
+      },
+      {
+        "case_id": "A01",
+        "answer": "To resolve **ERR\u20116030**, have someone with the appropriate permissions submit the rollback request. Specifically, ask an **Account Owner** or a **Billing Administrator** to perform the rollback on your behalf.\u202f[HC\u2011BILL\u2011006--rollback-related-error-codes--err-6030]",
+        "latency_s": 8.741001800000959,
+        "tokens": 1655,
+        "assertions_ok": true,
+        "judge": "GOOD",
+        "passed": true,
+        "error": null
+      },
+      {
+        "case_id": "A03",
+        "answer": "PLAN\u2011ENT\u2011V1 maps to the new plan ID **PLAN\u2011ENTERPRISE\u20112024** on the new platform. \u3010HC-BILL-001--subscription-and-entitlement-migration--plan-ent-v1\u3011\u3010HC-BILL-001--subscription-and-entitlement-migration--prose-001\u3011",
+        "latency_s": 13.665804500000377,
+        "tokens": 2295,
+        "assertions_ok": true,
+        "judge": "GOOD",
+        "passed": true,
+        "error": null
+      },
+      {
+        "case_id": "CE01",
+        "answer": "The migration error you\u2019re seeing is **ERR\u20114040** \u2013 \u201cPayment method re\u2011verification failed.\u201d  \n\n**Cause**  \nThe legacy payment method that was on file could not be re\u2011verified with the card network\u202f[HC-BILL-003--payment-method-errors-during-migration--err-4040].\n\n**Fix**  \nAdd a new, working payment method and set it as the default, then retry the migration\u202f[HC-BILL-003--payment-method-errors-during-migration--err-4040].",
+        "latency_s": 1.823167899998225,
+        "tokens": 809,
+        "assertions_ok": true,
+        "judge": "GOOD",
+        "passed": true,
+        "error": null
+      },
+      {
+        "case_id": "CE04",
+        "answer": "The ERR\u20116030 error means the rollback request was made by someone who does not have the Billing Administrator role.\u202fThe fix is to have an Account Owner or a Billing Administrator submit the rollback request.\u202f[HC\u2011BILL\u2011006--rollback-related-error-codes--err-6030]",
+        "latency_s": 1.7443091999994067,
+        "tokens": 717,
+        "assertions_ok": true,
+        "judge": "GOOD",
+        "passed": true,
+        "error": null
+      }
+    ]
+  },
+  "multi": {
+    "pass_rate": 0.7,
+    "passes": 7,
+    "p50_latency_s": 7.836794000000737,
+    "p99_latency_s": 19.4981267330005,
+    "total_tokens": 18231,
+    "cost_per_ticket": 0.00164079,
+    "rows": [
+      {
+        "case_id": "R01",
+        "answer": "To resolve **ERR\u20114040**, add a new payment method to your account and set it as the default, then retry the migration.\u202fThis will allow the system to re\u2011verify the payment method successfully\u3010HC-BILL-002--error-codes--err-4040\u3011\u3010HC-BILL-003--payment-method-errors-during-migration--err-4040\u3011.",
+        "latency_s": 3.1900456999974267,
+        "tokens": 1725,
+        "assertions_ok": true,
+        "judge": "GOOD",
+        "passed": true,
+        "error": null,
+        "handoffs": [
+          {
+            "handoff": "orchestrator_to_triage_worker",
+            "input_tokens": 210,
+            "output_tokens": 103,
+            "total_tokens": 313,
+            "ms": 776.2,
+            "note": "intent=error_code"
+          },
+          {
+            "handoff": "policy_worker_search_tool",
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "ms": 38.4,
+            "note": "attempt=1 status=200 chunks=3"
+          },
+          {
+            "handoff": "orchestrator_to_policy_worker",
+            "input_tokens": 528,
+            "output_tokens": 143,
+            "total_tokens": 671,
+            "ms": 915.6,
+            "note": "chunks=3"
+          },
+          {
+            "handoff": "orchestrator_synthesis",
+            "input_tokens": 545,
+            "output_tokens": 196,
+            "total_tokens": 741,
+            "ms": 1194.2,
+            "note": "cited_chunks=2"
+          }
+        ]
+      },
+      {
+        "case_id": "R02",
+        "answer": "The migration is stuck because a required field from the legacy billing profile wasn\u2019t transferred, so the profile is incomplete. This missing required field triggers error\u202fERR\u20114032, causing the migration to halt.\u202f[HC-BILL-002--error-codes--err-4032]\u202f[HC-BILL-001--appendix-c-migration-error-code-quick-reference--err-4032]",
+        "latency_s": 3.9876744000030158,
+        "tokens": 2028,
+        "assertions_ok": true,
+        "judge": "NOT_GOOD",
+        "passed": false,
+        "error": null,
+        "handoffs": [
+          {
+            "handoff": "orchestrator_to_triage_worker",
+            "input_tokens": 205,
+            "output_tokens": 182,
+            "total_tokens": 387,
+            "ms": 1073.9,
+            "note": "intent=error_code"
+          },
+          {
+            "handoff": "policy_worker_search_tool",
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "ms": 37.2,
+            "note": "attempt=1 status=200 chunks=3"
+          },
+          {
+            "handoff": "orchestrator_to_policy_worker",
+            "input_tokens": 572,
+            "output_tokens": 194,
+            "total_tokens": 766,
+            "ms": 1187.4,
+            "note": "chunks=3"
+          },
+          {
+            "handoff": "orchestrator_synthesis",
+            "input_tokens": 538,
+            "output_tokens": 337,
+            "total_tokens": 875,
+            "ms": 1404.6,
+            "note": "cited_chunks=2"
+          }
+        ]
+      },
+      {
+        "case_id": "G01",
+        "answer": "I don't have enough information to answer that. For further help, please contact our support team or check our help centre.",
+        "latency_s": 2.0601145000000542,
+        "tokens": 1041,
+        "assertions_ok": true,
+        "judge": "NOT_GOOD",
+        "passed": false,
+        "error": null,
+        "handoffs": [
+          {
+            "handoff": "orchestrator_to_triage_worker",
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "ms": 0.0,
+            "note": "skipped_no_code_to_normalize"
+          },
+          {
+            "handoff": "policy_worker_search_tool",
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "ms": 34.8,
+            "note": "attempt=1 status=200 chunks=3"
+          },
+          {
+            "handoff": "orchestrator_to_policy_worker",
+            "input_tokens": 933,
+            "output_tokens": 108,
+            "total_tokens": 1041,
+            "ms": 1003.0,
+            "note": "chunks=3"
+          },
+          {
+            "handoff": "orchestrator_synthesis",
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "ms": 0.0,
+            "note": "skipped_no_llm_refusal_passthrough"
+          }
+        ]
+      },
+      {
+        "case_id": "G02",
+        "answer": "I don't have enough information to answer that. For further help, please contact our support team or check our help centre.",
+        "latency_s": 1.9877749000006588,
+        "tokens": 936,
+        "assertions_ok": true,
+        "judge": "NOT_GOOD",
+        "passed": false,
+        "error": null,
+        "handoffs": [
+          {
+            "handoff": "orchestrator_to_triage_worker",
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "ms": 0.0,
+            "note": "skipped_no_code_to_normalize"
+          },
+          {
+            "handoff": "policy_worker_search_tool",
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "ms": 94.7,
+            "note": "attempt=1 status=200 chunks=3"
+          },
+          {
+            "handoff": "orchestrator_to_policy_worker",
+            "input_tokens": 812,
+            "output_tokens": 124,
+            "total_tokens": 936,
+            "ms": 1242.6,
+            "note": "chunks=3"
+          },
+          {
+            "handoff": "orchestrator_synthesis",
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "ms": 0.0,
+            "note": "skipped_no_llm_refusal_passthrough"
+          }
+        ]
+      },
+      {
+        "case_id": "F01",
+        "answer": "Error code **ERR\u20114032** indicates that a required field was missing from the billing profile during migration, causing the migration to be incomplete.\u202fIt is flagged as a blocking error because the missing field prevents the profile from being successfully transferred.\u202f[HC\u2011BILL\u2011002--error\u2011codes--err\u20114032]\u202f[HC\u2011BILL\u2011001--appendix\u2011c\u2011migration\u2011error\u2011code\u2011quick\u2011reference--err\u20114032]",
+        "latency_s": 8.44207280000046,
+        "tokens": 2235,
+        "assertions_ok": true,
+        "judge": "GOOD",
+        "passed": true,
+        "error": null,
+        "handoffs": [
+          {
+            "handoff": "orchestrator_to_triage_worker",
+            "input_tokens": 204,
+            "output_tokens": 109,
+            "total_tokens": 313,
+            "ms": 826.8,
+            "note": "intent=error_code"
+          },
+          {
+            "handoff": "policy_worker_search_tool",
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "ms": 31.6,
+            "note": "attempt=1 status=200 chunks=3"
+          },
+          {
+            "handoff": "orchestrator_to_policy_worker",
+            "input_tokens": 910,
+            "output_tokens": 197,
+            "total_tokens": 1107,
+            "ms": 1171.3,
+            "note": "chunks=3"
+          },
+          {
+            "handoff": "orchestrator_synthesis",
+            "input_tokens": 550,
+            "output_tokens": 265,
+            "total_tokens": 815,
+            "ms": 4901.4,
+            "note": "cited_chunks=2"
+          }
+        ]
+      },
+      {
+        "case_id": "F04",
+        "answer": "During a billing\u2011profile migration, auto\u2011pay is automatically paused. It remains paused throughout the migration window and will not restart until the account owner confirms the new default payment method after migration completes. Once the owner confirms the payment method, auto\u2011pay resumes and any invoices that were deferred during the migration are paid\u202f[HC\u2011BILL\u2011001--recurring\u2011billing\u2011and\u2011auto\u2011pay\u2011impact--prose\u2011001]\u202f[HC\u2011BILL\u2011003--auto\u2011pay\u2011behavior\u2011after\u2011migration--prose\u2011001]",
+        "latency_s": 11.785197599998355,
+        "tokens": 2075,
+        "assertions_ok": true,
+        "judge": "GOOD",
+        "passed": true,
+        "error": null,
+        "handoffs": [
+          {
+            "handoff": "orchestrator_to_triage_worker",
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "ms": 0.0,
+            "note": "skipped_no_code_to_normalize"
+          },
+          {
+            "handoff": "policy_worker_search_tool",
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "ms": 40.3,
+            "note": "attempt=1 status=200 chunks=3"
+          },
+          {
+            "handoff": "orchestrator_to_policy_worker",
+            "input_tokens": 696,
+            "output_tokens": 230,
+            "total_tokens": 926,
+            "ms": 3821.1,
+            "note": "chunks=3"
+          },
+          {
+            "handoff": "orchestrator_synthesis",
+            "input_tokens": 689,
+            "output_tokens": 460,
+            "total_tokens": 1149,
+            "ms": 7055.1,
+            "note": "cited_chunks=2"
+          }
+        ]
+      },
+      {
+        "case_id": "A01",
+        "answer": "To resolve\u202fERR\u20116030, ask an Account Owner or a Billing Administrator to submit the rollback request on your behalf.\u202f[HC-BILL-006--rollback-related-error-codes--err-6030]",
+        "latency_s": 10.250282400000287,
+        "tokens": 1599,
+        "assertions_ok": true,
+        "judge": "GOOD",
+        "passed": true,
+        "error": null,
+        "handoffs": [
+          {
+            "handoff": "orchestrator_to_triage_worker",
+            "input_tokens": 205,
+            "output_tokens": 119,
+            "total_tokens": 324,
+            "ms": 995.0,
+            "note": "intent=error_code"
+          },
+          {
+            "handoff": "policy_worker_search_tool",
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "ms": 36.3,
+            "note": "attempt=1 status=200 chunks=3"
+          },
+          {
+            "handoff": "orchestrator_to_policy_worker",
+            "input_tokens": 539,
+            "output_tokens": 163,
+            "total_tokens": 702,
+            "ms": 2484.3,
+            "note": "chunks=3"
+          },
+          {
+            "handoff": "orchestrator_synthesis",
+            "input_tokens": 407,
+            "output_tokens": 166,
+            "total_tokens": 573,
+            "ms": 5869.3,
+            "note": "cited_chunks=1"
+          }
+        ]
+      },
+      {
+        "case_id": "A03",
+        "answer": "PLAN\u2011ENT\u2011V1 maps to the new plan ID **PLAN\u2011ENTERPRISE\u20112024** on the new platform.\u202f[HC-BILL-001--subscription-and-entitlement-migration--plan-ent-v1]",
+        "latency_s": 20.26094390000071,
+        "tokens": 3245,
+        "assertions_ok": true,
+        "judge": "GOOD",
+        "passed": true,
+        "error": null,
+        "handoffs": [
+          {
+            "handoff": "orchestrator_to_triage_worker",
+            "input_tokens": 210,
+            "output_tokens": 190,
+            "total_tokens": 400,
+            "ms": 1205.9,
+            "note": "intent=policy"
+          },
+          {
+            "handoff": "policy_worker_search_tool",
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "ms": 53.5,
+            "note": "attempt=1 status=200 chunks=3"
+          },
+          {
+            "handoff": "orchestrator_to_policy_worker",
+            "input_tokens": 2099,
+            "output_tokens": 162,
+            "total_tokens": 2261,
+            "ms": 13450.1,
+            "note": "chunks=3"
+          },
+          {
+            "handoff": "orchestrator_synthesis",
+            "input_tokens": 409,
+            "output_tokens": 175,
+            "total_tokens": 584,
+            "ms": 4776.5,
+            "note": "cited_chunks=1"
+          }
+        ]
+      },
+      {
+        "case_id": "CE01",
+        "answer": "The migration error you\u2019re seeing is **ERR\u20114040** \u2013 \u201cPayment method re\u2011verification failed.\u201d  \n\n**Cause**  \nThe legacy payment method that was on file could not be re\u2011verified with the card network\u202f[HC-BILL-003--payment-method-errors-during-migration--err-4040].\n\n**Fix**  \nAdd a new, working payment method and set it as the default, then retry the migration\u202f[HC-BILL-003--payment-method-errors-during-migration--err-4040].",
+        "latency_s": 7.231515200001013,
+        "tokens": 1669,
+        "assertions_ok": true,
+        "judge": "GOOD",
+        "passed": true,
+        "error": null,
+        "handoffs": [
+          {
+            "handoff": "orchestrator_to_triage_worker",
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "ms": 0.0,
+            "note": "skipped_no_code_to_normalize"
+          },
+          {
+            "handoff": "policy_worker_search_tool",
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "ms": 38.4,
+            "note": "attempt=1 status=200 chunks=3"
+          },
+          {
+            "handoff": "orchestrator_to_policy_worker",
+            "input_tokens": 529,
+            "output_tokens": 280,
+            "total_tokens": 809,
+            "ms": 1371.9,
+            "note": "chunks=3"
+          },
+          {
+            "handoff": "orchestrator_synthesis",
+            "input_tokens": 476,
+            "output_tokens": 384,
+            "total_tokens": 860,
+            "ms": 4926.1,
+            "note": "cited_chunks=1"
+          }
+        ]
+      },
+      {
+        "case_id": "CE04",
+        "answer": "Error code **ERR\u20116030** means that the rollback request was made by a user who does not have the Billing Administrator role\u202f\u2014\u202fthe request must be submitted by an Account Owner or Billing Administrator.\u202f[HC\u2011BILL\u2011006--rollback-related-error-codes--err-6030]",
+        "latency_s": 9.152999400001136,
+        "tokens": 1678,
+        "assertions_ok": true,
+        "judge": "GOOD",
+        "passed": true,
+        "error": null,
+        "handoffs": [
+          {
+            "handoff": "orchestrator_to_triage_worker",
+            "input_tokens": 210,
+            "output_tokens": 163,
+            "total_tokens": 373,
+            "ms": 1057.6,
+            "note": "intent=error_code"
+          },
+          {
+            "handoff": "policy_worker_search_tool",
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "ms": 38.2,
+            "note": "attempt=1 status=200 chunks=3"
+          },
+          {
+            "handoff": "orchestrator_to_policy_worker",
+            "input_tokens": 538,
+            "output_tokens": 153,
+            "total_tokens": 691,
+            "ms": 3617.0,
+            "note": "chunks=3"
+          },
+          {
+            "handoff": "orchestrator_synthesis",
+            "input_tokens": 430,
+            "output_tokens": 184,
+            "total_tokens": 614,
+            "ms": 3397.8,
+            "note": "cited_chunks=1"
+          }
+        ]
+      }
+    ]
+  },
+  "multiplier": 1.4,
+  "failure_behaviour": "retried, then degraded",
+  "verdict_keep": false
+}

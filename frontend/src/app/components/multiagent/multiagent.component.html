@@ -1,0 +1,251 @@
+<div class="ma-page">
+
+  <div class="ma-header">
+    <div>
+      <h1>Multi-Agent vs Single Agent</h1>
+      <p class="subtitle">Week 10 Task Set A: does a manager plus two specialists beat one agent? Measured on the same 10 Week-6 eval cases with the same judge.</p>
+    </div>
+    <button class="btn btn-primary" (click)="startRace()" [disabled]="status.status === 'running'">
+      @if (status.status === 'running') { Running race... } @else { Run Race (10 cases) }
+    </button>
+  </div>
+
+  <div class="status-bar" [class]="'status-' + status.status">
+    @switch (status.status) {
+      @case ('idle') {
+        @if (results) { <span>Showing saved results from {{ results.run_at | date:'medium' }}.</span> }
+        @else { <span>No results yet. Click <strong>Run Race</strong> (about 5 to 8 minutes) or try the live demo below.</span> }
+      }
+      @case ('running') {
+        <span>Race in progress: {{ status.done }} of {{ status.total }} cases done</span>
+        <div class="progress"><div class="progress-fill" [style.width.%]="progressPct"></div></div>
+      }
+      @case ('done') { <span>Race finished. Results refreshed.</span> }
+      @case ('error') { <span>Error: {{ status.error }}</span> }
+    }
+  </div>
+
+  <!-- Concepts -->
+  <section class="section">
+    <h2 class="section-title">The pattern: orchestrator and workers</h2>
+    <div class="arch">
+      <div class="node node-orch">
+        <div class="node-title">Orchestrator (manager)</div>
+        <div class="node-body">Splits the job, hands pieces to specialists, verifies the draft against its sources, returns the final reply or an explicit refusal. 1 LLM call.</div>
+      </div>
+      <div class="arch-row">
+        <div class="node node-worker">
+          <div class="node-title">Triage worker</div>
+          <div class="node-body">Narrow prompt, <strong>no tools</strong>. Normalizes codes (error 4032 becomes ERR-4032), classifies intent, rewrites the search query. Skipped when the question has no code to normalize, so the original wording is searched. 1 LLM call.</div>
+        </div>
+        <div class="node node-worker">
+          <div class="node-title">Policy-lookup worker</div>
+          <div class="node-body">Narrow prompt, <strong>one tool</strong> (hybrid search). Retries the tool once on failure, then drafts a cited answer. 1 LLM call.</div>
+        </div>
+      </div>
+      <div class="arch-notes">
+        <div><strong>Why it can cost more:</strong> every hand-off re-sends context (question, chunks, draft), so tokens multiply.</div>
+        <div><strong>MCP vs A2A:</strong> MCP connects an agent to tools. A2A connects an agent to other agents.</div>
+        <div><strong>When a team genuinely helps:</strong> independent sub-tasks that can run in parallel, or parts needing clearly different instructions.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Live demo -->
+  <section class="section">
+    <h2 class="section-title">Live demo: ask both</h2>
+    <div class="card">
+      <div class="demo-controls">
+        <select [(ngModel)]="selectedCase" (change)="pickCase()" aria-label="Pick an eval case">
+          <option value="">Pick an eval case or type your own</option>
+          @for (c of cases; track c.case_id) {
+            <option [value]="c.case_id">{{ c.case_id }} ({{ c.mode }}): {{ c.question }}</option>
+          }
+        </select>
+        <textarea [(ngModel)]="question" rows="2" maxlength="500" placeholder="Ask a billing migration question"></textarea>
+        <div class="demo-row">
+          <label class="check">
+            <input type="checkbox" [(ngModel)]="injectFailure" />
+            Inject HTTP 500 into the policy-lookup worker
+          </label>
+          <button class="btn btn-primary" (click)="ask()" [disabled]="asking || question.trim().length < 3">
+            @if (asking) { Running both agents... } @else { Ask both }
+          </button>
+        </div>
+      </div>
+
+      @if (askError) { <div class="error-box">{{ askError }}</div> }
+
+      @if (asked) {
+        <div class="compare">
+          <div class="col col-single">
+            <div class="col-title">Single agent</div>
+            <div class="kpis">
+              <span class="chip">{{ asked.single.tokens }} tokens</span>
+              <span class="chip">{{ asked.single.latency_s | number:'1.1-2' }}s</span>
+              <span class="chip">${{ asked.single.cost_usd | number:'1.6-6' }}</span>
+            </div>
+            <pre class="answer">{{ asked.single.answer }}</pre>
+            <div class="asserts">
+              @for (a of assertionList(asked.single.assertions); track a.name) {
+                <span class="pill" [class.pill-ok]="a.ok" [class.pill-bad]="!a.ok">{{ a.name }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="col col-multi">
+            <div class="col-title">
+              Multi-agent
+              @if (asked.multi.policy_lookup_failed) { <span class="pill pill-warn">degraded</span> }
+            </div>
+            <div class="kpis">
+              <span class="chip">{{ asked.multi.tokens }} tokens</span>
+              <span class="chip">{{ asked.multi.latency_s | number:'1.1-2' }}s</span>
+              <span class="chip">${{ asked.multi.cost_usd | number:'1.6-6' }}</span>
+              <span class="chip chip-mult">{{ (asked.multi.tokens / (asked.single.tokens || 1)) | number:'1.1-1' }}x tokens</span>
+            </div>
+            <pre class="answer">{{ asked.multi.answer }}</pre>
+            <div class="asserts">
+              @for (a of assertionList(asked.multi.assertions); track a.name) {
+                <span class="pill" [class.pill-ok]="a.ok" [class.pill-bad]="!a.ok">{{ a.name }}</span>
+              }
+            </div>
+            @if (asked.multi.triage.normalized_query) {
+              <div class="triage">Triage rewrote the query to: <em>{{ asked.multi.triage.normalized_query }}</em> (intent: {{ asked.multi.triage.intent }})</div>
+            }
+          </div>
+        </div>
+
+        <h3 class="sub-title">Hand-off log (tokens per hand-off)</h3>
+        <table class="tbl">
+          <thead><tr><th>Hand-off</th><th>Tokens</th><th>Time</th><th>Note</th><th class="bar-col"></th></tr></thead>
+          <tbody>
+            @for (h of asked.multi.handoffs; track $index) {
+              <tr [class.row-fail]="h.note.includes('status=500')">
+                <td class="mono">{{ h.handoff }}</td>
+                <td>{{ h.total_tokens }}</td>
+                <td>{{ h.ms | number:'1.0-0' }} ms</td>
+                <td class="mono small">{{ h.note }}</td>
+                <td class="bar-col"><div class="bar"><div class="bar-fill" [style.width.%]="(h.total_tokens / maxHandoff(asked.multi.handoffs)) * 100"></div></div></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        @if (asked.multi.policy_lookup_failed) {
+          <div class="note warn-note">The policy tool failed {{ asked.multi.tool_attempts }} times. The orchestrator did not invent an answer: it told the customer lookup is unavailable and escalated.</div>
+        }
+      }
+    </div>
+  </section>
+
+  <!-- Results -->
+  @if (loadingResults) { <div class="loading-bar">Loading results...</div> }
+
+  @if (results) {
+    <section class="section">
+      <h2 class="section-title">Race results (same 10 cases, same judge)</h2>
+      <div class="metrics-grid">
+        @for (m of metrics; track m.label) {
+          <div class="metric-card">
+            <div class="metric-label">{{ m.label }}</div>
+            <div class="metric-row">
+              <div class="metric-half" [class.winner]="m.singleWins">
+                <span class="sys-label">Single</span>
+                <span class="sys-value">{{ m.single }}</span>
+                @if (m.singleWins) { <span class="win-badge">WIN</span> }
+              </div>
+              <div class="metric-divider"></div>
+              <div class="metric-half" [class.winner]="m.multiWins">
+                <span class="sys-label">Multi</span>
+                <span class="sys-value">{{ m.multi }}</span>
+                @if (m.multiWins) { <span class="win-badge">WIN</span> }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="multiplier">
+        <div class="mult-big">{{ results.multiplier | number:'1.1-1' }}x</div>
+        <div>
+          <div class="mult-title">Context re-send multiplier</div>
+          <div class="muted">multi tokens divided by single tokens
+            @if (shares.length) { . Largest hand-off: <strong>{{ shares[0].name }}</strong> at {{ shares[0].share * 100 | number:'1.0-0' }}% of all multi-agent tokens. }
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub-title">Where the multi-agent tokens went</h3>
+      @for (s of shares; track s.name) {
+        <div class="share-row">
+          <span class="mono share-name">{{ s.name }}</span>
+          <div class="bar"><div class="bar-fill" [style.width.%]="s.share * 100"></div></div>
+          <span class="share-val">{{ s.tokens | number }} ({{ s.share * 100 | number:'1.0-0' }}%)</span>
+        </div>
+      }
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Per case</h2>
+      <table class="tbl">
+        <thead>
+          <tr><th>Case</th><th>Mode</th><th>Single</th><th>Single tokens</th><th>Multi</th><th>Multi tokens</th><th></th></tr>
+        </thead>
+        <tbody>
+          @for (id of results.cases; track id) {
+            @let s = singleRow(id);
+            @let m = multiRow(id);
+            <tr class="clickable" (click)="toggle(id)">
+              <td class="mono">{{ id }}</td>
+              <td>{{ caseMode(id) }}</td>
+              <td><span class="pill" [class.pill-ok]="s?.passed" [class.pill-bad]="!s?.passed">{{ s?.passed ? 'PASS' : 'FAIL' }}</span></td>
+              <td>{{ s?.tokens | number }}</td>
+              <td><span class="pill" [class.pill-ok]="m?.passed" [class.pill-bad]="!m?.passed">{{ m?.passed ? 'PASS' : 'FAIL' }}</span></td>
+              <td>{{ m?.tokens | number }}</td>
+              <td>{{ expanded.has(id) ? 'Hide' : 'Show' }}</td>
+            </tr>
+            @if (expanded.has(id)) {
+              <tr class="detail-row">
+                <td colspan="7">
+                  <div class="q"><strong>Question:</strong> {{ caseQuestion(id) }}</div>
+                  <div class="compare">
+                    <div class="col"><div class="col-title">Single (judge: {{ s?.judge }})</div><pre class="answer">{{ s?.answer }}</pre></div>
+                    <div class="col"><div class="col-title">Multi (judge: {{ m?.judge }})</div><pre class="answer">{{ m?.answer }}</pre>
+                      @if (m?.handoffs?.length) {
+                        <div class="small muted">
+                          @for (h of m!.handoffs!; track $index) { <div class="mono">{{ h.handoff }}: {{ h.total_tokens }} tokens</div> }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Verdict</h2>
+      <div class="card" [class.verdict-keep]="results.verdict_keep" [class.verdict-kill]="!results.verdict_keep">
+        <div class="verdict-badge">{{ results.verdict_keep ? 'KEEP multi-agent' : 'KILL multi-agent, keep the single agent' }}</div>
+        <pre class="plain">{{ results.files['verdict'] }}</pre>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Injected worker failure</h2>
+      <div class="card">
+        <div class="lifecycle">
+          <span class="step">submitted</span>
+          <span class="step">working</span>
+          <span class="step step-bad">policy tool: HTTP 500 (x2)</span>
+          <span class="step step-warn">input-required</span>
+        </div>
+        <p class="muted">Observed behaviour: <strong>{{ results.failure_behaviour }}</strong>. The orchestrator did not pretend the worker had answered.</p>
+        <pre class="plain">{{ results.files['failure_case'] }}</pre>
+      </div>
+    </section>
+  }
+</div>

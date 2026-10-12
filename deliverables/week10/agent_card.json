@@ -1,0 +1,57 @@
+{
+  "name": "billing-support-orchestrator",
+  "description": "Manager agent for billing-migration support questions. Delegates query triage and documentation lookup to two specialists and returns a grounded, cited answer or an explicit refusal.",
+  "version": "1.0.0",
+  "url": "https://billing-support.example.com/a2a",
+  "defaultInputModes": [
+    "text/plain"
+  ],
+  "defaultOutputModes": [
+    "text/plain",
+    "application/json"
+  ],
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false
+  },
+  "authentication": {
+    "schemes": [
+      "bearer"
+    ]
+  },
+  "skills": [
+    {
+      "id": "triage-query",
+      "name": "Triage query",
+      "description": "Normalize error and plan codes, classify intent, rewrite the search query.",
+      "inputModes": [
+        "text/plain"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    },
+    {
+      "id": "policy-lookup",
+      "name": "Policy lookup",
+      "description": "Search the billing help-centre corpus and draft a cited answer.",
+      "inputModes": [
+        "text/plain"
+      ],
+      "outputModes": [
+        "text/plain"
+      ]
+    },
+    {
+      "id": "draft-reply",
+      "name": "Draft reply",
+      "description": "Verify the draft against its sources and return the final grounded answer or refusal.",
+      "inputModes": [
+        "text/plain"
+      ],
+      "outputModes": [
+        "text/plain"
+      ]
+    }
+  ]
+}

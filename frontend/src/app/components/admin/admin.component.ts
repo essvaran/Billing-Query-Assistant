@@ -9,9 +9,10 @@ import { TaxonomyComponent } from '../taxonomy/taxonomy.component';
 import { EvalComponent } from '../eval/eval.component';
 import { RaceComponent } from '../race/race.component';
 import { TrajectoryComponent } from '../trajectory/trajectory.component';
+import { MultiAgentComponent } from '../multiagent/multiagent.component';
 
 type Tab = 'tickets' | 'orders' | 'customers' | 'users' | 'documents'
-         | 'traces' | 'sample' | 'taxonomy' | 'eval' | 'race' | 'trajectory';
+         | 'traces' | 'sample' | 'taxonomy' | 'eval' | 'race' | 'trajectory' | 'multiagent';
 
 interface Toast { message: string; kind: 'success' | 'error'; id: number }
 
@@ -20,7 +21,7 @@ interface Toast { message: string; kind: 'success' | 'error'; id: number }
   standalone: true,
   imports: [CommonModule, FormsModule,
     TracesComponent, SampleComponent, TaxonomyComponent,
-    EvalComponent, RaceComponent, TrajectoryComponent],
+    EvalComponent, RaceComponent, TrajectoryComponent, MultiAgentComponent],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss',
 })

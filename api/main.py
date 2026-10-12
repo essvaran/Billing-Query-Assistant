@@ -104,12 +104,14 @@ from api.agent_router import router as agent_router
 from api.auth import router as auth_router, get_current_user, require_admin
 from api.admin_router import router as admin_router
 from api.trajectory_router import router as trajectory_router
+from api.multiagent_router import router as multiagent_router
 
 app.include_router(auth_router)
 app.include_router(admin_router)
 app.include_router(race_router)
 app.include_router(agent_router)
 app.include_router(trajectory_router)
+app.include_router(multiagent_router)
 
 # ---------------------------------------------------------------------------
 # CORS  —  restrict to configured origins only

@@ -4,10 +4,29 @@
     {
       "name": "Angular Dev",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["ng", "serve", "--port", "4200", "--proxy-config", "proxy.conf.json"],
+      "runtimeArgs": [
+        "ng",
+        "serve",
+        "--port",
+        "4200",
+        "--proxy-config",
+        "proxy.conf.json"
+      ],
       "port": 4200,
       "url": "http://localhost:4200",
       "cwd": "frontend"
+    },
+    {
+      "name": "FastAPI",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "-m",
+        "uvicorn",
+        "api.main:app",
+        "--port",
+        "8000"
+      ],
+      "port": 8000
     }
   ]
 }
