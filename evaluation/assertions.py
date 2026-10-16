@@ -100,10 +100,33 @@ def assert_no_fabricated_citation(answer: str, retrieved_chunk_ids: list) -> Ass
     )
 
 
-def run_assertions(answer: str, retrieved_chunk_ids: list) -> list:
+_REFUSAL_PREFIXES = (
+    "I don't have enough information to answer that",
+    "I cannot answer that from the indexed help",
+)
+
+
+def assert_refuses_corpus_gap(answer: str, expected_behavior: str | None):
+    """Fail when a case that must be refused (corpus has no answer) gets a real answer.
+
+    Deterministic replacement for asking the LLM judge whether a fabricated
+    policy was fabricated. Accepts both refusal wordings in the codebase.
+    """
+    if expected_behavior != "refusal":
+        return AssertionResult("refuses_corpus_gap", True, "not a refusal case")
+    refused = answer.strip().startswith(_REFUSAL_PREFIXES)
+    return AssertionResult(
+        "refuses_corpus_gap",
+        refused,
+        "OK" if refused else f"expected refusal, got answer: {answer[:80]}",
+    )
+
+
+def run_assertions(answer: str, retrieved_chunk_ids: list, expected_behavior: str | None = None) -> list:
     return [
         assert_no_bare_article_id(answer),
         assert_no_en_dash_in_citation(answer),
         assert_no_hallucinated_error_code(answer, retrieved_chunk_ids),
         assert_no_fabricated_citation(answer, retrieved_chunk_ids),
+        assert_refuses_corpus_gap(answer, expected_behavior),
     ]

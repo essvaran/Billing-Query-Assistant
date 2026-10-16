@@ -1,0 +1,329 @@
+<section class="panel" aria-labelledby="drill-title">
+  <h3 class="panel__title" id="drill-title">Support drill</h3>
+  @if (!drillRunning && !drillResult) {
+    <p class="panel__hint">
+      Practise finding one bad answer from a vague complaint. Start the clock, find the trace with the filters below,
+      open it and press "This is the bad answer". Under {{ mmss(drillBarSeconds) }} passes.
+    </p>
+    <div class="row">
+      <button class="btn btn--primary" (click)="startDrill()">Start drill</button>
+      @if (demoTools) {
+        <button class="btn" (click)="plant()" title="Adds a fabricated refund answer from yesterday afternoon">
+          Plant a bad answer (demo)
+        </button>
+      } @else {
+        <span class="muted" style="font-size: 0.78rem">
+          Demo tools are off. To practise the drill, set <span class="mono">OBS_DEMO_TOOLS=true</span> in the server
+          <span class="mono">.env</span> and restart the API to get a "Plant a bad answer" button.
+        </span>
+      }
+    </div>
+  }
+  @if (drillRunning) {
+    <div class="row" style="align-items: center">
+      <div class="kpi" style="min-width: 150px">
+        <div class="kpi__label">Elapsed</div>
+        <div class="kpi__value" aria-live="off">{{ mmss(drillElapsed) }}</div>
+        <div class="kpi__sub" [class.text-danger]="drillElapsed >= drillBarSeconds">
+          bar {{ mmss(drillBarSeconds) }}
+        </div>
+      </div>
+      <div class="field--grow">
+        <div class="muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em">Complaint</div>
+        <div>"a customer said it gave a wrong answer about refunds yesterday afternoon."</div>
+        <div class="muted" style="font-size: 0.8rem; margin-top: 0.25rem">
+          No trace id, no timestamp, no ticket number. Use the filters, then open the trace.
+        </div>
+      </div>
+      <button class="btn" (click)="cancelDrill()">Cancel</button>
+    </div>
+  }
+  @if (drillResult) {
+    <div class="banner" [class.banner--ok]="drillResult.passed" [class.banner--err]="!drillResult.passed" role="status">
+      Found in <strong>{{ mmss(drillResult.seconds) }}</strong>
+      ({{ drillResult.passed ? 'under' : 'over' }} the {{ mmss(drillBarSeconds) }} bar).
+      Slice used: <strong>{{ drillResult.slice }}</strong>.
+      @if (!drillResult.passed) {
+        Name the log field whose absence cost you the time in your write-up.
+      }
+    </div>
+    <button class="btn" (click)="drillResult = null">Run another drill</button>
+  }
+  @if (drills.length) {
+    <details style="margin-top: 0.85rem">
+      <summary class="muted" style="cursor: pointer; font-size: 0.8rem">Previous drills ({{ drills.length }})</summary>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>When</th><th>Who</th><th class="num">Time</th><th>Slice</th><th>Result</th></tr>
+          </thead>
+          <tbody>
+            @for (d of drills; track d.id) {
+              <tr>
+                <td class="mono">{{ fmtUtc(d.created_at) }}</td>
+                <td>{{ d.user_email }}</td>
+                <td class="num">{{ mmss(d.seconds) }}</td>
+                <td>{{ d.slice }}</td>
+                <td>
+                  <span class="badge" [class.badge--green]="d.passed_bar" [class.badge--red]="!d.passed_bar">
+                    {{ d.passed_bar ? 'under bar' : 'over bar' }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </details>
+  }
+</section>
+
+<section class="panel" aria-labelledby="filter-title">
+  <h3 class="panel__title" id="filter-title">Find a trace</h3>
+  <form (ngSubmit)="search()">
+    <div class="row">
+      <div class="field">
+        <label for="f-after">After (UTC)</label>
+        <input id="f-after" type="datetime-local" name="after" [(ngModel)]="after" />
+      </div>
+      <div class="field">
+        <label for="f-before">Before (UTC)</label>
+        <input id="f-before" type="datetime-local" name="before" [(ngModel)]="before" />
+      </div>
+      <div class="field field--grow">
+        <label for="f-keyword">Keyword in question or answer</label>
+        <input id="f-keyword" type="text" name="keyword" [(ngModel)]="keyword" placeholder="refund" maxlength="200"
+               title="Langfuse cannot search text, so this scans the newest traces in the time window" />
+      </div>
+      <div class="field" style="min-width: 110px">
+        <label for="f-version">Prompt version</label>
+        <input id="f-version" type="text" name="version" [(ngModel)]="promptVersion" placeholder="v2" maxlength="50" />
+      </div>
+      <div class="field" style="min-width: 150px">
+        <label for="f-user">User email</label>
+        <input id="f-user" type="text" name="user" [(ngModel)]="userFilter" placeholder="alice@" maxlength="200" />
+      </div>
+      <div class="field" style="min-width: 120px">
+        <label for="f-cost">Cost above (USD)</label>
+        <input id="f-cost" type="number" name="cost" [(ngModel)]="costAbove" min="0" step="0.0001" placeholder="0.0005" />
+      </div>
+    </div>
+    <div class="row" style="margin-top: 0.6rem">
+      <label class="check"><input type="checkbox" name="unverified" [(ngModel)]="unverified" /> Unverified answers (not a refusal, citations failed)</label>
+      <label class="check"><input type="checkbox" name="errors" [(ngModel)]="errorsOnly" /> Errors only</label>
+      <span style="flex: 1"></span>
+      <button class="btn" type="button" (click)="presetYesterday()">Yesterday 12:00 to 18:00 UTC</button>
+      <button class="btn" type="button" (click)="reset()">Reset</button>
+      <button class="btn btn--primary" type="submit">Search</button>
+    </div>
+  </form>
+</section>
+
+@if (notice) {
+  <div class="banner" [class.banner--ok]="notice.kind === 'ok'" [class.banner--err]="notice.kind === 'err'"
+       [class.banner--warn]="notice.kind === 'warn'" role="status">{{ notice.text }}</div>
+}
+
+<section class="panel">
+  @if (loading && !list) {
+    <div class="loading">Loading traces...</div>
+  } @else if (list) {
+    <div class="row" style="justify-content: space-between; margin-bottom: 0.5rem">
+      <span class="muted" style="font-size: 0.8rem">
+        {{ list.total }} trace{{ list.total === 1 ? '' : 's' }} matched in Langfuse
+        @if (loading) { (refreshing) }
+      </span>
+      <span class="row" style="gap: 0.5rem; align-items: center">
+        <button class="btn btn--small" (click)="prevPage()" [disabled]="offset === 0">Previous</button>
+        <span class="muted" style="font-size: 0.8rem">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button class="btn btn--small" (click)="nextPage()" [disabled]="offset + pageSize >= list.total">Next</button>
+      </span>
+    </div>
+    @if (list.truncated) {
+      <div class="banner banner--warn">
+        Matches are searched among the newest {{ list.scanned }} traces in Langfuse. To search older traces, narrow the
+        time window with After and Before.
+      </div>
+    }
+    @if (list.items.length === 0) {
+      <div class="empty">No traces match these filters.</div>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Time (UTC)</th><th>Question</th><th>Answer</th><th>Version</th>
+              <th class="num">Cost</th><th class="num">Latency</th><th>Check</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (t of list.items; track t.trace_id) {
+              <tr class="clickable" tabindex="0" (click)="open(t.trace_id)" (keydown.enter)="open(t.trace_id)"
+                  [class.selected]="detail && detail.trace_id === t.trace_id">
+                <td class="mono">{{ fmtUtc(t.timestamp) }}</td>
+                <td class="truncate" [title]="t.question">{{ t.question }}</td>
+                <td class="truncate" [title]="t.answer_preview">{{ t.answer_preview }}</td>
+                <td><span class="badge badge--blue">{{ t.prompt_version }}</span></td>
+                <td class="num">{{ fmtUsd(t.cost_usd) }}</td>
+                <td class="num">{{ fmtMs(t.total_ms) }}</td>
+                <td>
+                  @if (t.error) {
+                    <span class="badge badge--red">error</span>
+                  } @else if (t.is_refusal) {
+                    <span class="badge">refusal</span>
+                  } @else if (t.unverified) {
+                    <span class="badge badge--red">unverified</span>
+                  } @else {
+                    <span class="badge badge--green">grounded</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</section>
+
+@if (detail || detailLoading) {
+  <div class="drawer-backdrop" (click)="closeDetail()"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-label="Trace detail">
+    <div class="drawer__head">
+      <h3 style="margin: 0; font-size: 1rem">Trace {{ detail ? shortId(detail.trace_id) : '' }}</h3>
+      <button class="btn btn--small" (click)="closeDetail()" aria-label="Close trace detail">Close</button>
+    </div>
+    @if (detailLoading) {
+      <div class="loading">Loading trace...</div>
+    }
+    @if (detail) {
+      <div class="drawer__body">
+        @if (drillRunning) {
+          <div class="banner banner--warn">
+            Drill running: {{ mmss(drillElapsed) }}.
+            <button class="btn btn--primary btn--small" style="margin-left: 0.5rem" (click)="markFound()" [disabled]="drillBusy">
+              This is the bad answer
+            </button>
+          </div>
+        }
+        <div class="row" style="gap: 0.4rem; margin-bottom: 0.6rem">
+          <span class="badge badge--blue">{{ detail.prompt_version }}</span>
+          <span class="badge">{{ detail.model }}</span>
+          @if (detail.is_refusal) { <span class="badge">refusal</span> }
+          @else if (detail.unverified) { <span class="badge badge--red">unverified</span> }
+          @else { <span class="badge badge--green">grounded</span> }
+          @if (detail.eval_case_id) { <span class="badge badge--purple">eval case {{ detail.eval_case_id }}</span> }
+          @if (detail.user_email) { <span class="badge" title="Who asked">{{ detail.user_email }}</span> }
+        </div>
+        <div class="mono muted" style="margin-bottom: 0.75rem; word-break: break-all">
+          {{ detail.trace_id }} at {{ fmtUtc(detail.timestamp) }}
+        </div>
+
+        @if (detail.feedback.length) {
+          <h4 class="drawer__h">User feedback</h4>
+          @for (f of detail.feedback; track f.id) {
+            <div class="banner" [class.banner--err]="f.rating === 'down'" [class.banner--ok]="f.rating === 'up'">
+              <strong>{{ f.rating === 'down' ? 'Thumbs down' : 'Thumbs up' }}</strong>
+              by {{ f.user_email }}
+              @if (f.rating === 'down') {
+                : {{ f.reason_label }}
+                @if (f.comment) { <div style="margin-top: 0.3rem; white-space: pre-wrap; color: var(--text-primary)">"{{ f.comment }}"</div> }
+              }
+              @if (f.status === 'reviewed') { <span class="badge" style="margin-left: 0.4rem">reviewed</span> }
+            </div>
+          }
+        }
+
+        <h4 class="drawer__h">Question</h4>
+        <pre class="block">{{ detail.question }}</pre>
+        <h4 class="drawer__h">Answer</h4>
+        <pre class="block">{{ detail.final_answer }}</pre>
+
+        <h4 class="drawer__h">Spans (latency, tokens, cost)</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Span</th><th class="num">Latency</th><th class="num">Tokens in</th><th class="num">Tokens out</th><th class="num">Cost</th></tr></thead>
+            <tbody>
+              @for (s of detail.spans; track s.name) {
+                <tr>
+                  <td>
+                    {{ s.name }}
+                    @if (!s.logged) { <span class="badge badge--amber" title="This step's latency is not recorded separately">not logged</span> }
+                    @if (s.latency_ms !== null) {
+                      <div class="bar" style="margin-top: 0.25rem; width: 120px"><span [style.width.%]="spanWidth(s.latency_ms)"></span></div>
+                    }
+                  </td>
+                  <td class="num">{{ fmtMs(s.latency_ms) }}</td>
+                  <td class="num">{{ s.tokens_in }}</td>
+                  <td class="num">{{ s.tokens_out }}</td>
+                  <td class="num">{{ fmtUsd(s.cost_usd) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="muted" style="font-size: 0.78rem; margin-top: 0.4rem">
+          Total {{ fmtMs(detail.total_ms) }} and {{ fmtUsd(detail.cost_usd) }}
+          (retrieval {{ fmtUsd(detail.cost_by_stage.retrieval_usd) }},
+          generation {{ fmtUsd(detail.cost_by_stage.generation_usd) }},
+          tools {{ fmtUsd(detail.cost_by_stage.tools_usd) }}).
+        </div>
+
+        <h4 class="drawer__h">Retrieved context ids</h4>
+        @if (!detail.context_recorded) {
+          <div class="muted" style="font-size: 0.8rem">Not recorded for this trace: it was made before the full snapshot was stored in Langfuse.</div>
+        }
+        <ol class="mono" style="margin: 0; padding-left: 1.2rem">
+          @for (id of detail.retrieved_context_ids; track id) { <li style="word-break: break-all">{{ id }}</li> }
+        </ol>
+        <div class="muted" style="font-size: 0.78rem; margin-top: 0.4rem">
+          Retriever {{ detail.retriever }}, top_k {{ detail.top_k }}, collection {{ detail.collection }}.
+          Citations: {{ detail.citations.length ? detail.citations.join(', ') : 'none' }}.
+        </div>
+
+        @if (detail.langfuse_url) {
+          <div class="row" style="margin-top: 1rem">
+            <a class="btn" [href]="detail.langfuse_url" target="_blank" rel="noopener"
+               title="Opens this request in Langfuse. Only requests made after Langfuse ids were aligned with the app are there.">
+              Open in Langfuse
+            </a>
+          </div>
+        }
+
+        <h4 class="drawer__h">Close the loop</h4>
+        @if (detail.eval_case_id) {
+          @if (!caseNotice || caseNotice.kind !== 'ok') {
+            <div class="banner banner--ok">This trace already has eval case {{ detail.eval_case_id }}.</div>
+            <button class="btn" (click)="openEval.emit()">Open Failure to test</button>
+          }
+        } @else {
+          <p class="panel__hint">Turn this failure into a permanent test, then watch it fail (RED) before you fix the prompt.</p>
+          <div class="row">
+            <div class="field">
+              <label for="c-exp">A correct system should</label>
+              <select id="c-exp" [(ngModel)]="caseExpected" (ngModelChange)="onExpectedChange()">
+                <option value="refusal">refuse (corpus has no answer)</option>
+                <option value="answer">answer (corpus has the answer)</option>
+              </select>
+            </div>
+            <div class="field field--grow">
+              <label for="c-notes">Note (optional)</label>
+              <input id="c-notes" type="text" [(ngModel)]="caseNotes" maxlength="500" placeholder="What went wrong" />
+            </div>
+          </div>
+          <div class="row" style="margin-top: 0.6rem">
+            <button class="btn btn--primary" (click)="createCase()" [disabled]="caseBusy">Add as eval case</button>
+          </div>
+        }
+        @if (caseNotice) {
+          <div class="banner" style="margin-top: 0.6rem" [class.banner--ok]="caseNotice.kind === 'ok'" [class.banner--err]="caseNotice.kind === 'err'" role="status">
+            {{ caseNotice.text }}
+            @if (caseNotice.kind === 'ok') {
+              <button class="btn btn--small" style="margin-left: 0.5rem" (click)="openEval.emit()">Open Failure to test</button>
+            }
+          </div>
+        }
+      </div>
+    }
+  </aside>
+}

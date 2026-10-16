@@ -105,8 +105,12 @@ from api.auth import router as auth_router, get_current_user, require_admin
 from api.admin_router import router as admin_router
 from api.trajectory_router import router as trajectory_router
 from api.multiagent_router import router as multiagent_router
+from api.observability_router import router as observability_router
+from api.feedback_router import router as feedback_router
 
 app.include_router(auth_router)
+app.include_router(observability_router)
+app.include_router(feedback_router)
 app.include_router(admin_router)
 app.include_router(race_router)
 app.include_router(agent_router)
@@ -166,7 +170,7 @@ def ask(body: AskRequest, request: Request, _user=Depends(get_current_user)) -> 
     from src.generation.llm_client import LLMRequestError
 
     try:
-        result = answer_question(body.question, use_hybrid=body.use_hybrid)
+        result = answer_question(body.question, use_hybrid=body.use_hybrid, user_email=_user.email)
     except LLMRequestError as exc:
         log.error("LLM error on ask: %s", exc)
         raise HTTPException(status_code=502, detail="LLM service unavailable — please retry") from exc
@@ -191,6 +195,7 @@ def ask(body: AskRequest, request: Request, _user=Depends(get_current_user)) -> 
         total_ms=round(result.retrieval_ms + result.generation_ms, 1),
         citations_valid=result.citations_valid,
         retriever=result.retriever,
+        trace_id=result.trace_id or None,
     )
 
 # ---------------------------------------------------------------------------

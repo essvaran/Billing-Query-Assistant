@@ -19,12 +19,25 @@ export interface AskResponse {
   total_ms: number;
   citations_valid: boolean;
   retriever: string;
+  trace_id?: string | null;
 }
 
 export interface Message {
   role: 'user' | 'assistant';
   text: string;
   response?: AskResponse;
+}
+
+export interface FeedbackReason {
+  code: string;
+  label: string;
+}
+
+export interface FeedbackPayload {
+  trace_id: string;
+  rating: 'up' | 'down';
+  reason_code?: string;
+  comment?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -35,5 +48,13 @@ export class ChatService {
 
   ask(question: string, useHybrid: boolean = true): Observable<AskResponse> {
     return this.http.post<AskResponse>(this.apiUrl, { question, use_hybrid: useHybrid });
+  }
+
+  feedbackReasons(): Observable<FeedbackReason[]> {
+    return this.http.get<FeedbackReason[]>('/api/feedback/reasons');
+  }
+
+  sendFeedback(payload: FeedbackPayload): Observable<{ saved: boolean; rating: string }> {
+    return this.http.post<{ saved: boolean; rating: string }>('/api/feedback', payload);
   }
 }

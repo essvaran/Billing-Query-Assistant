@@ -62,6 +62,61 @@
                   </div>
                 }
               }
+
+              @if (canRate(msg) && msg.feedback) {
+                <div class="feedback-bar" role="group" aria-label="Rate this answer">
+                  @if (msg.feedback.rating === null && !msg.feedback.formOpen) {
+                    <span class="feedback-label">Was this helpful?</span>
+                  }
+                  @if (msg.feedback.rating && !msg.feedback.formOpen) {
+                    <span class="feedback-thanks" role="status">
+                      {{ msg.feedback.rating === 'up' ? 'Thanks for the feedback.' : 'Thanks, we will look into it.' }}
+                    </span>
+                  }
+                  <button type="button" class="feedback-btn" [class.feedback-btn--active]="msg.feedback.rating === 'up'"
+                          [disabled]="msg.feedback.busy" [attr.aria-pressed]="msg.feedback.rating === 'up'"
+                          aria-label="Good answer" title="Good answer" (click)="thumbsUp(msg)">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M7 10v11H3V10h4zM7 10l4-8c1.5 0 3 1 3 3v3h6a2 2 0 0 1 2 2.3l-1.4 8A2 2 0 0 1 18.6 21H7"/>
+                    </svg>
+                  </button>
+                  <button type="button" class="feedback-btn feedback-btn--down" [class.feedback-btn--active]="msg.feedback.rating === 'down'"
+                          [disabled]="msg.feedback.busy" [attr.aria-pressed]="msg.feedback.rating === 'down'"
+                          aria-label="Bad answer" title="Bad answer" (click)="thumbsDown(msg)">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M17 14V3h4v11h-4zM17 14l-4 8c-1.5 0-3-1-3-3v-3H4a2 2 0 0 1-2-2.3l1.4-8A2 2 0 0 1 5.4 3H17"/>
+                    </svg>
+                  </button>
+                </div>
+
+                @if (msg.feedback.formOpen) {
+                  <form class="feedback-form" (ngSubmit)="submitThumbsDown(msg)">
+                    <label class="feedback-form__label" [attr.for]="'fb-reason-' + i">What went wrong?</label>
+                    <select class="feedback-form__select" [id]="'fb-reason-' + i" name="reason{{ i }}"
+                            [(ngModel)]="msg.feedback.reason">
+                      <option value="" disabled>Choose a reason</option>
+                      @for (r of reasons; track r.code) { <option [value]="r.code">{{ r.label }}</option> }
+                    </select>
+                    <label class="feedback-form__label" [attr.for]="'fb-comment-' + i">Tell us more (optional)</label>
+                    <textarea class="feedback-form__text" [id]="'fb-comment-' + i" name="comment{{ i }}" rows="3"
+                              maxlength="1000" [(ngModel)]="msg.feedback.comment"
+                              placeholder="What should the answer have said?"></textarea>
+                    @if (msg.feedback.error) {
+                      <div class="feedback-form__error" role="alert">{{ msg.feedback.error }}</div>
+                    }
+                    <div class="feedback-form__actions">
+                      <button type="submit" class="feedback-form__send" [disabled]="msg.feedback.busy">
+                        {{ msg.feedback.busy ? 'Sending...' : 'Send feedback' }}
+                      </button>
+                      <button type="button" class="feedback-form__cancel" (click)="cancelFeedback(msg)">Cancel</button>
+                    </div>
+                  </form>
+                } @else if (msg.feedback.error) {
+                  <div class="feedback-form__error" role="alert">{{ msg.feedback.error }}</div>
+                }
+              }
             </div>
           }
 

@@ -4,10 +4,11 @@ import {
   ViewChild,
   AfterViewChecked,
   OnDestroy,
+  OnInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ChatService, Message, AskResponse } from '../../services/chat.service';
+import { ChatService, Message, AskResponse, FeedbackReason } from '../../services/chat.service';
 import { AgentChatService, AgentStep, AgentResult } from '../../services/agent-chat.service';
 
 interface AgentTurn {
@@ -18,12 +19,31 @@ interface AgentTurn {
   error: string | null;
 }
 
+interface FeedbackState {
+  rating: 'up' | 'down' | null;
+  formOpen: boolean;
+  reason: string;
+  comment: string;
+  busy: boolean;
+  error: string | null;
+}
+
 interface ChatMessage {
   role: 'user' | 'assistant';
   text: string;
   response?: AskResponse;
   agentTurn?: AgentTurn;
+  feedback?: FeedbackState;
 }
+
+const DEFAULT_REASONS: FeedbackReason[] = [
+  { code: 'wrong_answer', label: 'The answer is wrong' },
+  { code: 'not_helpful', label: 'It did not answer my question' },
+  { code: 'incomplete', label: 'Important information is missing' },
+  { code: 'outdated', label: 'The information is outdated' },
+  { code: 'unclear', label: 'Hard to understand' },
+  { code: 'other', label: 'Something else' },
+];
 
 const _TOOL_LABELS: Record<string, string> = {
   get_ticket: 'Checked ticket',
@@ -39,7 +59,7 @@ const _TOOL_LABELS: Record<string, string> = {
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',
 })
-export class ChatComponent implements AfterViewChecked, OnDestroy {
+export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   @ViewChild('messagesEnd') private messagesEnd!: ElementRef;
   @ViewChild('inputField') private inputField!: ElementRef;
 
@@ -48,6 +68,7 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
   loading = false;
   expandedChunks: Set<number> = new Set();
   chatMode: 'rag' | 'agent' = 'rag';
+  reasons: FeedbackReason[] = DEFAULT_REASONS;
 
   private _pollTimer: ReturnType<typeof setInterval> | null = null;
   private _expandedTools = new Map<string, boolean>();
@@ -57,8 +78,107 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
     private agentSvc: AgentChatService,
   ) {}
 
+  ngOnInit(): void {
+    this.chatService.feedbackReasons().subscribe({
+      next: this.onReasons.bind(this),
+      error: this.noop.bind(this),
+    });
+  }
+
+  private onReasons(list: FeedbackReason[]): void {
+    if (list && list.length > 0) {
+      this.reasons = list;
+    }
+  }
+
+  private noop(): void {
+    // The built-in reason list is used when the API cannot be reached.
+  }
+
   ngOnDestroy(): void {
     this._stopPolling();
+  }
+
+  // ------------------------------------------------------------ feedback (thumbs up or down)
+
+  canRate(msg: ChatMessage): boolean {
+    return !!msg.feedback && !!msg.response && !!msg.response.trace_id;
+  }
+
+  thumbsUp(msg: ChatMessage): void {
+    const fb = msg.feedback;
+    if (!fb || fb.busy || fb.rating === 'up') {
+      return;
+    }
+    fb.formOpen = false;
+    this.sendFeedback(msg, 'up');
+  }
+
+  thumbsDown(msg: ChatMessage): void {
+    const fb = msg.feedback;
+    if (!fb || fb.busy || fb.rating === 'down') {
+      return;
+    }
+    fb.error = null;
+    fb.formOpen = true;
+  }
+
+  cancelFeedback(msg: ChatMessage): void {
+    if (msg.feedback) {
+      msg.feedback.formOpen = false;
+      msg.feedback.error = null;
+    }
+  }
+
+  submitThumbsDown(msg: ChatMessage): void {
+    const fb = msg.feedback;
+    if (!fb || fb.busy) {
+      return;
+    }
+    if (!fb.reason) {
+      fb.error = 'Please choose a reason so we can fix it.';
+      return;
+    }
+    this.sendFeedback(msg, 'down');
+  }
+
+  private sendFeedback(msg: ChatMessage, rating: 'up' | 'down'): void {
+    const fb = msg.feedback;
+    if (!fb || !msg.response || !msg.response.trace_id) {
+      return;
+    }
+    fb.busy = true;
+    fb.error = null;
+    const payload = {
+      trace_id: msg.response.trace_id,
+      rating: rating,
+      reason_code: rating === 'down' ? fb.reason : undefined,
+      comment: rating === 'down' ? fb.comment.trim() || undefined : undefined,
+    };
+    this.chatService.sendFeedback(payload).subscribe({
+      next: this.onFeedbackSaved.bind(this, msg, rating),
+      error: this.onFeedbackError.bind(this, msg),
+    });
+  }
+
+  private onFeedbackSaved(msg: ChatMessage, rating: 'up' | 'down'): void {
+    if (msg.feedback) {
+      msg.feedback.busy = false;
+      msg.feedback.rating = rating;
+      msg.feedback.formOpen = false;
+    }
+  }
+
+  private onFeedbackError(msg: ChatMessage, err: { error?: { detail?: unknown } }): void {
+    if (msg.feedback) {
+      msg.feedback.busy = false;
+      const detail = err && err.error ? err.error.detail : null;
+      msg.feedback.error = typeof detail === 'string' ? detail : 'Could not send your feedback. Please try again.';
+    }
+  }
+
+  private newFeedbackState(): FeedbackState {
+    return { rating: null, formOpen: false, reason: '', comment: '', busy: false, error: null };
   }
 
   ngAfterViewChecked(): void {
@@ -141,7 +261,12 @@ export class ChatComponent implements AfterViewChecked, OnDestroy {
 
     this.chatService.ask(question, true).subscribe({
       next: (response: AskResponse) => {
-        this.messages.push({ role: 'assistant', text: response.answer, response });
+        this.messages.push({
+          role: 'assistant',
+          text: response.answer,
+          response,
+          feedback: response.trace_id ? this.newFeedbackState() : undefined,
+        });
         this.loading = false;
       },
       error: () => {

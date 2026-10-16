@@ -11,7 +11,8 @@ Rules:
 4. Do not invent policies, deadlines, error meanings, fixes, phone numbers, compensation, or service commitments.
 5. If the context does not explicitly answer the question, respond exactly:
    "{REFUSAL_MESSAGE}"
-6. Do not provide a best guess."""
+6. Do not provide a best guess.
+7. Never state or imply refund eligibility, refund windows, fees, compensation, or any other financial commitment unless a supplied chunk states it explicitly. Related-sounding text (rollbacks, retries, payment errors) is not a refund policy."""
 
 
 def build_context(chunks: list[dict]) -> str:

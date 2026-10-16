@@ -6,37 +6,37 @@ Judge: evaluation/judge.py v1 plus the 4 deterministic assertions in evaluation/
 
 | Metric | Single agent (answer_question) | Multi-agent (orchestrator + 2 workers) |
 |---|---|---|
-| Pass rate | 8/10 = 80% | 7/10 = 70% |
-| p50 latency (s) | 2.21 | 7.84 |
-| p99 latency (s) | 13.41 | 19.50 |
-| Total tokens | 12,621 | 18,231 |
-| Cost per ticket (USD) | 0.001136 | 0.001641 |
+| Pass rate | 8/10 = 80% | 6/10 = 60% |
+| p50 latency (s) | 2.54 | 6.21 |
+| p99 latency (s) | 12.41 | 19.04 |
+| Total tokens | 12,570 | 18,801 |
+| Cost per ticket (USD) | 0.001131 | 0.001692 |
 
-**Context re-send multiplier: 1.4x** (multi 18,231 tokens / single 12,621 tokens). Largest single hand-off: orchestrator_to_policy_worker, 54% of all multi-agent tokens (9,910).
+**Context re-send multiplier: 1.5x** (multi 18,801 tokens / single 12,570 tokens). Largest single hand-off: orchestrator_to_policy_worker, 53% of all multi-agent tokens (10,028).
 
 Hand-off share of multi-agent tokens:
 
 | Hand-off | Tokens | Share |
 |---|---|---|
-| orchestrator_to_policy_worker | 9,910 | 54% |
-| orchestrator_synthesis | 6,211 | 34% |
-| orchestrator_to_triage_worker | 2,110 | 12% |
+| orchestrator_to_policy_worker | 10,028 | 53% |
+| orchestrator_synthesis | 6,665 | 35% |
+| orchestrator_to_triage_worker | 2,108 | 11% |
 | policy_worker_search_tool | 0 | 0% |
 
 Per case:
 
 | Case | Single pass | Single tokens | Single latency (s) | Multi pass | Multi tokens | Multi latency (s) |
 |---|---|---|---|---|---|---|
-| R01 | PASS | 676 | 10.83 | PASS | 1,725 | 3.19 |
-| R02 | PASS | 2,449 | 1.67 | FAIL | 2,028 | 3.99 |
-| G01 | FAIL | 1,041 | 2.22 | FAIL | 1,041 | 2.06 |
-| G02 | FAIL | 936 | 1.38 | FAIL | 936 | 1.99 |
-| F01 | PASS | 1,117 | 2.19 | PASS | 2,235 | 8.44 |
-| F04 | PASS | 926 | 3.26 | PASS | 2,075 | 11.79 |
-| A01 | PASS | 1,655 | 8.74 | PASS | 1,599 | 10.25 |
-| A03 | PASS | 2,295 | 13.67 | PASS | 3,245 | 20.26 |
-| CE01 | PASS | 809 | 1.82 | PASS | 1,669 | 7.23 |
-| CE04 | PASS | 717 | 1.74 | PASS | 1,678 | 9.15 |
+| R01 | PASS | 674 | 2.66 | PASS | 1,732 | 3.68 |
+| R02 | PASS | 2,405 | 2.12 | FAIL | 2,003 | 5.22 |
+| G01 | FAIL | 1,041 | 3.69 | FAIL | 1,041 | 2.75 |
+| G02 | FAIL | 948 | 1.48 | FAIL | 936 | 1.99 |
+| F01 | PASS | 1,118 | 1.82 | PASS | 2,296 | 14.32 |
+| F04 | PASS | 950 | 1.61 | FAIL | 2,473 | 9.67 |
+| A01 | PASS | 1,654 | 8.49 | PASS | 1,597 | 7.66 |
+| A03 | PASS | 2,295 | 12.79 | PASS | 3,245 | 19.50 |
+| CE01 | PASS | 791 | 2.42 | PASS | 1,735 | 3.63 |
+| CE04 | PASS | 694 | 2.75 | PASS | 1,743 | 7.19 |
 
 Notes:
 - With n=10, p99 is interpolated and sits very close to the slowest case.

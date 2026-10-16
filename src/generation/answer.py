@@ -1,4 +1,6 @@
 import json
+import logging
+import os
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -8,6 +10,7 @@ from uuid import uuid4
 import re as _re
 
 from src.config import DEFAULT_COLLECTION, MIN_SCORE_DENSE, MIN_SCORE_HYBRID, MIN_QUERY_RELEVANCE, TOP_K
+from src.generation.cost import calculate_cost
 from src.generation.citations import extract_citations, validate_citations
 from src.generation.langfuse_client import get_langfuse
 from src.generation.llm_client import LLM_PROVIDER, GROQ_MODEL, OLLAMA_MODEL, ask_llm
@@ -18,7 +21,13 @@ from src.retrieval.search import search
 
 _CITATION_BRACKET_RE = _re.compile(r"\[([A-Za-z0-9]+(?:-[A-Za-z0-9]+)*--[A-Za-z0-9-]+--[A-Za-z0-9-]+)\]")
 
+# Legacy Week 6 pages read this file. Writing it is opt-in (TRACE_JSONL_MIRROR=true); Langfuse is the trace store.
 _TRACES_PATH = Path(__file__).resolve().parents[2] / "evaluation" / "traces.jsonl"
+
+logger = logging.getLogger(__name__)
+
+# Bump on every change to SYSTEM_PROMPT / build_user_prompt so traces stay attributable.
+PROMPT_VERSION = "v2"
 
 
 @dataclass
@@ -34,17 +43,32 @@ class Answer:
     retriever: str = field(default="hybrid-bm25-rrf")
     input_tokens: int = field(default=0)
     output_tokens: int = field(default=0)
+    trace_id: str = field(default="")
 
 
-def _write_trace(answer: "Answer", question: str, k: int, collection_name: str) -> None:
+def _langfuse_costs(model, input_tokens, output_tokens):
+    cost = calculate_cost(model, input_tokens, output_tokens)
+    return {
+        "inputCost": cost["input_cost_usd"],
+        "outputCost": cost["output_cost_usd"],
+        "totalCost": cost["total_cost_usd"],
+    }
+
+
+def _write_trace(answer: "Answer", question: str, k: int, collection_name: str, trace_id: str | None = None,
+                 user_email: str | None = None, lf_trace=None, lf=None, reason: str | None = None) -> None:
+    """Finish a request: push the complete snapshot to Langfuse (the only trace store) and check alerts."""
     model = GROQ_MODEL if LLM_PROVIDER == "groq" else OLLAMA_MODEL
+    cost = calculate_cost(model, answer.input_tokens, answer.output_tokens)["total_cost_usd"]
+    refused = answer.final_answer.startswith(("I don't have enough information to answer that", "I cannot answer that from the indexed help"))
     record = {
-        "trace_id": str(uuid4()),
+        "trace_id": trace_id or answer.trace_id or str(uuid4()),
+        "user_email": user_email,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "question": question,
         "original_query": question,
         "rewritten_query": None,
-        "prompt_version": "v1",
+        "prompt_version": PROMPT_VERSION,
         "model": model,
         "temperature": 0.0,
         "retriever": answer.retriever,
@@ -68,13 +92,59 @@ def _write_trace(answer: "Answer", question: str, k: int, collection_name: str) 
         "total_ms": round(answer.retrieval_ms + answer.generation_ms, 2),
         "input_tokens": answer.input_tokens,
         "output_tokens": answer.output_tokens,
+        "cost_usd": cost,
+        "cost_by_stage": {"retrieval_usd": 0.0, "generation_usd": cost, "tools_usd": 0.0},
         "error": None,
     }
+    answer.trace_id = record["trace_id"]
+    logger.info(
+        "trace=%s pv=%s retrieval_ms=%.1f generation_ms=%.1f in=%d out=%d cost_usd=%.8f citations_valid=%s",
+        record["trace_id"], PROMPT_VERSION, answer.retrieval_ms, answer.generation_ms,
+        answer.input_tokens, answer.output_tokens, cost, answer.citations_valid,
+    )
+    if lf_trace is not None:
+        try:
+            lf_trace.update(
+                output={"final_answer": answer.final_answer, "reason": reason},
+                metadata={
+                    "prompt_version": PROMPT_VERSION,
+                    "model": model,
+                    "retriever": answer.retriever,
+                    "collection": collection_name,
+                    "top_k": k,
+                    "temperature": 0.0,
+                    "citations_valid": answer.citations_valid,
+                    "citations": record["citations"],
+                    "unverified": (not answer.citations_valid) and not refused,
+                    "retrieved_chunks": record["retrieved_chunks"],
+                    "retrieval_ms": record["retrieval_ms"],
+                    "generation_ms": record["generation_ms"],
+                    "total_ms": record["total_ms"],
+                    "input_tokens": answer.input_tokens,
+                    "output_tokens": answer.output_tokens,
+                    "cost_usd": cost,
+                },
+            )
+            if lf is not None:
+                lf.flush()
+        except Exception:
+            logger.exception("failed to update the Langfuse trace")
     try:
-        with _TRACES_PATH.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(record) + "\n")
+        from src.observability.trace_store import remember
+        remember(record)
     except Exception:
-        pass
+        logger.exception("failed to cache the trace summary")
+    if os.getenv("TRACE_JSONL_MIRROR", "false").lower() == "true":
+        try:
+            with _TRACES_PATH.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(record) + "\n")
+        except Exception:
+            logger.exception("failed to write the legacy trace file")
+    try:
+        from src.observability.alerting import check_and_alert
+        check_and_alert(record)
+    except Exception:
+        logger.exception("alerting failed")
 
 
 def answer_question(
@@ -83,7 +153,9 @@ def answer_question(
     k: int = TOP_K,
     where: dict | None = None,
     use_hybrid: bool = True,
+    user_email: str | None = None,
 ) -> Answer:
+    trace_id = str(uuid4())
     retriever_label = "hybrid-bm25-rrf" if use_hybrid else "dense"
     model = GROQ_MODEL if LLM_PROVIDER == "groq" else OLLAMA_MODEL
     lf = get_langfuse()
@@ -92,9 +164,14 @@ def answer_question(
     if lf:
         try:
             trace = lf.trace(
+                id=trace_id,
                 name="answer_question",
+                user_id=user_email,
+                version=PROMPT_VERSION,
+                tags=[f"prompt:{PROMPT_VERSION}"],
                 input={"question": question},
                 metadata={
+                    "prompt_version": PROMPT_VERSION,
                     "collection": collection_name,
                     "retriever": retriever_label,
                     "top_k": k,
@@ -118,13 +195,7 @@ def answer_question(
                 generation_ms=0.0,
                 retriever=retriever_label,
             )
-            if trace:
-                trace.update(
-                    output={"final_answer": REFUSAL_MESSAGE, "reason": "off_topic_query"},
-                    metadata={"citations_valid": False},
-                )
-                lf.flush()
-            _write_trace(ans, question, k, collection_name)
+            _write_trace(ans, question, k, collection_name, trace_id, user_email, trace, lf, "off_topic_query")
             return ans
     except Exception:
         pass  # if the gate fails, proceed to retrieval rather than blocking
@@ -181,13 +252,7 @@ def answer_question(
             generation_ms=0.0,
             retriever=retriever_label,
         )
-        if trace:
-            trace.update(
-                output={"final_answer": REFUSAL_MESSAGE, "reason": "no_chunks_retrieved"},
-                metadata={"citations_valid": False},
-            )
-            lf.flush()
-        _write_trace(ans, question, k, collection_name)
+        _write_trace(ans, question, k, collection_name, trace_id, user_email, trace, lf, "no_chunks_retrieved")
         return ans
 
     user_prompt = build_user_prompt(question, retrieved_chunks)
@@ -218,6 +283,7 @@ def answer_question(
                 "input": input_tokens,
                 "output": output_tokens,
                 "unit": "TOKENS",
+                **_langfuse_costs(model, input_tokens, output_tokens),
             },
             metadata={"generation_ms": round(generation_ms, 2)},
         )
@@ -236,13 +302,7 @@ def answer_question(
             input_tokens=input_tokens,
             output_tokens=output_tokens,
         )
-        if trace:
-            trace.update(
-                output={"final_answer": REFUSAL_MESSAGE, "reason": "llm_refused"},
-                metadata={"citations_valid": False, "input_tokens": input_tokens, "output_tokens": output_tokens},
-            )
-            lf.flush()
-        _write_trace(ans, question, k, collection_name)
+        _write_trace(ans, question, k, collection_name, trace_id, user_email, trace, lf, "llm_refused")
         return ans
 
     citations = extract_citations(raw_answer)
@@ -287,20 +347,6 @@ def answer_question(
         output_tokens=output_tokens,
     )
 
-    if trace:
-        trace.update(
-            output={"final_answer": final_answer},
-            metadata={
-                "citations_valid": citations_valid,
-                "citations": list(citations),
-                "retrieval_ms": round(retrieval_ms, 2),
-                "generation_ms": round(generation_ms, 2),
-                "total_ms": round(retrieval_ms + generation_ms, 2),
-                "input_tokens": input_tokens,
-                "output_tokens": output_tokens,
-            },
-        )
-        lf.flush()
 
-    _write_trace(ans, question, k, collection_name)
+    _write_trace(ans, question, k, collection_name, trace_id, user_email, trace, lf, None)
     return ans

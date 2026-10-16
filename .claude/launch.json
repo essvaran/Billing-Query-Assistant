@@ -27,6 +27,21 @@
         "8000"
       ],
       "port": 8000
+    },
+    {
+      "name": "FastAPI demo tools",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "-m",
+        "uvicorn",
+        "api.main:app",
+        "--port",
+        "8000"
+      ],
+      "env": {
+        "OBS_DEMO_TOOLS": "true"
+      },
+      "port": 8000
     }
   ]
 }

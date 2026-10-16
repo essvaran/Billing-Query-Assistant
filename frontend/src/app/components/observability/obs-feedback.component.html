@@ -1,0 +1,137 @@
+@if (error) {
+  <div class="banner banner--err" role="alert">{{ error }}</div>
+}
+
+<section class="panel" aria-labelledby="fb-title">
+  <h3 class="panel__title" id="fb-title">What users think of the answers</h3>
+  <p class="panel__hint">
+    Every thumbs up or down from the chat lands here. A thumbs down also sends you an email and adds a score to the
+    Langfuse trace. Open the trace to see exactly what was retrieved and answered, read why the user disagreed, then
+    add it as an eval case and fix the prompt or retrieval.
+  </p>
+  @if (list) {
+    <div class="kpis" style="margin-bottom: 0.75rem">
+      <div class="kpi">
+        <div class="kpi__label">Needs review</div>
+        <div class="kpi__value" [class.text-danger]="list.counts.new_down > 0">{{ list.counts.new_down }}</div>
+        <div class="kpi__sub">new thumbs down</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi__label">Thumbs down</div>
+        <div class="kpi__value">{{ list.counts.down }}</div>
+        <div class="kpi__sub">all time</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi__label">Thumbs up</div>
+        <div class="kpi__value">{{ list.counts.up }}</div>
+        <div class="kpi__sub">all time</div>
+      </div>
+    </div>
+  }
+  <div class="row">
+    <div class="field">
+      <label for="fb-rating">Vote</label>
+      <select id="fb-rating" [(ngModel)]="rating" (ngModelChange)="filterChanged()">
+        <option value="down">Thumbs down</option>
+        <option value="up">Thumbs up</option>
+        <option value="">All votes</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="fb-status">Status</label>
+      <select id="fb-status" [(ngModel)]="status" (ngModelChange)="filterChanged()">
+        <option value="new">Needs review</option>
+        <option value="reviewed">Reviewed</option>
+        <option value="">All</option>
+      </select>
+    </div>
+    <span style="flex: 1"></span>
+    <button class="btn" type="button" (click)="load()">Refresh</button>
+  </div>
+</section>
+
+<section class="panel">
+  @if (loading && !list) {
+    <div class="loading">Loading feedback...</div>
+  } @else if (list) {
+    @if (list.items.length === 0) {
+      <div class="empty">
+        Nothing here.
+        @if (status === 'new' && rating === 'down') { No thumbs down are waiting for review. }
+        @else { Try the other filters, or ask a question in Chat and rate the answer. }
+      </div>
+    } @else {
+      <div class="row" style="justify-content: space-between; margin-bottom: 0.5rem">
+        <span class="muted" style="font-size: 0.8rem">{{ list.total }} vote{{ list.total === 1 ? '' : 's' }}</span>
+        <span class="row" style="gap: 0.5rem; align-items: center">
+          <button class="btn btn--small" (click)="prevPage()" [disabled]="offset === 0">Previous</button>
+          <span class="muted" style="font-size: 0.8rem">Page {{ currentPage }} of {{ totalPages }}</span>
+          <button class="btn btn--small" (click)="nextPage()" [disabled]="offset + pageSize >= list.total">Next</button>
+        </span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>When (UTC)</th><th>User</th><th>Vote</th><th>Why they disagree</th><th>Question and answer</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody>
+            @for (f of list.items; track f.id) {
+              <tr>
+                <td class="mono">{{ fmtUtc(f.updated_at) }}</td>
+                <td>{{ f.user_email }}</td>
+                <td>
+                  <span class="badge" [class.badge--red]="f.rating === 'down'" [class.badge--green]="f.rating === 'up'">
+                    {{ f.rating === 'down' ? 'down' : 'up' }}
+                  </span>
+                </td>
+                <td style="min-width: 200px">
+                  @if (f.rating === 'down') {
+                    <div><strong>{{ f.reason_label }}</strong></div>
+                    @if (f.comment) { <div class="muted" style="white-space: pre-wrap">"{{ f.comment }}"</div> }
+                  } @else { <span class="muted">-</span> }
+                </td>
+                <td style="min-width: 260px">
+                  <div><strong>{{ f.question || 'trace not found' }}</strong></div>
+                  <div class="muted truncate" [title]="f.answer_preview || ''">{{ f.answer_preview }}</div>
+                  <div class="muted" style="font-size: 0.72rem">prompt {{ f.prompt_version || '-' }}, trace {{ shortId(f.trace_id) }}</div>
+                </td>
+                <td>
+                  <span class="badge" [class.badge--amber]="f.status === 'new'" [class.badge--green]="f.status === 'reviewed'">{{ f.status }}</span>
+                  @if (f.status === 'reviewed' && f.reviewed_by) {
+                    <div class="muted" style="font-size: 0.72rem">by {{ f.reviewed_by }}</div>
+                    @if (f.admin_note) { <div class="muted" style="font-size: 0.72rem">"{{ f.admin_note }}"</div> }
+                  }
+                </td>
+                <td style="min-width: 190px">
+                  <div class="row" style="gap: 0.35rem">
+                    <button class="btn btn--small btn--primary" (click)="openTrace.emit(f.trace_id)">Open trace</button>
+                    @if (f.langfuse_url) {
+                      <a class="btn btn--small" [href]="f.langfuse_url" target="_blank" rel="noopener">Langfuse</a>
+                    }
+                  </div>
+                  <div style="margin-top: 0.35rem">
+                    @if (f.status === 'new') {
+                      @if (reviewingId === f.id) {
+                        <input type="text" class="note-input" [(ngModel)]="note" maxlength="500" placeholder="Note (optional)"
+                               aria-label="Review note"
+                               style="width: 100%; background: var(--surface-card); color: var(--text-primary); border: 1px solid var(--border-strong); border-radius: 8px; padding: 0.3rem 0.5rem; font: inherit; font-size: 0.8rem" />
+                        <div class="row" style="gap: 0.35rem; margin-top: 0.3rem">
+                          <button class="btn btn--small" (click)="markReviewed(f)" [disabled]="busyId === f.id">Save</button>
+                          <button class="btn btn--small" (click)="cancelReview()">Cancel</button>
+                        </div>
+                      } @else {
+                        <button class="btn btn--small" (click)="startReview(f)">Mark reviewed</button>
+                      }
+                    } @else {
+                      <button class="btn btn--small" (click)="reopen(f)" [disabled]="busyId === f.id">Reopen</button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</section>

@@ -63,7 +63,69 @@ def init_db() -> None:
                 error      TEXT,
                 created_at TEXT NOT NULL DEFAULT (datetime('now'))
             );
+            CREATE TABLE IF NOT EXISTS alerts (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                ts         TEXT NOT NULL,
+                alert_type TEXT NOT NULL,
+                trace_id   TEXT,
+                reason     TEXT,
+                status     TEXT NOT NULL CHECK(status IN ('sent','failed','suppressed','test')),
+                detail     TEXT
+            );
+            CREATE INDEX IF NOT EXISTS idx_alerts_ts ON alerts(ts);
+            CREATE TABLE IF NOT EXISTS drills (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TEXT NOT NULL,
+                trace_id   TEXT NOT NULL,
+                seconds    REAL NOT NULL CHECK(seconds >= 0),
+                slice      TEXT NOT NULL,
+                notes      TEXT,
+                user_email TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS eval_suite_runs (
+                run_id         TEXT PRIMARY KEY,
+                prompt_version TEXT NOT NULL,
+                started_at     TEXT NOT NULL,
+                finished_at    TEXT,
+                total          INTEGER NOT NULL DEFAULT 0,
+                passed         INTEGER NOT NULL DEFAULT 0,
+                status         TEXT NOT NULL CHECK(status IN ('running','done','error')),
+                source         TEXT NOT NULL,
+                user_email     TEXT,
+                error          TEXT
+            );
+            CREATE TABLE IF NOT EXISTS eval_run_results (
+                id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                run_id   TEXT NOT NULL REFERENCES eval_suite_runs(run_id) ON DELETE CASCADE,
+                case_id  TEXT NOT NULL,
+                passed   INTEGER NOT NULL,
+                detail   TEXT NOT NULL DEFAULT '[]',
+                answer   TEXT,
+                trace_id TEXT
+            );
+            CREATE INDEX IF NOT EXISTS idx_eval_results_run ON eval_run_results(run_id);
+            CREATE TABLE IF NOT EXISTS feedback (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                trace_id    TEXT NOT NULL,
+                user_email  TEXT NOT NULL,
+                rating      TEXT NOT NULL CHECK(rating IN ('up','down')),
+                reason_code TEXT,
+                comment     TEXT,
+                status      TEXT NOT NULL DEFAULT 'new' CHECK(status IN ('new','reviewed')),
+                created_at  TEXT NOT NULL,
+                updated_at  TEXT NOT NULL,
+                reviewed_by TEXT,
+                reviewed_at TEXT,
+                admin_note  TEXT,
+                UNIQUE(trace_id, user_email)
+            );
+            CREATE INDEX IF NOT EXISTS idx_feedback_inbox ON feedback(rating, status, created_at);
+            CREATE INDEX IF NOT EXISTS idx_feedback_trace ON feedback(trace_id);
         """)
+        feedback_columns = {row[1] for row in conn.execute("PRAGMA table_info(feedback)")}
+        for column in ("question", "answer_preview", "prompt_version", "answered_at"):
+            if column not in feedback_columns:
+                conn.execute(f"ALTER TABLE feedback ADD COLUMN {column} TEXT")
         _seed_if_empty(conn)
 
 
@@ -93,3 +155,15 @@ def _seed_if_empty(conn: sqlite3.Connection) -> None:
         "INSERT OR IGNORE INTO users (email, role) VALUES (?,?)",
         (ADMIN_EMAIL, "admin"),
     )
+
+
+def insert_alert(alert_type: str, status: str, trace_id: str | None = None,
+                 reason: str | None = None, detail: str | None = None):
+    """Record an alert outcome (sent / failed / suppressed / test) for the alert history view."""
+    from datetime import datetime, timezone
+
+    with get_db() as conn:
+        conn.execute(
+            "INSERT INTO alerts (ts, alert_type, trace_id, reason, status, detail) VALUES (?,?,?,?,?,?)",
+            (datetime.now(timezone.utc).isoformat(), alert_type, trace_id, reason, status, detail),
+        )

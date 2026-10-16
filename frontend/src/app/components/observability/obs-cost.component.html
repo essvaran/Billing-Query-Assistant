@@ -1,0 +1,177 @@
+@if (error) {
+  <div class="banner banner--err" role="alert">{{ error }}</div>
+}
+
+<div class="row" style="margin-bottom: 0.85rem; justify-content: space-between; align-items: center">
+  <span class="muted" style="font-size: 0.82rem">Cost per request from Langfuse traces. Retrieval is local, so all API cost is generation.</span>
+  <div class="field" style="min-width: 130px">
+    <label for="cost-window">Window</label>
+    <select id="cost-window" [(ngModel)]="days" (ngModelChange)="load()">
+      @for (w of windows; track w) { <option [ngValue]="w">Last {{ w }} days</option> }
+    </select>
+  </div>
+</div>
+
+@if (loading && !stats) {
+  <div class="loading">Loading cost data...</div>
+}
+
+@if (stats) {
+  @if (stats.truncated) {
+    <div class="banner banner--warn">
+      Based on the newest {{ stats.scanned }} traces in this window. Older traces in the window are not included.
+    </div>
+  }
+  @if (stats.overall.llm_requests === 0) {
+    <div class="empty panel">No LLM requests in this window. Ask a question in Chat or widen the window.</div>
+  } @else {
+    <div class="kpis">
+      <div class="kpi">
+        <div class="kpi__label">Cost per request</div>
+        <div class="kpi__value">{{ fmtUsd(stats.overall.avg_cost_usd) }}</div>
+        <div class="kpi__sub">p50 {{ fmtUsd(stats.overall.p50_cost_usd) }}, p95 {{ fmtUsd(stats.overall.p95_cost_usd) }}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi__label">Per 1,000 requests</div>
+        <div class="kpi__value">${{ stats.overall.cost_per_1000_usd }}</div>
+        <div class="kpi__sub">{{ stats.overall.llm_requests }} LLM requests analysed</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi__label">Avg tokens</div>
+        <div class="kpi__value">{{ stats.overall.avg_input_tokens + stats.overall.avg_output_tokens | number: '1.0-0' }}</div>
+        <div class="kpi__sub">{{ stats.overall.avg_input_tokens | number: '1.0-0' }} in, {{ stats.overall.avg_output_tokens | number: '1.0-0' }} out</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi__label">Median latency</div>
+        <div class="kpi__value">{{ fmtMs(stats.overall.p50_retrieval_ms + stats.overall.p50_generation_ms) }}</div>
+        <div class="kpi__sub">retrieval {{ fmtMs(stats.overall.p50_retrieval_ms) }} (median, ignores cold starts)</div>
+      </div>
+    </div>
+
+    <section class="panel">
+      <h3 class="panel__title">Cost by stage</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Stage</th><th class="num">Avg cost per query</th><th class="num">Median latency</th><th>Note</th></tr></thead>
+          <tbody>
+            @for (s of stats.stages; track s.stage) {
+              <tr>
+                <td>{{ s.stage }}</td>
+                <td class="num">{{ fmtUsd(s.avg_cost_usd) }}</td>
+                <td class="num">{{ s.avg_latency_ms ? fmtMs(s.avg_latency_ms) : '-' }}</td>
+                <td class="muted">{{ s.note }}</td>
+              </tr>
+            }
+            <tr>
+              <td><strong>Total</strong></td>
+              <td class="num"><strong>{{ fmtUsd(stats.overall.avg_cost_usd) }}</strong></td>
+              <td class="num"></td><td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3 class="panel__title">Before and after, by prompt version</h3>
+      <p class="panel__hint">Use this to prove a change moved the number: ship a new prompt version, then compare the rows.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Prompt version</th><th>Model(s)</th><th class="num">LLM requests</th><th class="num">Avg cost</th><th class="num">vs previous row</th>
+              <th class="num">Avg tokens in</th><th class="num">Avg tokens out</th><th class="num">Median generation</th><th class="num">Unverified answers</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (v of stats.by_prompt_version; track v.prompt_version; let i = $index) {
+              <tr>
+                <td><span class="badge badge--blue">{{ v.prompt_version }}</span></td>
+                <td class="mono muted">{{ v.models.join(', ') }}</td>
+                <td class="num">{{ v.llm_requests }}</td>
+                <td class="num">{{ fmtUsd(v.avg_cost_usd) }}</td>
+                <td class="num">
+                  @if (delta(i) === null) { <span class="muted">-</span> }
+                  @else {
+                    <span [class.text-success]="delta(i)! < 0" [class.text-danger]="delta(i)! > 0">
+                      {{ delta(i)! > 0 ? '+' : '' }}{{ delta(i) | number: '1.0-1' }}%
+                    </span>
+                  }
+                </td>
+                <td class="num">{{ v.avg_input_tokens | number: '1.0-0' }}</td>
+                <td class="num">{{ v.avg_output_tokens | number: '1.0-0' }}</td>
+                <td class="num">{{ fmtMs(v.p50_generation_ms) }}</td>
+                <td class="num">{{ v.unverified_answers }} ({{ unverifiedRate(v) }})</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="panel__hint" style="margin-top: 0.6rem">
+        If two rows use different models, a cost change comes from the model, not the prompt. Only compare rows that share a model before claiming a saving.
+      </p>
+    </section>
+  }
+}
+
+<section class="panel" aria-labelledby="tenx-title">
+  <h3 class="panel__title" id="tenx-title">What breaks first at 10x?</h3>
+  <p class="panel__hint">Enter today's traffic and a multiplier. Limits come from the server settings OBS_LIMIT_TPM, OBS_LIMIT_RPD and OBS_LIMIT_RPM.</p>
+  <div class="row">
+    <div class="field">
+      <label for="tx-rpm">Baseline requests per minute</label>
+      <input id="tx-rpm" type="number" min="0.1" step="0.5" [(ngModel)]="baselineRpm" (ngModelChange)="onTenxInput()" />
+    </div>
+    <div class="field">
+      <label for="tx-mult">Multiplier</label>
+      <input id="tx-mult" type="number" min="1" step="1" [(ngModel)]="multiplier" (ngModelChange)="onTenxInput()" />
+    </div>
+    @if (stats) {
+      <div class="muted" style="font-size: 0.8rem; padding-bottom: 0.5rem">
+        Observed peak: {{ stats.traffic.peak_requests_per_min }} requests and {{ stats.traffic.peak_tokens_per_min | number }} tokens in one minute.
+      </div>
+    }
+  </div>
+  @if (tenxError) {
+    <div class="banner banner--err" style="margin-top: 0.75rem">{{ tenxError }}</div>
+  }
+  @if (tenx) {
+    <div class="banner" [class.banner--warn]="tenx.constraints.length && tenx.verdict.startsWith('Rate')"
+         [class.banner--ok]="!tenx.verdict.startsWith('Rate')" style="margin-top: 0.85rem" role="status">
+      <strong>{{ tenx.verdict }}</strong>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Constraint</th><th class="num">Limit</th><th class="num">Needed at {{ tenx.requests_per_min | number: '1.0-1' }} req/min</th><th class="num">Ratio</th><th>Breaks</th></tr></thead>
+        <tbody>
+          @for (c of tenx.constraints; track c.name) {
+            <tr>
+              <td>{{ c.name }}</td>
+              <td class="num">{{ c.limit | number }}</td>
+              <td class="num">{{ c.needed | number: '1.0-0' }}</td>
+              <td class="num">
+                <span class="badge" [class.badge--red]="c.ratio > 1" [class.badge--green]="c.ratio <= 1">{{ c.ratio }}x</span>
+              </td>
+              <td>
+                @if (c.minutes_to_break === null) { <span class="muted">not exceeded</span> }
+                @else if (c.minutes_to_break === 0) { immediately }
+                @else { after {{ c.minutes_to_break | number: '1.0-1' }} min }
+              </td>
+            </tr>
+          }
+          <tr>
+            <td>cost</td><td class="num">-</td>
+            <td class="num">{{ fmtUsd(tenx.daily_cost_usd) }} per day</td><td class="num">-</td>
+            <td class="muted">{{ fmtUsd(tenx.cost_per_request_usd) }} per request</td>
+          </tr>
+          <tr>
+            <td>latency</td><td class="num">-</td>
+            <td class="num">{{ fmtMs(tenx.avg_generation_ms) }} generation</td><td class="num">-</td>
+            <td class="muted">grows only once rate limits force retries</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="panel__hint" style="margin-top: 0.6rem">{{ tenx.assumptions }}</p>
+  }
+</section>

@@ -1,0 +1,97 @@
+{
+  "trace_id": "8ebfc75d-5499-4c3f-b606-2bb07a201a7c",
+  "timestamp": "2026-10-11T14:32:17+00:00",
+  "question": "Can I get a refund if my billing migration fails?",
+  "prompt_version": "v1",
+  "model": "openai/gpt-oss-120b",
+  "retriever": "hybrid-bm25-rrf",
+  "retrieved_context_ids": [
+    "HC-BILL-001--related-articles--prose-001",
+    "HC-BILL-006--when-a-rollback-is-possible--prose-001",
+    "HC-BILL-002--frequently-asked-questions-about-error-codes--prose-001"
+  ],
+  "spans": [
+    {
+      "name": "pre_retrieval_gate",
+      "latency_ms": null,
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "cost_usd": 0.0,
+      "note": "NOT LOGGED: gate latency is not recorded separately"
+    },
+    {
+      "name": "retrieval",
+      "latency_ms": 58.4,
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "cost_usd": 0.0,
+      "output": {
+        "chunk_ids": [
+          "HC-BILL-001--related-articles--prose-001",
+          "HC-BILL-006--when-a-rollback-is-possible--prose-001",
+          "HC-BILL-002--frequently-asked-questions-about-error-codes--prose-001"
+        ],
+        "scores": [
+          0.030536,
+          0.029324,
+          0.028034
+        ]
+      }
+    },
+    {
+      "name": "generation",
+      "latency_ms": 1043.7,
+      "tokens_in": 921,
+      "tokens_out": 74,
+      "cost_usd": 0.00018255
+    },
+    {
+      "name": "citation_validation",
+      "latency_ms": null,
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "cost_usd": 0.0,
+      "output": {
+        "citations": [
+          "hc-bill-006--when-a-rollback-is-possible--prose-001"
+        ],
+        "citations_valid": false
+      },
+      "note": "NOT LOGGED: validation latency is not recorded separately"
+    }
+  ],
+  "total_ms": 1102.1,
+  "total_cost_usd": 0.00018255,
+  "final_answer": "Yes, if your billing migration fails you are entitled to a full refund within 30 days. Contact support with your migration ID and they will return the money to your original payment method. [HC-BILL-006--when-a-rollback-is-possible--prose-001]",
+  "provenance": "Planted for the support drill by scripts/plant_bad_trace.py; latencies and tokens are representative, not measured.",
+  "real_reproductions": [
+    {
+      "trace_id": "70fd750b-5078-40b8-a050-6ecc35e223cc",
+      "timestamp": "2026-10-12T15:29:36.152424+00:00",
+      "prompt_version": "v1-regressed",
+      "generation_ms": 1357.14,
+      "final_answer": "The documentation you have doesn\u2019t address refunds for a failed billing\u2011profile migration. It does advise that for any unlisted error codes\u2014or other migration i"
+    },
+    {
+      "trace_id": "b62ae162-f8bd-4d36-ac88-b3636dd11cef",
+      "timestamp": "2026-10-12T15:32:20.103838+00:00",
+      "prompt_version": "v1-regressed",
+      "generation_ms": 1464.87,
+      "final_answer": "The documentation you have doesn\u2019t include any policy about refunds for a failed billing\u2011profile migration. It does note that a migration failure is transaction"
+    },
+    {
+      "trace_id": "e37acd34-d05f-419f-8f11-aa704767c9fb",
+      "timestamp": "2026-10-12T15:37:55.707498+00:00",
+      "prompt_version": "v2",
+      "generation_ms": 995.33,
+      "final_answer": "I don't have enough information to answer that. For further help, please contact our support team or check our help centre."
+    },
+    {
+      "trace_id": "4b24a2b3-07a5-4afe-b34a-ed16484f4167",
+      "timestamp": "2026-10-12T15:40:48.637963+00:00",
+      "prompt_version": "v2",
+      "generation_ms": 1019.76,
+      "final_answer": "I don't have enough information to answer that. For further help, please contact our support team or check our help centre."
+    }
+  ]
+}

@@ -56,6 +56,10 @@
 
     <span class="tab-divider" aria-hidden="true"></span>
 
+    <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'observability'"
+            (click)="setTab('observability')" [attr.aria-selected]="activeTab === 'observability'">
+      Observability
+    </button>
     <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'traces'"
             (click)="setTab('traces')" [attr.aria-selected]="activeTab === 'traces'">
       Traces
@@ -403,6 +407,7 @@
   }
 
   <!-- ===== DEV / RESEARCH TOOLS ===== -->
+  @if (activeTab === 'observability') { <app-observability></app-observability> }
   @if (activeTab === 'traces')     { <app-traces></app-traces> }
   @if (activeTab === 'sample')     { <app-sample></app-sample> }
   @if (activeTab === 'taxonomy')   { <app-taxonomy></app-taxonomy> }

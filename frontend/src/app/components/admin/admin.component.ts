@@ -10,9 +10,11 @@ import { EvalComponent } from '../eval/eval.component';
 import { RaceComponent } from '../race/race.component';
 import { TrajectoryComponent } from '../trajectory/trajectory.component';
 import { MultiAgentComponent } from '../multiagent/multiagent.component';
+import { ObservabilityComponent } from '../observability/observability.component';
+import { ActivatedRoute } from '@angular/router';
 
 type Tab = 'tickets' | 'orders' | 'customers' | 'users' | 'documents'
-         | 'traces' | 'sample' | 'taxonomy' | 'eval' | 'race' | 'trajectory' | 'multiagent';
+         | 'observability' | 'traces' | 'sample' | 'taxonomy' | 'eval' | 'race' | 'trajectory' | 'multiagent';
 
 interface Toast { message: string; kind: 'success' | 'error'; id: number }
 
@@ -21,7 +23,7 @@ interface Toast { message: string; kind: 'success' | 'error'; id: number }
   standalone: true,
   imports: [CommonModule, FormsModule,
     TracesComponent, SampleComponent, TaxonomyComponent,
-    EvalComponent, RaceComponent, TrajectoryComponent, MultiAgentComponent],
+    EvalComponent, RaceComponent, TrajectoryComponent, MultiAgentComponent, ObservabilityComponent],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss',
 })
@@ -62,9 +64,16 @@ export class AdminComponent implements OnInit {
   uploadMessage = '';
   uploadedFileName = '';
 
-  constructor(private svc: AdminService, private uploadSvc: UploadService) {}
+  constructor(private svc: AdminService, private uploadSvc: UploadService, private route: ActivatedRoute) {}
 
-  ngOnInit(): void { this.loadAll(); }
+  ngOnInit(): void {
+    // Deep links such as /admin?tab=observability&trace=ID (used by alert emails) open that tab directly.
+    const requested = this.route.snapshot.queryParamMap.get('tab');
+    if (requested === 'observability') {
+      this.activeTab = 'observability';
+    }
+    this.loadAll();
+  }
 
   setTab(tab: Tab): void {
     this.activeTab = tab;

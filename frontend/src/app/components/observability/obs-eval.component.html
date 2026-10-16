@@ -1,0 +1,194 @@
+@if (error) {
+  <div class="banner banner--err" role="alert">{{ error }}</div>
+}
+@if (info) {
+  <div class="banner banner--ok" role="status">{{ info }}</div>
+}
+
+<section class="panel" aria-labelledby="runs-title">
+  <div class="row" style="justify-content: space-between; align-items: center; margin-bottom: 0.5rem">
+    <h3 class="panel__title" id="runs-title" style="margin: 0">Suite runs (pass counts)</h3>
+    <div class="row" style="gap: 0.5rem">
+      <button class="btn btn--small" (click)="refreshAll()">Refresh</button>
+      <button class="btn btn--primary btn--small" (click)="startSuite()" [disabled]="startingSuite || suiteRunning">
+        {{ suiteRunning ? 'Suite running...' : 'Run full suite' }}
+      </button>
+    </div>
+  </div>
+  <p class="panel__hint">
+    Each run records how many eval cases pass with the deterministic checks (citation format, hallucinated codes, refusal on a corpus gap).
+    Seeing a case RED before a fix and GREEN after, with the suite pass count both times, proves nothing else broke.
+  </p>
+
+  @if (runs.length === 0) {
+    <div class="empty">No runs yet. Run the suite, or run
+      <span class="mono">python scripts/backfill_eval_runs.py</span> to load the earlier RED and GREEN runs.</div>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Started (UTC)</th><th>Prompt version</th><th>Source</th><th>Status</th><th class="num">Passed</th><th>Result</th><th></th></tr></thead>
+        <tbody>
+          @for (r of runs; track r.run_id) {
+            <tr [class.selected]="selectedRun && selectedRun.run.run_id === r.run_id">
+              <td class="mono">{{ fmtUtc(r.started_at) }}</td>
+              <td><span class="badge badge--blue">{{ r.prompt_version }}</span></td>
+              <td>{{ r.source }}</td>
+              <td>
+                <span class="badge" [class.badge--amber]="r.status === 'running'" [class.badge--red]="r.status === 'error'">{{ r.status }}</span>
+              </td>
+              <td class="num">{{ r.passed }}/{{ r.total }}</td>
+              <td>
+                @if (r.status === 'running') {
+                  <div class="bar" style="width: 90px"><span [style.width.%]="r.total ? (r.passed / r.total) * 100 : 0"></span></div>
+                } @else if (r.status === 'done') {
+                  <span class="badge" [class.badge--green]="isGreen(r)" [class.badge--red]="!isGreen(r)">
+                    {{ isGreen(r) ? 'all pass' : (r.total - r.passed) + ' failing' }}
+                  </span>
+                }
+              </td>
+              <td><button class="btn btn--small" (click)="openRun(r.run_id)">Details</button></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (selectedRun) {
+  <section class="panel" aria-labelledby="detail-title" style="scroll-margin-top: 70px">
+    <div class="row" style="justify-content: space-between; align-items: center; margin-bottom: 0.5rem">
+      <h3 class="panel__title" id="detail-title" style="margin: 0; scroll-margin-top: 70px">
+        Run {{ selectedRun.run.prompt_version }}: {{ selectedRun.run.passed }}/{{ selectedRun.run.total }} passed
+      </h3>
+      <button class="btn btn--small" (click)="closeRun()">Close</button>
+    </div>
+    @if (selectedRun.run.error) { <div class="banner banner--err">{{ selectedRun.run.error }}</div> }
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Case</th><th>Result</th><th>Failed checks</th><th>Answer</th><th>Trace</th></tr></thead>
+        <tbody>
+          @for (res of selectedRun.results; track res.case_id) {
+            <tr>
+              <td class="mono">{{ res.case_id }}</td>
+              <td><span class="badge" [class.badge--green]="res.passed" [class.badge--red]="!res.passed">{{ res.passed ? 'pass' : 'FAIL' }}</span></td>
+              <td>
+                @for (d of res.detail; track d.name) {
+                  @if (!d.passed) { <div><strong>{{ d.name }}</strong>: {{ d.detail }}</div> }
+                }
+                @if (res.passed) { <span class="muted">-</span> }
+              </td>
+              <td class="truncate" [title]="res.answer || ''">{{ res.answer || '-' }}</td>
+              <td class="mono">{{ shortId(res.trace_id) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}
+
+@if (runs.length > 1) {
+  <section class="panel" aria-labelledby="diff-title">
+    <h3 class="panel__title" id="diff-title">Compare two runs</h3>
+    <div class="row">
+      <div class="field field--grow">
+        <label for="d-base">Before (base)</label>
+        <select id="d-base" [(ngModel)]="baseRunId">
+          <option value="">Select a run</option>
+          @for (r of runs; track r.run_id) { <option [value]="r.run_id">{{ runLabel(r) }}</option> }
+        </select>
+      </div>
+      <div class="field field--grow">
+        <label for="d-head">After (head)</label>
+        <select id="d-head" [(ngModel)]="headRunId">
+          <option value="">Select a run</option>
+          @for (r of runs; track r.run_id) { <option [value]="r.run_id">{{ runLabel(r) }}</option> }
+        </select>
+      </div>
+      <button class="btn btn--primary" (click)="compare()" [disabled]="diffBusy || !baseRunId || !headRunId">Compare</button>
+    </div>
+    @if (diff) {
+      <div class="row" style="gap: 0.5rem; margin: 0.85rem 0 0.5rem">
+        <span class="badge badge--green">{{ diff.summary['fixed'] }} fixed</span>
+        <span class="badge" [class.badge--red]="diff.summary['regressed'] > 0" [class.badge--green]="diff.summary['regressed'] === 0">
+          {{ diff.summary['regressed'] }} regressed
+        </span>
+        <span class="badge badge--amber">{{ diff.summary['same_fail'] }} still failing</span>
+        <span class="badge">{{ diff.summary['same_pass'] }} still passing</span>
+      </div>
+      @if (diff.summary['regressed'] === 0) {
+        <div class="banner banner--ok">No case went from pass to fail, so the change did not break anything else.</div>
+      } @else {
+        <div class="banner banner--err">{{ diff.summary['regressed'] }} case(s) regressed. Do not ship this change.</div>
+      }
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Case</th><th>Before</th><th>After</th><th>Change</th></tr></thead>
+          <tbody>
+            @for (row of diff.rows; track row.case_id) {
+              @if (row.change !== 'same_pass') {
+                <tr>
+                  <td class="mono">{{ row.case_id }}</td>
+                  <td>{{ passText(row.base) }}</td>
+                  <td>{{ passText(row.head) }}</td>
+                  <td><span class="badge" [ngClass]="changeClass(row.change)">{{ changeLabel(row.change) }}</span></td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="panel__hint" style="margin-top: 0.5rem">Cases that pass in both runs are hidden.</p>
+    }
+  </section>
+}
+
+<section class="panel" aria-labelledby="cases-title">
+  <h3 class="panel__title" id="cases-title">Eval cases ({{ cases.length }})</h3>
+  <p class="panel__hint">Run one case against the live pipeline right now. Cases created from a production trace are marked as regressions.</p>
+
+  @if (caseOutcome) {
+    <div class="banner" [class.banner--ok]="caseOutcome.passed" [class.banner--err]="!caseOutcome.passed" role="status">
+      <strong>{{ caseOutcome.case_id }}: {{ caseOutcome.passed ? 'GREEN (pass)' : 'RED (fail)' }}</strong>
+      @for (d of caseOutcome.detail; track d.name) {
+        @if (!d.passed) { <div>{{ d.name }}: {{ d.detail }}</div> }
+      }
+      <div style="margin-top: 0.3rem; color: var(--text-secondary)">Answer: {{ caseOutcome.answer }}</div>
+    </div>
+  }
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Case</th><th>Mode</th><th>Expected</th><th>Question</th><th>Last result</th><th></th></tr></thead>
+      <tbody>
+        @for (c of cases; track c.case_id) {
+          <tr>
+            <td class="mono">
+              {{ c.case_id }}
+              @if (c.is_regression) { <span class="badge badge--purple" title="Created from a real failure">regression</span> }
+            </td>
+            <td>{{ c.mode }}</td>
+            <td>{{ c.expected_behavior }}</td>
+            <td class="truncate" [title]="c.question">{{ c.question }}</td>
+            <td>
+              @if (c.last_result) {
+                <span class="badge" [class.badge--green]="c.last_result.passed" [class.badge--red]="!c.last_result.passed">
+                  {{ c.last_result.passed ? 'GREEN' : 'RED' }}
+                </span>
+                <span class="muted" style="font-size: 0.72rem"> {{ c.last_result.prompt_version }}</span>
+              } @else {
+                <span class="muted">never run</span>
+              }
+            </td>
+            <td>
+              <button class="btn btn--small" (click)="runCase(c.case_id)" [disabled]="runningCase !== null || suiteRunning">
+                {{ runningCase === c.case_id ? 'Running...' : 'Run' }}
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

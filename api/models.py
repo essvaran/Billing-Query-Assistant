@@ -25,6 +25,7 @@ class AskResponse(BaseModel):
     total_ms: float
     citations_valid: bool
     retriever: str
+    trace_id: str | None = None
 
 
 class TraceChunk(BaseModel):

@@ -11,12 +11,12 @@
   },
   {
     "case_id": "G01",
-    "label": "GOOD",
+    "label": "NOT_GOOD",
     "mode": "corpus_gap"
   },
   {
     "case_id": "G02",
-    "label": "GOOD",
+    "label": "NOT_GOOD",
     "mode": "corpus_gap"
   },
   {
@@ -31,12 +31,12 @@
   },
   {
     "case_id": "G05",
-    "label": "GOOD",
+    "label": "NOT_GOOD",
     "mode": "corpus_gap"
   },
   {
     "case_id": "G06",
-    "label": "GOOD",
+    "label": "NOT_GOOD",
     "mode": "corpus_gap"
   },
   {
@@ -56,7 +56,7 @@
   },
   {
     "case_id": "F04",
-    "label": "GOOD",
+    "label": "NOT_GOOD",
     "mode": "false_refusal"
   },
   {
@@ -123,5 +123,10 @@
     "case_id": "CE05",
     "label": "GOOD",
     "mode": "citation_character_error"
+  },
+  {
+    "case_id": "G07",
+    "label": "NOT_GOOD",
+    "mode": "corpus_gap"
   }
 ]

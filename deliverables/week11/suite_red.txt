@@ -1,0 +1,161 @@
+Loaded 26 cases from eval_set.jsonl
+
+Generating answers for 26 cases…
+  [ 1/26] R01: Error code ERR-4040 appeared, how do I fix it?... ✓
+  [ 2/26] R02: The migration is stuck with error 4032... ✓
+  [ 3/26] G01: Can I get a refund if my billing migration fails?... ✓
+  [ 4/26] G02: What is the processing fee for international credit card pay... ✓
+  [ 5/26] G03: How long does a billing migration typically take?... ✓
+  [ 6/26] G04: Can I pause a billing migration once it has started?... ✓
+  [ 7/26] G05: Is there a customer service phone number for billing issues?... ✓
+  [ 8/26] G06: What is the SLA for resolving billing migration errors?... ✓
+  [ 9/26] F01: What does ERR-4032 mean?... ✓
+  [10/26] F02: What causes PAY-1001?... ✓
+  [11/26] F03: What does ERR-5010 mean?... ✓
+  [12/26] F04: What happens to auto-pay during a billing migration?... ✓
+  [13/26] F05: Which account roles can confirm a billing migration?... ✓
+  [14/26] F06: Can a completed billing migration be rolled back?... ✓
+  [15/26] F07: What does ERR-4040 mean and how is it different from ERR-403... ✓
+  [16/26] A01: How do I fix ERR-6030?... ✓
+  [17/26] A02: How do I request a migration rollback?... ✓
+  [18/26] A03: What does PLAN-ENT-V1 map to on the new platform?... ✓
+  [19/26] A04: Which error codes are related to payment method issues?... ✓
+  [20/26] A05: Tell me about PAY-1007... ✓
+  [21/26] CE01: Payment method re-verification failed during migration... ✓
+  [22/26] CE02: What steps should I take if ERR-4032 keeps repeating?... ✓
+  [23/26] CE03: How do I add a new payment method during migration?... ✓
+  [24/26] CE04: What does the ERR-6030 error code indicate for rollback scen... ✓
+  [25/26] CE05: What are the prerequisites for a billing migration?... ✓
+  [26/26] G07: Can I get a refund if my billing migration fails?... ✓
+
+Answers saved → E:\Python\Project\rag-billing-support\evaluation\answers_25.jsonl
+
+Running deterministic assertions…
+
+==================================================================================
+ASSERTION RESULTS
+==================================================================================
+Mode                         N  bare_id  en_dash  halluc  fabricat  refusal    All
+----------------------------------------------------------------------------------
+  citation_abbreviation      6      6/6      6/6     6/6       6/6      5/6  5/6
+  citation_character_error   5      5/5      5/5     5/5       5/5      5/5  5/5
+  corpus_gap                 7      7/7      7/7     7/7       7/7      0/7  0/7
+  false_refusal              8      8/8      8/8     8/8       8/8      8/8  8/8
+----------------------------------------------------------------------------------
+  TOTAL                     26    26/26    26/26   26/26     26/26    18/26  18/26 (69%)
+
+Running judge (v2) on 26 cases…
+  [ 1/26] R01 → GOOD
+  [ 2/26] R02
+  [rate-limit] 429 -- retrying in 1s (attempt 1/4)...
+ → NOT_GOOD
+  [ 3/26] G01
+  [rate-limit] 429 -- retrying in 7s (attempt 1/4)...
+ → NOT_GOOD
+  [ 4/26] G02
+  [rate-limit] 429 -- retrying in 6s (attempt 1/4)...
+ → NOT_GOOD
+  [ 5/26] G03
+  [rate-limit] 429 -- retrying in 8s (attempt 1/4)...
+ → GOOD
+  [ 6/26] G04
+  [rate-limit] 429 -- retrying in 5s (attempt 1/4)...
+ → NOT_GOOD
+  [ 7/26] G05
+  [rate-limit] 429 -- retrying in 7s (attempt 1/4)...
+ → NOT_GOOD
+  [ 8/26] G06
+  [rate-limit] 429 -- retrying in 6s (attempt 1/4)...
+ → GOOD
+  [ 9/26] F01
+  [rate-limit] 429 -- retrying in 5s (attempt 1/4)...
+ → GOOD
+  [10/26] F02 → GOOD
+  [11/26] F03
+  [rate-limit] 429 -- retrying in 3s (attempt 1/4)...
+
+  [rate-limit] 429 -- retrying in 1s (attempt 2/4)...
+ → GOOD
+  [12/26] F04
+  [rate-limit] 429 -- retrying in 5s (attempt 1/4)...
+ → NOT_GOOD
+  [13/26] F05
+  [rate-limit] 429 -- retrying in 8s (attempt 1/4)...
+
+  [rate-limit] 429 -- retrying in 3s (attempt 2/4)...
+ → GOOD
+  [14/26] F06
+  [rate-limit] 429 -- retrying in 3s (attempt 1/4)...
+ → NOT_GOOD
+  [15/26] F07
+  [rate-limit] 429 -- retrying in 11s (attempt 1/4)...
+ → GOOD
+  [16/26] A01 → GOOD
+  [17/26] A02
+  [rate-limit] 429 -- retrying in 3s (attempt 1/4)...
+ → GOOD
+  [18/26] A03
+  [rate-limit] 429 -- retrying in 5s (attempt 1/4)...
+ → GOOD
+  [19/26] A04
+  [rate-limit] 429 -- retrying in 6s (attempt 1/4)...
+ → GOOD
+  [20/26] A05
+  [rate-limit] 429 -- retrying in 5s (attempt 1/4)...
+ → GOOD
+  [21/26] CE01 → NOT_GOOD
+  [22/26] CE02
+  [rate-limit] 429 -- retrying in 1s (attempt 1/4)...
+ → NOT_GOOD
+  [23/26] CE03
+  [rate-limit] 429 -- retrying in 7s (attempt 1/4)...
+ → GOOD
+  [24/26] CE04 → GOOD
+  [25/26] CE05
+  [rate-limit] 429 -- retrying in 6s (attempt 1/4)...
+ → GOOD
+  [26/26] G07
+  [rate-limit] 429 -- retrying in 6s (attempt 1/4)...
+ → NOT_GOOD
+
+============================================================
+JUDGE RESULTS (v2)
+============================================================
+Mode                         N    GOOD   Pass%
+----------------------------------------------
+  citation_abbreviation      6       6    100%
+  citation_character_error   5       3     60%
+  corpus_gap                 7       2     28%
+  false_refusal              8       5     62%
+----------------------------------------------
+  TOTAL                     26      16     61%
+
+============================================================
+AGREEMENT — labels_25.json vs judge_v2
+============================================================
+Agreement: 18/25 = 72%
+
+Mismatches (7):
+  R02: human=GOOD, judge=NOT_GOOD
+  G01: human=GOOD, judge=NOT_GOOD
+  G02: human=GOOD, judge=NOT_GOOD
+  G05: human=GOOD, judge=NOT_GOOD
+  F04: human=GOOD, judge=NOT_GOOD
+  F06: human=GOOD, judge=NOT_GOOD
+  CE01: human=GOOD, judge=NOT_GOOD
+
+============================================================
+PASS RATE BY MODE (assertions AND judge both pass)
+============================================================
+Mode                         N   Pass      %
+--------------------------------------------
+  citation_abbreviation      6      5    83%
+  citation_character_error   5      3    60%
+  corpus_gap                 7      0     0%
+  false_refusal              8      5    62%
+--------------------------------------------
+  TOTAL                     26     13    50%
+
+Judge predictions saved -> E:\Python\Project\rag-billing-support\evaluation\prediction_v2.json
+
+[RAGAS] Merged scores from ragas_results.json into results.

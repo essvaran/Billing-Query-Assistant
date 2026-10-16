@@ -112,7 +112,7 @@ def generate_answers(cases: list) -> list:
 def run_all_assertions(results: list) -> list:
     from evaluation.assertions import run_assertions
     for row in results:
-        checks = run_assertions(row["final_answer"], row["retrieved_chunk_ids"])
+        checks = run_assertions(row["final_answer"], row["retrieved_chunk_ids"], row.get("expected_behavior"))
         row["assertions"] = {r.name: {"passed": r.passed, "detail": r.detail} for r in checks}
         row["all_assertions_pass"] = all(r.passed for r in checks)
     return results
@@ -149,10 +149,11 @@ def print_assertion_table(results: list) -> None:
         "no_en_dash_in_citation",
         "no_hallucinated_error_code",
         "no_fabricated_citation",
+        "refuses_corpus_gap",
     ]
     modes = sorted({r["mode"] for r in results})
 
-    header = f"{'Mode':<26} {'N':>3}  {'bare_id':>7}  {'en_dash':>7}  {'halluc':>6}  {'fabricat':>8}  {'All':>5}"
+    header = f"{'Mode':<26} {'N':>3}  {'bare_id':>7}  {'en_dash':>7}  {'halluc':>6}  {'fabricat':>8}  {'refusal':>7}  {'All':>5}"
     print("\n" + "=" * len(header))
     print("ASSERTION RESULTS")
     print("=" * len(header))
@@ -173,11 +174,11 @@ def print_assertion_table(results: list) -> None:
             cols.append(f"{passed}/{n}")
         all_pass = sum(1 for r in rows if r.get("all_assertions_pass", False))
         total_all += all_pass
-        print(f"  {mode:<24} {n:>3}  {cols[0]:>7}  {cols[1]:>7}  {cols[2]:>6}  {cols[3]:>8}  {all_pass}/{n}")
+        print(f"  {mode:<24} {n:>3}  {cols[0]:>7}  {cols[1]:>7}  {cols[2]:>6}  {cols[3]:>8}  {cols[4]:>7}  {all_pass}/{n}")
 
     print("-" * len(header))
     total_cols = [f"{total_pass[name]}/{total_n}" for name in ASSERTION_NAMES]
-    print(f"  {'TOTAL':<24} {total_n:>3}  {total_cols[0]:>7}  {total_cols[1]:>7}  {total_cols[2]:>6}  {total_cols[3]:>8}  {total_all}/{total_n} ({_pct(total_all, total_n)})")
+    print(f"  {'TOTAL':<24} {total_n:>3}  {total_cols[0]:>7}  {total_cols[1]:>7}  {total_cols[2]:>6}  {total_cols[3]:>8}  {total_cols[4]:>7}  {total_all}/{total_n} ({_pct(total_all, total_n)})")
 
 
 def print_judge_table(results: list, version: str) -> None:
