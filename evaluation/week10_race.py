@@ -8,7 +8,7 @@ Run from the repo root:
     python -m evaluation.week10_race
     python -m evaluation.week10_race --pace 5     # seconds between cases (Groq RPM)
 
-Writes deliverables/week10/{race_table.md, handoffs.log, failure_case.md,
+Writes docs/archive/deliverables/week10/{race_table.md, handoffs.log, failure_case.md,
 verdict.md, agent_card.json, a2a_lifecycle.md, race_results.json}.
 """
 
@@ -28,25 +28,31 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from evaluation.assertions import run_assertions
 from evaluation.judge import judge_response
-from evaluation.week10_multi_agent import AGENT_CARD, COST_PER_1M_TOKENS, SYNTHESIS_SYSTEM_PROMPT, run_multi_agent
+from evaluation.week10_multi_agent import agent_card, run_multi_agent, synthesis_prompt
+from src.generation.cost import calculate_cost
+from src.generation.llm_client import default_model
 from src.generation.answer import answer_question
 
-EVAL_SET = Path(__file__).resolve().parent / "eval_set.jsonl"
-OUT_DIR = Path(__file__).resolve().parent.parent / "deliverables" / "week10"
+OUT_DIR = Path(__file__).resolve().parent.parent / "docs" / "archive" / "deliverables" / "week10"
 
-CASE_IDS = ["R01", "R02", "G01", "G02", "F01", "F04", "A01", "A03", "CE01", "CE04"]
-FAILURE_CASE_ID = "F01"
+
+
+def case_ids() -> list[str]:
+    """The race's cases: catalog list week10_case (Admin, Reference data)."""
+    from src.catalog import ref
+    return ref.codes("week10_case")
+
+
+def failure_case_id() -> str:
+    from src.catalog import ref
+    flagged = [v["code"] for v in ref.values("week10_case") if v["meta"].get("failure_demo")]
+    return flagged[0] if flagged else case_ids()[0]
 
 
 def load_cases():
-    rows = {}
-    with EVAL_SET.open(encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                row = json.loads(line)
-                rows[row["case_id"]] = row
-    return [rows[cid] for cid in CASE_IDS]
+    from src.catalog import eval_store
+    rows = {c["case_id"]: c for c in eval_store.cases("docs", include_inactive=True)}
+    return [rows[cid] for cid in case_ids() if cid in rows]
 
 
 def percentile(values, pct):
@@ -78,7 +84,8 @@ def run_single(case, pace):
         ok, verdict, passed = grade(case["question"], ans.final_answer, ans.retrieved_chunks, pace)
         return {
             "case_id": case["case_id"], "answer": ans.final_answer, "latency_s": latency,
-            "tokens": ans.input_tokens + ans.output_tokens, "assertions_ok": ok,
+            "tokens": ans.input_tokens + ans.output_tokens, "input_tokens": ans.input_tokens, "output_tokens": ans.output_tokens,
+            "assertions_ok": ok,
             "judge": verdict, "passed": passed, "error": None,
         }
     except Exception as exc:
@@ -94,7 +101,8 @@ def run_multi(case, pace):
         ok, verdict, passed = grade(case["question"], ans.final_answer, ans.retrieved_chunks, pace)
         return {
             "case_id": case["case_id"], "answer": ans.final_answer, "latency_s": latency,
-            "tokens": ans.total_tokens, "assertions_ok": ok, "judge": verdict, "passed": passed,
+            "tokens": ans.total_tokens, "input_tokens": ans.input_tokens, "output_tokens": ans.output_tokens,
+            "assertions_ok": ok, "judge": verdict, "passed": passed,
             "error": None, "handoffs": ans.handoffs,
         }
     except Exception as exc:
@@ -112,7 +120,7 @@ def aggregate(rows):
         "p50_latency_s": statistics.median(lat),
         "p99_latency_s": percentile(lat, 99),
         "total_tokens": tokens,
-        "cost_per_ticket": (tokens / 1_000_000 * COST_PER_1M_TOKENS) / len(rows),
+        "cost_per_ticket": sum(calculate_cost(default_model(), r.get("input_tokens", 0), r.get("output_tokens", 0))["total_cost_usd"] for r in rows) / len(rows),
     }
 
 
@@ -170,7 +178,7 @@ def write_race_table(single, multi, s_agg, m_agg, mult, shares, cases):
         "",
         "Notes:",
         "- With n=10, p99 is interpolated and sits very close to the slowest case.",
-        f"- Cost uses {COST_PER_1M_TOKENS} USD per 1M tokens, the same constant as agent/agent_loop.py. "
+        f"- Cost uses the model prices in the catalog (Admin, Model prices), input and output priced separately. "
         "Tokens count the answering LLM calls only (judge calls excluded for both arms).",
         "- Context strategy: triage sees only the question; policy worker sees the rewritten query and "
         "retrieved chunks; orchestrator sees the question, the draft and only the chunks the draft cites.",
@@ -191,10 +199,10 @@ def write_handoffs_log(multi, failure_run):
                 f"output={h['output_tokens']} total={h['total_tokens']} ms={h['ms']} note={h['note']}"
             )
     lines.append("")
-    lines.append(f"# Failure-injection demo (case {FAILURE_CASE_ID}), not part of the race totals")
+    lines.append(f"# Failure-injection demo (case {failure_case_id()}), not part of the race totals")
     for h in failure_run.handoffs:
         lines.append(
-            f"case={FAILURE_CASE_ID}-injected handoff={h['handoff']} input={h['input_tokens']} "
+            f"case={failure_case_id()}-injected handoff={h['handoff']} input={h['input_tokens']} "
             f"output={h['output_tokens']} total={h['total_tokens']} ms={h['ms']} note={h['note']}"
         )
     (OUT_DIR / "handoffs.log").write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -247,7 +255,7 @@ def write_failure_case(case, ans):
         "policy_lookup_failed instead of a draft when the tool fails:",
         "",
         "```",
-        SYNTHESIS_SYSTEM_PROMPT.split("4. ")[1],
+        synthesis_prompt().split("4. ")[1],
         "```",
         "",
         f"Tool attempts: {ans.tool_attempts}. Retrieved chunks: {len(ans.retrieved_chunks)}. "
@@ -283,7 +291,7 @@ def write_verdict(s_agg, m_agg, mult):
 
 
 def write_a2a(case, label):
-    (OUT_DIR / "agent_card.json").write_text(json.dumps(AGENT_CARD, indent=2) + "\n", encoding="utf-8")
+    (OUT_DIR / "agent_card.json").write_text(json.dumps(agent_card(), indent=2) + "\n", encoding="utf-8")
     lines = [
         "# A2A mapping for the failed case (bonus)",
         "",
@@ -337,8 +345,8 @@ def run_race(pace=3.0, on_progress=None):
     mult = round(m_agg["total_tokens"] / max(s_agg["total_tokens"], 1), 1)
     shares = handoff_shares(multi)
 
-    print(f"\nFailure injection on {FAILURE_CASE_ID}")
-    failure_case = next(c for c in cases if c["case_id"] == FAILURE_CASE_ID)
+    print(f"\nFailure injection on {failure_case_id()}")
+    failure_case = next(c for c in cases if c["case_id"] == failure_case_id())
     failure_run = run_multi_agent(failure_case["question"], inject_failure=True)
 
     write_race_table(single, multi, s_agg, m_agg, mult, shares, cases)
@@ -349,7 +357,7 @@ def run_race(pace=3.0, on_progress=None):
 
     payload = {
         "run_at": datetime.now(timezone.utc).isoformat(),
-        "cases": CASE_IDS,
+        "cases": case_ids(),
         "single": {**s_agg, "rows": single},
         "multi": {**m_agg, "rows": multi},
         "multiplier": mult,

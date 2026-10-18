@@ -1,0 +1,640 @@
+{
+  "_about": "First-run seed for runtime settings in data/catalog.db. Edited afterwards in the app (Admin, Settings). A key missing from the database is added from here; an existing key is never overwritten. If 'env' names an environment variable and it is set, it overrides the stored value (deployment control); secrets never live here.",
+  "settings": [
+    {
+      "key": "models.agent",
+      "group": "Models",
+      "label": "Tier-1 agent model",
+      "type": "str",
+      "value": "openai/gpt-oss-120b",
+      "env": "LLM_MODEL",
+      "description": "Chat model the Tier-1 assistant and the Week 7 agent call. Must be reachable with your provider key."
+    },
+    {
+      "key": "models.judge",
+      "group": "Models",
+      "label": "Eval judge model",
+      "type": "str",
+      "value": "qwen/qwen3.8-27b",
+      "env": "JUDGE_MODEL",
+      "description": "Grades replies in the integrated eval. Keep it a different model family from the agent."
+    },
+    {
+      "key": "models.docs",
+      "group": "Models",
+      "label": "Docs mode model",
+      "type": "str",
+      "value": "openai/gpt-oss-120b",
+      "env": "LLM_MODEL",
+      "description": "Model behind Docs mode answers."
+    },
+    {
+      "key": "tier1.max_laps",
+      "group": "Tier-1 assistant",
+      "label": "Model calls per ticket (max)",
+      "type": "int",
+      "value": 6,
+      "min": 1,
+      "max": 20
+    },
+    {
+      "key": "tier1.max_tokens",
+      "group": "Tier-1 assistant",
+      "label": "Tokens per ticket (max)",
+      "type": "int",
+      "value": 14000,
+      "min": 1000,
+      "max": 200000
+    },
+    {
+      "key": "tier1.max_searches",
+      "group": "Tier-1 assistant",
+      "label": "Help-centre searches per ticket (max)",
+      "type": "int",
+      "value": 2,
+      "min": 1,
+      "max": 10
+    },
+    {
+      "key": "tier1.max_wall_s",
+      "group": "Tier-1 assistant",
+      "label": "Time per ticket (max seconds)",
+      "type": "float",
+      "value": 120,
+      "min": 5,
+      "max": 900
+    },
+    {
+      "key": "tier1.tool_timeout_s",
+      "group": "Tier-1 assistant",
+      "label": "Tool call timeout (seconds)",
+      "type": "float",
+      "value": 10,
+      "min": 1,
+      "max": 120
+    },
+    {
+      "key": "tier1.connect_timeout_s",
+      "group": "Tier-1 assistant",
+      "label": "Tool server start-up timeout (seconds)",
+      "type": "float",
+      "value": 180,
+      "min": 10,
+      "max": 900
+    },
+    {
+      "key": "tier1.answer_slots",
+      "group": "Tier-1 assistant",
+      "label": "Tickets answered at once in the API",
+      "type": "int",
+      "value": 2,
+      "min": 1,
+      "max": 20,
+      "restart": true
+    },
+    {
+      "key": "tier1.query_chars",
+      "group": "Tier-1 assistant",
+      "label": "First search query length (characters)",
+      "type": "int",
+      "value": 300,
+      "min": 50,
+      "max": 2000
+    },
+    {
+      "key": "tier1.max_ticket_chars",
+      "group": "Tier-1 assistant",
+      "label": "Longest ticket accepted (characters)",
+      "type": "int",
+      "value": 4000,
+      "min": 200,
+      "max": 50000
+    },
+    {
+      "key": "tier1.snippet_chars",
+      "group": "Tier-1 assistant",
+      "label": "Search result snippet length (characters)",
+      "type": "int",
+      "value": 700,
+      "min": 100,
+      "max": 5000
+    },
+    {
+      "key": "provider.tpm",
+      "group": "Provider limits",
+      "label": "Tokens per minute (pace to this)",
+      "type": "int",
+      "value": 8000,
+      "min": 100,
+      "max": 10000000,
+      "env": "LLM_TPM",
+      "description": "The gateway paces requests to stay under this. Read the real value from the x-ratelimit-limit-tokens header."
+    },
+    {
+      "key": "provider.rpd",
+      "group": "Provider limits",
+      "label": "Requests per day",
+      "type": "int",
+      "value": 1000,
+      "min": 1,
+      "max": 100000000,
+      "env": "OBS_LIMIT_RPD"
+    },
+    {
+      "key": "provider.tpd",
+      "group": "Provider limits",
+      "label": "Tokens per day",
+      "type": "int",
+      "value": 200000,
+      "min": 1000,
+      "max": 10000000000,
+      "description": "Not in any response header: read from the body of a 429 'tokens per day' error."
+    },
+    {
+      "key": "provider.rpm",
+      "group": "Provider limits",
+      "label": "Requests per minute (0 = not limited)",
+      "type": "int",
+      "value": 0,
+      "min": 0,
+      "max": 1000000,
+      "env": "OBS_LIMIT_RPM"
+    },
+    {
+      "key": "provider.max_attempts",
+      "group": "Provider limits",
+      "label": "Retries for a failed model call",
+      "type": "int",
+      "value": 4,
+      "min": 1,
+      "max": 10
+    },
+    {
+      "key": "provider.max_backoff_s",
+      "group": "Provider limits",
+      "label": "Longest wait between retries (seconds)",
+      "type": "float",
+      "value": 60,
+      "min": 1,
+      "max": 600
+    },
+    {
+      "key": "capacity.tickets_per_month",
+      "group": "Capacity plan",
+      "label": "Tickets per month today",
+      "type": "int",
+      "value": 2000,
+      "min": 1,
+      "max": 100000000
+    },
+    {
+      "key": "capacity.black_friday_week",
+      "group": "Capacity plan",
+      "label": "Tickets in Black Friday week",
+      "type": "int",
+      "value": 20000,
+      "min": 1,
+      "max": 100000000
+    },
+    {
+      "key": "capacity.peak_hour_share",
+      "group": "Capacity plan",
+      "label": "Share of a day's tickets in the busiest hour",
+      "type": "float",
+      "value": 0.15,
+      "min": 0.01,
+      "max": 1
+    },
+    {
+      "key": "capacity.tenx_baseline_rpm",
+      "group": "Capacity plan",
+      "label": "10x calculator: default requests per minute",
+      "type": "float",
+      "value": 5,
+      "min": 0.01,
+      "max": 100000
+    },
+    {
+      "key": "capacity.tenx_multiplier",
+      "group": "Capacity plan",
+      "label": "10x calculator: default multiplier",
+      "type": "float",
+      "value": 10,
+      "min": 1,
+      "max": 1000
+    },
+    {
+      "key": "eval.agreement_target",
+      "group": "Evaluation",
+      "label": "Judge agreement target",
+      "type": "float",
+      "value": 0.85,
+      "min": 0.5,
+      "max": 1
+    },
+    {
+      "key": "eval.min_labels",
+      "group": "Evaluation",
+      "label": "Human labels needed before agreement counts",
+      "type": "int",
+      "value": 20,
+      "min": 1,
+      "max": 1000
+    },
+    {
+      "key": "eval.full_run_min_cases",
+      "group": "Evaluation",
+      "label": "Cases a run needs to count as a full run",
+      "type": "int",
+      "value": 30,
+      "min": 1,
+      "max": 10000
+    },
+    {
+      "key": "eval.second_contact_sample",
+      "group": "Evaluation",
+      "label": "Second-contact eval sample size",
+      "type": "int",
+      "value": 10,
+      "min": 1,
+      "max": 1000
+    },
+    {
+      "key": "docs.top_k",
+      "group": "Docs mode retrieval",
+      "label": "Chunks retrieved per question",
+      "type": "int",
+      "value": 3,
+      "min": 1,
+      "max": 20
+    },
+    {
+      "key": "docs.min_score_dense",
+      "group": "Docs mode retrieval",
+      "label": "Minimum dense score",
+      "type": "float",
+      "value": 0.5,
+      "min": 0,
+      "max": 1
+    },
+    {
+      "key": "docs.min_score_hybrid",
+      "group": "Docs mode retrieval",
+      "label": "Minimum hybrid (RRF) score",
+      "type": "float",
+      "value": 0.015,
+      "min": 0,
+      "max": 1
+    },
+    {
+      "key": "docs.min_query_relevance",
+      "group": "Docs mode retrieval",
+      "label": "Minimum question relevance (pre-retrieval gate)",
+      "type": "float",
+      "value": 0.2,
+      "min": 0,
+      "max": 1
+    },
+    {
+      "key": "alerts.cost_threshold_usd",
+      "group": "Alerts",
+      "label": "Alert when one request costs more than (USD)",
+      "type": "float",
+      "value": 0.001,
+      "min": 0,
+      "max": 100,
+      "env": "ALERT_COST_THRESHOLD"
+    },
+    {
+      "key": "alerts.latency_threshold_ms",
+      "group": "Alerts",
+      "label": "Alert when one request takes longer than (ms)",
+      "type": "float",
+      "value": 10000,
+      "min": 100,
+      "max": 600000,
+      "env": "ALERT_LATENCY_THRESHOLD_MS"
+    },
+    {
+      "key": "alerts.rate_limit_s",
+      "group": "Alerts",
+      "label": "Minimum gap between two alerts of one kind (seconds)",
+      "type": "int",
+      "value": 300,
+      "min": 0,
+      "max": 86400
+    },
+    {
+      "key": "alerts.test_cooldown_s",
+      "group": "Alerts",
+      "label": "Minimum gap between test emails (seconds)",
+      "type": "int",
+      "value": 20,
+      "min": 0,
+      "max": 3600
+    },
+    {
+      "key": "alerts.drill_bar_seconds",
+      "group": "Alerts",
+      "label": "Support drill time bar (seconds)",
+      "type": "int",
+      "value": 300,
+      "min": 30,
+      "max": 3600
+    },
+    {
+      "key": "feedback.max_comment",
+      "group": "Feedback",
+      "label": "Longest feedback comment (characters)",
+      "type": "int",
+      "value": 1000,
+      "min": 50,
+      "max": 20000
+    },
+    {
+      "key": "feedback.submit_limit",
+      "group": "Feedback",
+      "label": "Feedback submissions per user per window",
+      "type": "int",
+      "value": 30,
+      "min": 1,
+      "max": 10000
+    },
+    {
+      "key": "feedback.window_s",
+      "group": "Feedback",
+      "label": "Feedback rate-limit window (seconds)",
+      "type": "int",
+      "value": 600,
+      "min": 10,
+      "max": 86400
+    },
+    {
+      "key": "feedback.email_max_per_hour",
+      "group": "Feedback",
+      "label": "Feedback alert emails per hour (max)",
+      "type": "int",
+      "value": 20,
+      "min": 0,
+      "max": 10000,
+      "env": "FEEDBACK_EMAIL_MAX_PER_HOUR"
+    },
+    {
+      "key": "billing.max_addon_qty",
+      "group": "Billing",
+      "label": "Quantity per add-on (max)",
+      "type": "int",
+      "value": 10,
+      "min": 1,
+      "max": 10000
+    },
+    {
+      "key": "billing.max_seats",
+      "group": "Billing",
+      "label": "Seats a customer can request (max)",
+      "type": "int",
+      "value": 1000,
+      "min": 1,
+      "max": 1000000
+    },
+    {
+      "key": "billing.currency",
+      "group": "Billing",
+      "label": "Currency",
+      "type": "str",
+      "value": "USD"
+    },
+    {
+      "key": "billing.default_region",
+      "group": "Billing",
+      "label": "Default region for a new account",
+      "type": "str",
+      "value": "US"
+    },
+    {
+      "key": "billing.account_standard_days",
+      "group": "Billing",
+      "label": "Standard delivery days for app accounts",
+      "type": "int",
+      "value": 5,
+      "min": 1,
+      "max": 365
+    },
+    {
+      "key": "billing.account_express_days",
+      "group": "Billing",
+      "label": "Express delivery days for app accounts",
+      "type": "int",
+      "value": 2,
+      "min": 1,
+      "max": 365
+    },
+    {
+      "key": "week7.max_iters",
+      "group": "Week 7 agent",
+      "label": "Loop iterations (max)",
+      "type": "int",
+      "value": 8,
+      "min": 1,
+      "max": 50
+    },
+    {
+      "key": "week7.max_tokens",
+      "group": "Week 7 agent",
+      "label": "Tokens per run (max)",
+      "type": "int",
+      "value": 8000,
+      "min": 500,
+      "max": 200000
+    },
+    {
+      "key": "week7.max_cost_usd",
+      "group": "Week 7 agent",
+      "label": "Cost per run (max USD)",
+      "type": "float",
+      "value": 0.05,
+      "min": 0.0001,
+      "max": 100
+    },
+    {
+      "key": "week7.max_wall_s",
+      "group": "Week 7 agent",
+      "label": "Time per run (max seconds)",
+      "type": "float",
+      "value": 25,
+      "min": 1,
+      "max": 900
+    },
+    {
+      "key": "week7.demo_max_iters",
+      "group": "Week 7 agent",
+      "label": "Budget-demo iterations",
+      "type": "int",
+      "value": 2,
+      "min": 1,
+      "max": 20
+    },
+    {
+      "key": "week7.support_email",
+      "group": "Week 7 agent",
+      "label": "Billing team email the agent refers customers to",
+      "type": "str",
+      "value": "billing@company.com"
+    },
+    {
+      "key": "demo.incident",
+      "group": "Demo tools",
+      "label": "Planted support-drill incident",
+      "type": "json",
+      "value": {
+        "question": "Can I get a refund if my billing migration fails?",
+        "prompt_version": "v1",
+        "temperature": 0.0,
+        "retriever": "hybrid-bm25-rrf",
+        "top_k": 3,
+        "collection": "billing_structure_aware",
+        "retrieved_chunks": [
+          {
+            "chunk_id": "HC-BILL-001--related-articles--prose-001",
+            "document_id": "HC-BILL-001",
+            "score": 0.030536,
+            "rank": 1
+          },
+          {
+            "chunk_id": "HC-BILL-006--when-a-rollback-is-possible--prose-001",
+            "document_id": "HC-BILL-006",
+            "score": 0.029324,
+            "rank": 2
+          },
+          {
+            "chunk_id": "HC-BILL-002--frequently-asked-questions-about-error-codes--prose-001",
+            "document_id": "HC-BILL-002",
+            "score": 0.028034,
+            "rank": 3
+          }
+        ],
+        "final_answer": "Yes, if your billing migration fails you are entitled to a full refund within 30 days. Contact support with your migration ID and they will return the money to your original payment method. [HC-BILL-006--when-a-rollback-is-possible--prose-001]",
+        "citations": [
+          "hc-bill-006--when-a-rollback-is-possible--prose-001"
+        ],
+        "citations_valid": false,
+        "retrieval_ms": 58.4,
+        "generation_ms": 1043.7,
+        "total_ms": 1102.1,
+        "input_tokens": 921,
+        "output_tokens": 74,
+        "user_email": "demo-customer@example.com",
+        "complaint": "a customer said it gave a wrong answer about refunds yesterday afternoon."
+      },
+      "description": "The bad answer 'Plant a bad answer' creates for the support drill (only with OBS_DEMO_TOOLS=true)."
+    },
+    {
+      "key": "week10.agent_card",
+      "group": "Week 10 multi-agent",
+      "label": "A2A agent card",
+      "type": "json",
+      "value": {
+        "name": "billing-support-orchestrator",
+        "description": "Manager agent for billing-migration support questions. Delegates query triage and documentation lookup to two specialists and returns a grounded, cited answer or an explicit refusal.",
+        "version": "1.0.0",
+        "url": "https://billing-support.example.com/a2a",
+        "defaultInputModes": [
+          "text/plain"
+        ],
+        "defaultOutputModes": [
+          "text/plain",
+          "application/json"
+        ],
+        "capabilities": {
+          "streaming": false,
+          "pushNotifications": false
+        },
+        "authentication": {
+          "schemes": [
+            "bearer"
+          ]
+        },
+        "skills": [
+          {
+            "id": "triage-query",
+            "name": "Triage query",
+            "description": "Normalize error and plan codes, classify intent, rewrite the search query.",
+            "inputModes": [
+              "text/plain"
+            ],
+            "outputModes": [
+              "application/json"
+            ]
+          },
+          {
+            "id": "policy-lookup",
+            "name": "Policy lookup",
+            "description": "Search the billing help-centre corpus and draft a cited answer.",
+            "inputModes": [
+              "text/plain"
+            ],
+            "outputModes": [
+              "text/plain"
+            ]
+          },
+          {
+            "id": "draft-reply",
+            "name": "Draft reply",
+            "description": "Verify the draft against its sources and return the final grounded answer or refusal.",
+            "inputModes": [
+              "text/plain"
+            ],
+            "outputModes": [
+              "text/plain"
+            ]
+          }
+        ]
+      },
+      "description": "Published as docs/archive/deliverables/week10/agent_card.json by the race."
+    },
+    {
+      "key": "week10.policy_tool_max_attempts",
+      "group": "Week 10 multi-agent",
+      "label": "Policy lookup attempts",
+      "type": "int",
+      "value": 2,
+      "min": 1,
+      "max": 10
+    },
+    {
+      "key": "week7.as_of",
+      "group": "Week 7 agent",
+      "label": "Data set as-of date (YYYY-MM-DD, or today)",
+      "type": "str",
+      "value": "today",
+      "description": "Order ages for the Week 7 agent are measured from this date, so expected verdicts do not drift with the calendar. Set automatically when the data is first loaded."
+    },
+    {
+      "key": "week7.budget_demo_ticket",
+      "group": "Week 7 agent",
+      "label": "Ticket used for the budget demo",
+      "type": "str",
+      "value": "T008",
+      "description": "The race runs this ticket with the budget-demo iteration limit to show a clean budget stop."
+    },
+    {
+      "key": "docs.sample_seed",
+      "group": "Docs mode retrieval",
+      "label": "Trace sample seed",
+      "type": "int",
+      "value": 80,
+      "min": 0,
+      "max": 1000000,
+      "description": "scripts/sample_traces.py draws the Docs trace sample with this seed (the open-coding and taxonomy set)."
+    },
+    {
+      "key": "docs.sample_size",
+      "group": "Docs mode retrieval",
+      "label": "Trace sample size",
+      "type": "int",
+      "value": 20,
+      "min": 1,
+      "max": 1000
+    }
+  ]
+}

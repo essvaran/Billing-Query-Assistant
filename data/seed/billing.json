@@ -1,0 +1,77 @@
+{
+  "_about": "First-run seed for plans and add-ons in data/app.db (Admin, Billing). Written only when the tables are empty.",
+  "plans": [
+    {
+      "code": "standard",
+      "name": "Standard",
+      "description": "For individuals and small teams getting started.",
+      "price_monthly_cents": 1900,
+      "price_annual_cents": 19000,
+      "tier": "standard",
+      "policy_version": "refund-14d",
+      "refund_days": 14,
+      "features": [
+        "Email support",
+        "14-day refund window",
+        "Core billing tools"
+      ],
+      "max_seats": 3,
+      "sort_order": 1
+    },
+    {
+      "code": "premium",
+      "name": "Premium",
+      "description": "For growing teams that need faster answers.",
+      "price_monthly_cents": 4900,
+      "price_annual_cents": 49000,
+      "tier": "premium",
+      "policy_version": "refund-30d",
+      "refund_days": 30,
+      "features": [
+        "Chat and email support",
+        "30-day refund window",
+        "Invoice history and exports"
+      ],
+      "max_seats": 15,
+      "sort_order": 2
+    },
+    {
+      "code": "enterprise",
+      "name": "Enterprise",
+      "description": "For organisations with custom billing needs.",
+      "price_monthly_cents": 12900,
+      "price_annual_cents": 129000,
+      "tier": "enterprise",
+      "policy_version": "refund-30d",
+      "refund_days": 30,
+      "features": [
+        "Priority support",
+        "30-day refund window",
+        "Consolidated invoicing",
+        "Dedicated contact"
+      ],
+      "max_seats": 100,
+      "sort_order": 3
+    }
+  ],
+  "addons": [
+    {
+      "code": "extra-seats",
+      "name": "Extra seats pack",
+      "description": "Five additional seats on your plan.",
+      "price_monthly_cents": 2500
+    },
+    {
+      "code": "priority-support",
+      "name": "Priority support",
+      "description": "Jump the queue on every support request.",
+      "price_monthly_cents": 1500
+    },
+    {
+      "code": "invoice-archive",
+      "name": "Invoice archive",
+      "description": "Seven-year invoice archive with bulk export.",
+      "price_monthly_cents": 900
+    }
+  ]
+}

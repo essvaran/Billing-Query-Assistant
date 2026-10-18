@@ -21,7 +21,11 @@ from src.observability.trace_store import TraceStoreError
 log = logging.getLogger("api.observability")
 router = APIRouter(prefix="/api/obs", tags=["observability"], dependencies=[Depends(require_admin)])
 
-DRILL_BAR_SECONDS = 300
+
+
+def _setting(key: str):
+    from src.catalog import settings
+    return settings.get(key)
 
 
 # ------------------------------------------------------------------ helpers
@@ -81,10 +85,10 @@ def _count_new_down():
 
 
 def _feedback_row(row):
-    from src.observability.feedback import REASONS
+    from src.observability.feedback import reasons
 
     item = dict(row)
-    item["reason_label"] = REASONS.get(item.get("reason_code"), item.get("reason_code"))
+    item["reason_label"] = reasons().get(item.get("reason_code"), item.get("reason_code"))
     return item
 
 
@@ -95,14 +99,18 @@ def meta():
     from src.observability.alerting import is_enabled
 
     try:
-        from src.generation.answer import PROMPT_VERSION
+        from src.generation.prompts import prompt_version
+        PROMPT_VERSION = prompt_version()
     except Exception:
         PROMPT_VERSION = "unknown"
     return {
         "prompt_version": PROMPT_VERSION,
         "demo_tools_enabled": os.getenv("OBS_DEMO_TOOLS", "false").lower() == "true",
         "alerts_enabled": is_enabled(),
-        "drill_bar_seconds": DRILL_BAR_SECONDS,
+        "drill_bar_seconds": _setting("alerts.drill_bar_seconds"),
+        "drill_complaint": (_setting("demo.incident") or {}).get("complaint", ""),
+        "tenx_baseline_rpm": _setting("capacity.tenx_baseline_rpm"),
+        "tenx_multiplier": _setting("capacity.tenx_multiplier"),
         "langfuse_url": _langfuse_host(),
         "langfuse_configured": trace_store.configured(),
         "feedback_new_down": _count_new_down(),
@@ -266,17 +274,19 @@ def stats(days: int = Query(default=90, ge=1, le=3650)):
 
 @router.get("/tenx")
 def tenx(
-    baseline_rpm: float = Query(default=5.0, gt=0, le=100000),
-    multiplier: float = Query(default=10.0, ge=1, le=10000),
+    baseline_rpm: float | None = Query(default=None, gt=0, le=100000),
+    multiplier: float | None = Query(default=None, ge=1, le=10000),
     days: int = Query(default=90, ge=1, le=3650),
 ):
     overall = group_stats(_window(days)[0])
     tokens_per_request = overall["avg_input_tokens"] + overall["avg_output_tokens"]
+    baseline_rpm = _setting("capacity.tenx_baseline_rpm") if baseline_rpm is None else baseline_rpm
+    multiplier = _setting("capacity.tenx_multiplier") if multiplier is None else multiplier
     rpm = baseline_rpm * multiplier
     needed_tpm = rpm * tokens_per_request
-    limit_tpm = _env_float("OBS_LIMIT_TPM", "8000")
-    limit_rpd = _env_float("OBS_LIMIT_RPD", "1000")
-    limit_rpm = _env_float("OBS_LIMIT_RPM", "0")
+    limit_tpm = float(_setting("provider.tpm"))
+    limit_rpd = float(_setting("provider.rpd"))
+    limit_rpm = float(_setting("provider.rpm"))
 
     constraints = []
     if limit_tpm > 0:
@@ -312,7 +322,7 @@ def tenx(
         "avg_generation_ms": overall["avg_generation_ms"],
         "cost_per_request_usd": overall["avg_cost_usd"], "daily_cost_usd": round(daily_cost, 2),
         "constraints": constraints, "verdict": verdict,
-        "assumptions": "Limits come from OBS_LIMIT_TPM, OBS_LIMIT_RPD and OBS_LIMIT_RPM. Baseline traffic is "
+        "assumptions": "Limits are the Provider limits settings (Admin, Settings). Baseline traffic is "
                        "an input, because no production traffic exists yet.",
     }
 
@@ -344,8 +354,9 @@ def alerts_test():
     import time
     from src.observability.alerting import send_test_alert
 
-    if time.time() - _last_test["at"] < 20:
-        raise HTTPException(status_code=429, detail="Wait 20 seconds between test emails")
+    cooldown = _setting("alerts.test_cooldown_s")
+    if time.time() - _last_test["at"] < cooldown:
+        raise HTTPException(status_code=429, detail=f"Wait {cooldown} seconds between test emails")
     _last_test["at"] = time.time()
     ok, message = send_test_alert()
     if not ok and message.startswith("Missing settings"):
@@ -371,14 +382,15 @@ def record_drill(body: DrillRequest, user: UserOut = Depends(require_admin)):
             "INSERT INTO drills (created_at, trace_id, seconds, slice, notes, user_email) VALUES (?,?,?,?,?,?)",
             (datetime.now(timezone.utc).isoformat(), body.trace_id, body.seconds, body.slice, body.notes, user.email),
         )
-    return {"seconds": body.seconds, "passed_bar": body.seconds < DRILL_BAR_SECONDS}
+    return {"seconds": body.seconds, "passed_bar": body.seconds < _setting("alerts.drill_bar_seconds")}
 
 
 @router.get("/drills")
 def list_drills(limit: int = Query(default=20, ge=1, le=100)):
     with get_db() as conn:
         rows = conn.execute("SELECT * FROM drills ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
-    return [dict(r) | {"passed_bar": r["seconds"] < DRILL_BAR_SECONDS} for r in rows]
+    bar = _setting("alerts.drill_bar_seconds")
+    return [dict(r) | {"passed_bar": r["seconds"] < bar} for r in rows]
 
 
 # ------------------------------------------------------------------ eval
@@ -535,8 +547,8 @@ def review_feedback(feedback_id: int, body: ReviewRequest, user: UserOut = Depen
 def plant_demo_trace():
     if os.getenv("OBS_DEMO_TOOLS", "false").lower() != "true":
         raise HTTPException(status_code=404, detail="Demo tools are disabled")
-    from src.generation.llm_client import GROQ_MODEL
+    from src.generation.llm_client import default_model
     from src.observability.demo import plant_bad_trace
 
-    record = plant_bad_trace(GROQ_MODEL)
+    record = plant_bad_trace(default_model())
     return {"trace_id": record["trace_id"], "timestamp": record["timestamp"]}

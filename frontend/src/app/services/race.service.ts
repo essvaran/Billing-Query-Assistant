@@ -67,6 +67,10 @@ export class RaceService {
     return this.http.post<{ status: string }>('/api/race/run', {});
   }
 
+  getTools(): Observable<{ name: string; description: string }[]> {
+    return this.http.get<{ name: string; description: string }[]>('/api/agent/tools');
+  }
+
   getTickets(): Observable<TicketInfo[]> {
     return this.http.get<TicketInfo[]>('/api/race/tickets');
   }

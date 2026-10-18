@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from api.auth import UserOut, get_current_user
+from api.auth import UserOut, require_admin  # research tools: admin only (they spend model quota)
 
 log = logging.getLogger("api.trajectory")
 router = APIRouter(prefix="/api/trajectory", tags=["trajectory"])
@@ -32,32 +32,25 @@ _injection_lock = threading.Lock()
 
 
 @router.get("/expected-sequences")
-def get_expected_sequences(_user: UserOut = Depends(get_current_user)):
+def get_expected_sequences(_user: UserOut = Depends(require_admin)):
     """Return expected tool sequences for display."""
-    from agent.tickets import (
-        ADVERSARIAL_IDS,
-        BRANCHING_IDS,
-        EXPECTED,
-        EXPECTED_ARGS,
-        EXPECTED_SEQUENCES,
-        TICKETS,
-    )
+    from agent import tickets as fx
     return [
         {
             "ticket_id": tid,
-            "text": TICKETS[tid]["text"][:120],
-            "expected_verdict": EXPECTED[tid],
-            "branching": tid in BRANCHING_IDS,
-            "adversarial": tid in ADVERSARIAL_IDS,
-            "sequences": EXPECTED_SEQUENCES[tid],
-            "expected_args": EXPECTED_ARGS.get(tid, {}),
+            "text": fx.tickets()[tid]["text"][:120],
+            "expected_verdict": fx.expected()[tid],
+            "branching": tid in fx.branching_ids(),
+            "adversarial": tid in fx.adversarial_ids(),
+            "sequences": fx.expected_sequences()[tid],
+            "expected_args": fx.expected_args().get(tid, {}),
         }
-        for tid in TICKETS
+        for tid in fx.tickets()
     ]
 
 
 @router.post("/run")
-def start_eval(_user: UserOut = Depends(get_current_user)):
+def start_eval(_user: UserOut = Depends(require_admin)):
     """Start trajectory eval in a background thread."""
     with _eval_lock:
         if _eval_status["status"] == "running":
@@ -94,13 +87,13 @@ def start_eval(_user: UserOut = Depends(get_current_user)):
 
 
 @router.get("/status")
-def get_eval_status(_user: UserOut = Depends(get_current_user)):
+def get_eval_status(_user: UserOut = Depends(require_admin)):
     with _eval_lock:
         return dict(_eval_status)
 
 
 @router.get("/results")
-def get_eval_results(_user: UserOut = Depends(get_current_user)):
+def get_eval_results(_user: UserOut = Depends(require_admin)):
     if not _RESULTS_PATH.exists():
         raise HTTPException(404, "No trajectory results yet -- run an eval first")
     try:
@@ -114,7 +107,7 @@ def get_eval_results(_user: UserOut = Depends(get_current_user)):
 # --- Mitigation endpoints ---
 
 @router.post("/mitigate")
-def start_mitigation(_user: UserOut = Depends(get_current_user)):
+def start_mitigation(_user: UserOut = Depends(require_admin)):
     """Run eval with argument validation mitigation, compare before/after."""
     with _mitigation_lock:
         if _mitigation_status["status"] == "running":
@@ -152,13 +145,13 @@ def start_mitigation(_user: UserOut = Depends(get_current_user)):
 
 
 @router.get("/mitigation-status")
-def get_mitigation_status(_user: UserOut = Depends(get_current_user)):
+def get_mitigation_status(_user: UserOut = Depends(require_admin)):
     with _mitigation_lock:
         return dict(_mitigation_status)
 
 
 @router.get("/mitigation-results")
-def get_mitigation_results(_user: UserOut = Depends(get_current_user)):
+def get_mitigation_results(_user: UserOut = Depends(require_admin)):
     if not _MITIGATION_RESULTS_PATH.exists():
         raise HTTPException(404, "No mitigation results yet -- run a mitigation first")
     try:
@@ -172,7 +165,7 @@ def get_mitigation_results(_user: UserOut = Depends(get_current_user)):
 # --- Injection test endpoints ---
 
 @router.post("/injection/run")
-def start_injection_test(_user: UserOut = Depends(get_current_user)):
+def start_injection_test(_user: UserOut = Depends(require_admin)):
     """Run injection tests (undefended and defended)."""
     with _injection_lock:
         if _injection_status["status"] == "running":
@@ -203,13 +196,13 @@ def start_injection_test(_user: UserOut = Depends(get_current_user)):
 
 
 @router.get("/injection/status")
-def get_injection_status(_user: UserOut = Depends(get_current_user)):
+def get_injection_status(_user: UserOut = Depends(require_admin)):
     with _injection_lock:
         return dict(_injection_status)
 
 
 @router.get("/injection/results")
-def get_injection_results(_user: UserOut = Depends(get_current_user)):
+def get_injection_results(_user: UserOut = Depends(require_admin)):
     if not _INJECTION_RESULTS_PATH.exists():
         raise HTTPException(404, "No injection results yet -- run an injection test first")
     try:

@@ -296,7 +296,8 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    cases = _load_jsonl(_EVAL_SET)
+    from src.catalog import eval_store
+    cases = eval_store.cases("docs")   # the Docs eval set lives in the catalog (Admin, Eval cases)
     print(f"Loaded {len(cases)} cases from eval_set.jsonl")
 
     # ── generate ──

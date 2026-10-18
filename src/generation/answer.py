@@ -9,13 +9,14 @@ from uuid import uuid4
 
 import re as _re
 
-from src.config import DEFAULT_COLLECTION, MIN_SCORE_DENSE, MIN_SCORE_HYBRID, MIN_QUERY_RELEVANCE, TOP_K
+from src.catalog import settings
+from src.config import DEFAULT_COLLECTION
 from src.generation.cost import calculate_cost
 from src.generation.citations import extract_citations, validate_citations
 from src.generation.langfuse_client import get_langfuse
-from src.generation.llm_client import LLM_PROVIDER, GROQ_MODEL, OLLAMA_MODEL, ask_llm
-from src.generation.prompts import SYSTEM_PROMPT, build_user_prompt
-from src.generation.refusal import REFUSAL_MESSAGE
+from src.generation.llm_client import LLM_PROVIDER, ask_llm, default_model
+from src.generation.prompts import build_user_prompt, prompt_version, system_prompt
+from src.generation.refusal import refusal_message
 from src.retrieval.query_filter import is_query_relevant
 from src.retrieval.search import search
 
@@ -26,8 +27,7 @@ _TRACES_PATH = Path(__file__).resolve().parents[2] / "evaluation" / "traces.json
 
 logger = logging.getLogger(__name__)
 
-# Bump on every change to SYSTEM_PROMPT / build_user_prompt so traces stay attributable.
-PROMPT_VERSION = "v2"
+# The prompt version recorded on traces follows the active catalog version of docs.system (see prompts.prompt_version).
 
 
 @dataclass
@@ -58,7 +58,7 @@ def _langfuse_costs(model, input_tokens, output_tokens):
 def _write_trace(answer: "Answer", question: str, k: int, collection_name: str, trace_id: str | None = None,
                  user_email: str | None = None, lf_trace=None, lf=None, reason: str | None = None) -> None:
     """Finish a request: push the complete snapshot to Langfuse (the only trace store) and check alerts."""
-    model = GROQ_MODEL if LLM_PROVIDER == "groq" else OLLAMA_MODEL
+    model = default_model()
     cost = calculate_cost(model, answer.input_tokens, answer.output_tokens)["total_cost_usd"]
     refused = answer.final_answer.startswith(("I don't have enough information to answer that", "I cannot answer that from the indexed help"))
     record = {
@@ -68,7 +68,7 @@ def _write_trace(answer: "Answer", question: str, k: int, collection_name: str, 
         "question": question,
         "original_query": question,
         "rewritten_query": None,
-        "prompt_version": PROMPT_VERSION,
+        "prompt_version": prompt_version(),
         "model": model,
         "temperature": 0.0,
         "retriever": answer.retriever,
@@ -99,7 +99,7 @@ def _write_trace(answer: "Answer", question: str, k: int, collection_name: str, 
     answer.trace_id = record["trace_id"]
     logger.info(
         "trace=%s pv=%s retrieval_ms=%.1f generation_ms=%.1f in=%d out=%d cost_usd=%.8f citations_valid=%s",
-        record["trace_id"], PROMPT_VERSION, answer.retrieval_ms, answer.generation_ms,
+        record["trace_id"], prompt_version(), answer.retrieval_ms, answer.generation_ms,
         answer.input_tokens, answer.output_tokens, cost, answer.citations_valid,
     )
     if lf_trace is not None:
@@ -107,7 +107,7 @@ def _write_trace(answer: "Answer", question: str, k: int, collection_name: str, 
             lf_trace.update(
                 output={"final_answer": answer.final_answer, "reason": reason},
                 metadata={
-                    "prompt_version": PROMPT_VERSION,
+                    "prompt_version": prompt_version(),
                     "model": model,
                     "retriever": answer.retriever,
                     "collection": collection_name,
@@ -150,14 +150,15 @@ def _write_trace(answer: "Answer", question: str, k: int, collection_name: str, 
 def answer_question(
     question: str,
     collection_name: str = DEFAULT_COLLECTION,
-    k: int = TOP_K,
+    k: int | None = None,
     where: dict | None = None,
     use_hybrid: bool = True,
     user_email: str | None = None,
 ) -> Answer:
+    k = settings.get("docs.top_k") if k is None else k
     trace_id = str(uuid4())
     retriever_label = "hybrid-bm25-rrf" if use_hybrid else "dense"
-    model = GROQ_MODEL if LLM_PROVIDER == "groq" else OLLAMA_MODEL
+    model = default_model()
     lf = get_langfuse()
 
     trace = None
@@ -167,11 +168,11 @@ def answer_question(
                 id=trace_id,
                 name="answer_question",
                 user_id=user_email,
-                version=PROMPT_VERSION,
-                tags=[f"prompt:{PROMPT_VERSION}"],
+                version=prompt_version(),
+                tags=[f"prompt:{prompt_version()}"],
                 input={"question": question},
                 metadata={
-                    "prompt_version": PROMPT_VERSION,
+                    "prompt_version": prompt_version(),
                     "collection": collection_name,
                     "retriever": retriever_label,
                     "top_k": k,
@@ -183,12 +184,12 @@ def answer_question(
 
     # ── Pre-retrieval query relevance gate ────────────────────────────────
     try:
-        if not is_query_relevant(question, collection_name, MIN_QUERY_RELEVANCE):
+        if not is_query_relevant(question, collection_name, settings.get("docs.min_query_relevance")):
             ans = Answer(
                 question=question,
                 retrieved_chunks=[],
-                raw_answer=REFUSAL_MESSAGE,
-                final_answer=REFUSAL_MESSAGE,
+                raw_answer=refusal_message(),
+                final_answer=refusal_message(),
                 citations=set(),
                 citations_valid=False,
                 retrieval_ms=0.0,
@@ -224,7 +225,7 @@ def answer_question(
     # Drop all chunks if the best score falls below the relevance threshold.
     # This prevents the LLM from hallucinating answers for off-topic queries.
     if retrieved_chunks:
-        threshold = MIN_SCORE_HYBRID if use_hybrid else MIN_SCORE_DENSE
+        threshold = settings.get("docs.min_score_hybrid") if use_hybrid else settings.get("docs.min_score_dense")
         best_score = max(c["score"] for c in retrieved_chunks)
         if best_score < threshold:
             retrieved_chunks = []
@@ -244,8 +245,8 @@ def answer_question(
         ans = Answer(
             question=question,
             retrieved_chunks=[],
-            raw_answer=REFUSAL_MESSAGE,
-            final_answer=REFUSAL_MESSAGE,
+            raw_answer=refusal_message(),
+            final_answer=refusal_message(),
             citations=set(),
             citations_valid=False,
             retrieval_ms=retrieval_ms,
@@ -263,7 +264,7 @@ def answer_question(
             name="llm_call",
             model=model,
             input=[
-                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "system", "content": system_prompt()},
                 {"role": "user", "content": user_prompt},
             ],
             metadata={"temperature": 0.0, "provider": LLM_PROVIDER},
@@ -273,7 +274,7 @@ def answer_question(
     )
 
     t1 = time.perf_counter()
-    raw_answer, input_tokens, output_tokens = ask_llm(SYSTEM_PROMPT, user_prompt)
+    raw_answer, input_tokens, output_tokens = ask_llm(system_prompt(), user_prompt)
     generation_ms = (time.perf_counter() - t1) * 1000
 
     if generation:
@@ -288,12 +289,12 @@ def answer_question(
             metadata={"generation_ms": round(generation_ms, 2)},
         )
 
-    if raw_answer.strip() == REFUSAL_MESSAGE:
+    if raw_answer.strip() == refusal_message():
         ans = Answer(
             question=question,
             retrieved_chunks=retrieved_chunks,
             raw_answer=raw_answer,
-            final_answer=REFUSAL_MESSAGE,
+            final_answer=refusal_message(),
             citations=set(),
             citations_valid=False,
             retrieval_ms=retrieval_ms,
@@ -331,7 +332,7 @@ def answer_question(
             citations_valid = True
         else:
             # All citations were hallucinated -- return the refusal
-            final_answer = REFUSAL_MESSAGE
+            final_answer = refusal_message()
 
     ans = Answer(
         question=question,

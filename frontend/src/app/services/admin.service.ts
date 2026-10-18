@@ -28,6 +28,11 @@ export interface AppUser {
   email: string;
   role: 'admin' | 'user';
   created_at: string;
+  full_name?: string;
+  auth_provider?: string;
+  is_active?: boolean;
+  plan_name?: string | null;
+  subscription_status?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -83,6 +88,9 @@ export class AdminService {
   getUsers(offset = 0, limit = 100): Observable<AppUser[]> {
     const params = new HttpParams().set('offset', offset).set('limit', limit);
     return this.http.get<AppUser[]>('/api/admin/users', { params });
+  }
+  setUserStatus(id: number, isActive: boolean): Observable<{ id: number; email: string; is_active: boolean }> {
+    return this.http.put<{ id: number; email: string; is_active: boolean }>(`/api/admin/users/${id}/status`, { is_active: isActive });
   }
   updateUserRole(id: number, role: 'admin' | 'user'): Observable<AppUser> {
     return this.http.put<AppUser>(`/api/admin/users/${id}/role`, { role });

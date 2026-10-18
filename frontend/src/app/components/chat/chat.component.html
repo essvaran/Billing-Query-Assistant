@@ -6,7 +6,7 @@
       <span class="logo-icon">⚡</span>
       <span class="logo-text">Billing Support</span>
     </div>
-    <p class="sidebar-hint">Ask anything about billing migrations, errors, or account roles.</p>
+    <p class="sidebar-hint">Ask a billing question as a customer. Agent mode checks the account, cites the help centre and hands off to our team when unsure.</p>
   </aside>
 
   <!-- Main area -->
@@ -19,7 +19,7 @@
         <div class="empty-state">
           <div class="empty-icon">💬</div>
           <h2>How can I help you today?</h2>
-          <p>Ask a billing question or switch to <strong>Agent</strong> mode to resolve a ticket.</p>
+          <p>Ask in <strong>Agent</strong> mode (it uses your own account), or switch to <strong>Docs</strong> to search the help centre.</p>
         </div>
       }
 
@@ -120,52 +120,65 @@
             </div>
           }
 
-          <!-- Agent assistant bubble -->
+          <!-- Agent assistant bubble (Tier-1 assistant) -->
           @if (msg.role === 'assistant' && msg.agentTurn) {
             <div class="bubble assistant-bubble agent-bubble">
 
-              <!-- Live tool call progress -->
-              @if (toolPairs(msg.agentTurn.steps).length > 0 || msg.agentTurn.status === 'running') {
-                <div class="tool-progress-list">
-                  @for (pair of toolPairs(msg.agentTurn.steps); track $index; let pi = $index) {
-                    <div class="tool-call-group">
-                      <div class="tool-progress-item">
-                        <span class="tool-check">✓</span>
-                        <span class="tool-label">{{ friendlyTool(pair.call.tool ?? '') }}</span>
-                        @if (toolArg(pair.call)) {
-                          <span class="tool-arg">{{ toolArg(pair.call) }}</span>
-                        }
-                        @if (pair.result && resultSummary(pair.result)) {
-                          <span class="tool-result-summary">{{ resultSummary(pair.result) }}</span>
-                        }
-                        @if (pair.result) {
-                          <button class="tool-expand-btn" (click)="toggleToolResult(i, pi)">
-                            {{ isToolExpanded(i, pi) ? '▲' : '▼' }}
-                          </button>
-                        }
-                      </div>
-                      @if (pair.result && isToolExpanded(i, pi)) {
-                        <div class="tool-result-panel">
-                          <pre class="tool-result-pre">{{ formatResultJson(pair.result) }}</pre>
-                        </div>
+              @if (msg.agentTurn.status === 'running' || msg.agentTurn.steps.length > 0) {
+                <app-step-timeline [steps]="msg.agentTurn.steps" [running]="msg.agentTurn.status === 'running'" />
+              }
+
+              @if (msg.agentTurn.status === 'done' && msg.agentTurn.result) {
+                @if (msg.agentTurn.steps.length > 0) {
+                  <div class="ac-reply-divider"></div>
+                }
+
+                @if (msg.agentTurn.result.decision === 'ANSWER') {
+                  <div class="ac-reply-text">{{ msg.agentTurn.result.customer_reply }}</div>
+
+                  @if (sourceList(msg.agentTurn).length > 0) {
+                    <div class="chat-sources" aria-label="Sources">
+                      <span class="chat-sources__label">Sources</span>
+                      @for (src of sourceList(msg.agentTurn); track src.n) {
+                        <button type="button" class="chat-source" (click)="openSource(msg.agentTurn, src.slug)">
+                          [{{ src.n }}] {{ src.slug }}
+                        </button>
                       }
                     </div>
                   }
-                  @if (msg.agentTurn.status === 'running') {
-                    <div class="tool-progress-item tool-progress-item--thinking">
-                      <span class="ac-pulse">●</span>
-                      <span class="thinking-label">Thinking...</span>
+
+                  <div class="chat-actions">
+                    <button type="button" class="chat-action" (click)="copyReply(msg.agentTurn.result.customer_reply)">Copy reply</button>
+                    @if (msg.agentTurn.report.sent) {
+                      <span class="chat-action chat-action--done">Reported, thank you</span>
+                    } @else {
+                      <button type="button" class="chat-action" (click)="openReport(msg.agentTurn)"
+                              [attr.aria-expanded]="msg.agentTurn.report.open">Report wrong answer</button>
+                    }
+                  </div>
+
+                  @if (msg.agentTurn.report.open) {
+                    <div class="chat-report">
+                      <label class="chat-report__label" [attr.for]="'rr' + i">What was wrong?</label>
+                      <select [id]="'rr' + i" class="chat-report__select" [(ngModel)]="msg.agentTurn.report.reason">
+                        <option value="">Choose a reason</option>
+                        @for (r of reportReasons; track r.value) {
+                          <option [value]="r.value">{{ r.label }}</option>
+                        }
+                      </select>
+                      <input class="chat-report__input" type="text" maxlength="500" placeholder="Add a note (optional)"
+                             aria-label="Note" [(ngModel)]="msg.agentTurn.report.comment" />
+                      <div class="chat-report__row">
+                        <button type="button" class="chat-action" (click)="openReport(msg.agentTurn)">Cancel</button>
+                        <button type="button" class="chat-action chat-action--primary"
+                                [disabled]="!msg.agentTurn.report.reason || msg.agentTurn.report.busy"
+                                (click)="sendReport(msg.agentTurn)">Send report</button>
+                      </div>
                     </div>
                   }
-                </div>
-              }
-
-              <!-- Final answer -->
-              @if (msg.agentTurn.status === 'done' && msg.agentTurn.result) {
-                @if (toolSteps(msg.agentTurn.steps).length > 0) {
-                  <div class="ac-reply-divider"></div>
+                } @else {
+                  <div class="ac-reply-text">{{ escalationText(msg.agentTurn.result) }}</div>
                 }
-                <div class="ac-reply-text">{{ msg.agentTurn.result.reply || 'No response was generated. Please try again.' }}</div>
               }
 
               <!-- Error -->
@@ -175,7 +188,7 @@
                   <div class="ac-error-body">
                     <span class="ac-error-title">Something went wrong</span>
                     <span class="ac-error-detail">
-                      {{ msg.agentTurn.error || 'The agent encountered an error. Please try again.' }}
+                      {{ msg.agentTurn.error || 'The assistant encountered an error. Please try again.' }}
                     </span>
                   </div>
                 </div>
@@ -202,29 +215,58 @@
     <div class="input-bar">
       <!-- Mode selector -->
       <div class="mode-selector">
-        <select [(ngModel)]="chatMode" class="mode-select" [disabled]="loading">
-          <option value="rag">RAG</option>
+        <select [(ngModel)]="chatMode" class="mode-select" [disabled]="loading" aria-label="Mode">
           <option value="agent">Agent</option>
+          <option value="rag">Docs</option>
         </select>
       </div>
+
+      @if (chatMode === 'agent') {
+        <div class="mode-selector customer-pick">
+          @if (customersFailed) {
+            <button type="button" class="chat-action" (click)="loadCustomers()">Reload account</button>
+          } @else if (canChoose) {
+            <select [(ngModel)]="customerId" class="mode-select" [disabled]="loading" aria-label="Act as customer (admin)"
+                    [title]="policyText(selectedCustomer)">
+              <option value="" disabled>Act as customer</option>
+              @for (g of customerGroups; track g.code) {
+                <optgroup [label]="g.label">
+                  @for (c of g.items; track c.customer_id) {
+                    <option [value]="c.customer_id">{{ c.customer_id }} | {{ c.region }} | {{ c.plan }}</option>
+                  }
+                </optgroup>
+              }
+            </select>
+          } @else if (ownAccount) {
+            <span class="chat-account" title="The assistant answers using this account">Your account {{ ownAccount.customer_id }}</span>
+          } @else if (accountLoaded) {
+            <span class="chat-account chat-account--none" role="status">No customer account is linked to your sign-in</span>
+          }
+        </div>
+      }
 
       <textarea
         #inputField
         [(ngModel)]="inputText"
         (keydown)="onKeydown($event)"
         [disabled]="loading"
-        [placeholder]="chatMode === 'agent' ? 'Ask anything or mention a ticket ID like T001...' : 'Ask a billing question...'"
+        [placeholder]="chatMode === 'agent' ? 'Ask about your account, e.g. Can I still get a refund?' : 'Ask a billing question...'"
         rows="1"
         class="input-field"
       ></textarea>
       <button
         class="send-btn"
         (click)="sendMessage()"
-        [disabled]="loading || !inputText.trim()"
+        [disabled]="loading || !inputText.trim() || (chatMode === 'agent' && !hasAccount)"
+        aria-label="Send"
       >
         @if (loading) { ... } @else { ↑ }
       </button>
     </div>
 
   </div>
+
+  @if (drawer) {
+    <app-source-drawer [slug]="drawer.slug" [chunkText]="drawer.text" (closed)="drawer = null" />
+  }
 </div>

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from api.auth import UserOut, get_current_user
-from src.observability.feedback import REASONS, FeedbackError, MAX_COMMENT, submit_and_notify
+from src.observability.feedback import FeedbackError, reasons as feedback_reasons, submit_and_notify
 
 router = APIRouter(prefix="/api/feedback", tags=["feedback"])
 
@@ -14,12 +14,12 @@ class FeedbackIn(BaseModel):
     trace_id: str = Field(min_length=1, max_length=64)
     rating: Literal["up", "down"]
     reason_code: Optional[str] = Field(default=None, max_length=40)
-    comment: Optional[str] = Field(default=None, max_length=MAX_COMMENT)
+    comment: Optional[str] = Field(default=None, max_length=20000)   # the real limit is the setting feedback.max_comment
 
 
 @router.get("/reasons")
-def reasons(_user: UserOut = Depends(get_current_user)):
-    return [{"code": code, "label": label} for code, label in REASONS.items()]
+def list_reasons(_user: UserOut = Depends(get_current_user)):
+    return [{"code": code, "label": label} for code, label in feedback_reasons().items()]
 
 
 @router.post("", status_code=201)

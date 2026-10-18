@@ -32,16 +32,14 @@
     <div class="field">
       <label for="fb-rating">Vote</label>
       <select id="fb-rating" [(ngModel)]="rating" (ngModelChange)="filterChanged()">
-        <option value="down">Thumbs down</option>
-        <option value="up">Thumbs up</option>
+        @for (r of refValues('feedback_rating'); track r.code) { <option [value]="r.code">{{ r.label }}</option> }
         <option value="">All votes</option>
       </select>
     </div>
     <div class="field">
       <label for="fb-status">Status</label>
       <select id="fb-status" [(ngModel)]="status" (ngModelChange)="filterChanged()">
-        <option value="new">Needs review</option>
-        <option value="reviewed">Reviewed</option>
+        @for (st of refValues('feedback_status'); track st.code) { <option [value]="st.code">{{ st.label }}</option> }
         <option value="">All</option>
       </select>
     </div>

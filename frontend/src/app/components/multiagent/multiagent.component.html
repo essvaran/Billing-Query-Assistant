@@ -3,10 +3,10 @@
   <div class="ma-header">
     <div>
       <h1>Multi-Agent vs Single Agent</h1>
-      <p class="subtitle">Week 10 Task Set A: does a manager plus two specialists beat one agent? Measured on the same 10 Week-6 eval cases with the same judge.</p>
+      <p class="subtitle">Week 10 Task Set A: does a manager plus two specialists beat one agent? Measured on the same {{ cases.length }} Week-6 eval cases with the same judge (Admin, Reference data, Week 10 race cases).</p>
     </div>
     <button class="btn btn-primary" (click)="startRace()" [disabled]="status.status === 'running'">
-      @if (status.status === 'running') { Running race... } @else { Run Race (10 cases) }
+      @if (status.status === 'running') { Running race... } @else { Run Race ({{ cases.length }} cases) }
     </button>
   </div>
 
@@ -14,7 +14,7 @@
     @switch (status.status) {
       @case ('idle') {
         @if (results) { <span>Showing saved results from {{ results.run_at | date:'medium' }}.</span> }
-        @else { <span>No results yet. Click <strong>Run Race</strong> (about 5 to 8 minutes) or try the live demo below.</span> }
+        @else { <span>No results yet. Click <strong>Run Race</strong> (several minutes, provider rate limits apply) or try the live demo below.</span> }
       }
       @case ('running') {
         <span>Race in progress: {{ status.done }} of {{ status.total }} cases done</span>
@@ -143,7 +143,7 @@
 
   @if (results) {
     <section class="section">
-      <h2 class="section-title">Race results (same 10 cases, same judge)</h2>
+      <h2 class="section-title">Race results (same {{ cases.length }} cases, same judge)</h2>
       <div class="metrics-grid">
         @for (m of metrics; track m.label) {
           <div class="metric-card">

@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "tier1-tools": {
+      "command": "python",
+      "args": ["mcp_servers/tier1_tools_server.py"],
+      "allowed_tools": ["lookup_order", "check_entitlement", "escalate"]
+    },
+    "help-centre": {
+      "command": "python",
+      "args": ["mcp_servers/help_centre_server.py"],
+      "allowed_tools": ["search_help_centre"]
+    }
+  }
+}

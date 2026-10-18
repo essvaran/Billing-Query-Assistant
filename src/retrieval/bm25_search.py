@@ -31,6 +31,11 @@ def build_bm25_index(collection_name: str) -> tuple[BM25Okapi, list[dict]]:
                 "source_file": meta.get("source_file"),
                 "section": meta.get("section"),
                 "product_area": meta.get("product_area"),
+                "slug": meta.get("slug"),
+                "doc_type": meta.get("doc_type"),
+                "policy_version": meta.get("policy_version"),
+                "applies_to": meta.get("applies_to"),
+                "last_updated": meta.get("last_updated"),
             }
         )
 
@@ -46,12 +51,15 @@ def get_bm25_index(collection_name: str) -> tuple[BM25Okapi, list[dict]]:
     return _bm25_cache[collection_name]
 
 
-def bm25_search(collection_name: str, query: str, k: int = 25) -> list[dict]:
+def bm25_search(collection_name: str, query: str, k: int = 25, where: dict | None = None) -> list[dict]:
     """Return top-k chunks by BM25 score."""
     bm25, chunks = get_bm25_index(collection_name)
     scores = bm25.get_scores(_tokenize(query))
 
-    top_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:k]
+    from src.retrieval.filters import matches_where
+
+    candidates = [i for i in range(len(scores)) if matches_where(chunks[i], where)]
+    top_indices = sorted(candidates, key=lambda i: scores[i], reverse=True)[:k]
 
     hits = []
     for rank, idx in enumerate(top_indices, start=1):
@@ -63,6 +71,11 @@ def bm25_search(collection_name: str, query: str, k: int = 25) -> list[dict]:
                 "source_file": chunks[idx]["source_file"],
                 "section": chunks[idx]["section"],
                 "product_area": chunks[idx]["product_area"],
+                "slug": chunks[idx]["slug"],
+                "doc_type": chunks[idx]["doc_type"],
+                "policy_version": chunks[idx]["policy_version"],
+                "applies_to": chunks[idx]["applies_to"],
+                "last_updated": chunks[idx]["last_updated"],
                 "bm25_score": round(float(scores[idx]), 4),
                 "text": chunks[idx]["text"],
             }

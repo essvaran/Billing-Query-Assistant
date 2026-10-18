@@ -24,7 +24,10 @@ def _init() -> None:
         client = Langfuse(public_key=pk, secret_key=sk, host=host)
         if not callable(getattr(client, "trace", None)):
             return  # guard: wrong class, bail silently
-        _langfuse = client
+        # Every trace, span, generation and score in the process passes through this one object,
+        # so redacting here covers the agent, the RAG path, evals and feedback at once.
+        from src.observability.redact import RedactingProxy
+        _langfuse = RedactingProxy(client)
     except Exception:
         pass
 

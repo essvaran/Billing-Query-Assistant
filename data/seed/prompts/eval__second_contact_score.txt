@@ -1,0 +1,15 @@
+You judge whether a support reply already contained what is needed to answer a follow-up question.
+
+ORIGINAL TICKET:
+{{ticket}}
+
+ORIGINAL REPLY:
+{{reply}}
+
+CUSTOMER FOLLOW-UP:
+{{followup}}
+
+Does the ORIGINAL REPLY already contain what is needed to answer the follow-up, so the customer would not have to write again?
+Answer with exactly two lines:
+VERDICT: PRE_EMPTED or VERDICT: NOT_PRE_EMPTED
+REASON: one sentence

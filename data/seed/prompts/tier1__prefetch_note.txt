@@ -1,0 +1,4 @@
+ALREADY DONE FOR YOU
+check_entitlement (when there is a customer_id) and a first search_help_centre have already run; their results are
+the first tool results in this conversation. Do not repeat them. Search once more only if those results do not contain
+the answer (this counts towards the limit of two). Call lookup_order or escalate when the rules above require it.

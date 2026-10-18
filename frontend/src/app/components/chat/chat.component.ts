@@ -8,15 +8,22 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ChatService, Message, AskResponse, FeedbackReason } from '../../services/chat.service';
-import { AgentChatService, AgentStep, AgentResult } from '../../services/agent-chat.service';
+import { Subscription } from 'rxjs';
+import { ChatService, AskResponse, FeedbackReason } from '../../services/chat.service';
+import { CustomerOption, PolicyVersion, Step, TicketAnswer, Tier1Service } from '../../services/tier1.service';
+import { StepTimelineComponent } from '../../shared/step-timeline.component';
+import { SourceDrawerComponent } from '../../shared/source-drawer.component';
+import { currentPolicy, customerEscalationMessage, feedbackReasons, groupByPolicy, policyLabel } from '../../shared/labels';
+import { ToastService } from '../../shared/toast';
+import { numberedSources } from '../tier1/ticket-workspace.component';
 
 interface AgentTurn {
-  steps: AgentStep[];
-  result: AgentResult | null;
-  jobId: string;
+  steps: Step[];
+  result: TicketAnswer | null;
   status: 'running' | 'done' | 'error';
   error: string | null;
+  sub?: Subscription;
+  report: { open: boolean; reason: string; comment: string; busy: boolean; sent: boolean };
 }
 
 interface FeedbackState {
@@ -45,17 +52,10 @@ const DEFAULT_REASONS: FeedbackReason[] = [
   { code: 'other', label: 'Something else' },
 ];
 
-const _TOOL_LABELS: Record<string, string> = {
-  get_ticket: 'Checked ticket',
-  get_order: 'Fetched order',
-  get_customer_tier: 'Checked customer tier',
-  search_knowledge_base: 'Searched knowledge base',
-};
-
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, StepTimelineComponent, SourceDrawerComponent],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',
 })
@@ -67,18 +67,25 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   inputText = '';
   loading = false;
   expandedChunks: Set<number> = new Set();
-  chatMode: 'rag' | 'agent' = 'rag';
+  chatMode: 'rag' | 'agent' = 'agent';
+  customers: CustomerOption[] = [];
+  customerId = '';
+  customersFailed = false;
+  canChoose = false;
+  ownAccount: { customer_id: string; region: string; plan: string; policy_version: PolicyVersion } | null = null;
+  accountLoaded = false;
+  drawer: { slug: string; text: string } | null = null;
+  get reportReasons() { return feedbackReasons(); }
   reasons: FeedbackReason[] = DEFAULT_REASONS;
-
-  private _pollTimer: ReturnType<typeof setInterval> | null = null;
-  private _expandedTools = new Map<string, boolean>();
 
   constructor(
     private chatService: ChatService,
-    private agentSvc: AgentChatService,
+    private tier1: Tier1Service,
+    private toast: ToastService,
   ) {}
 
   ngOnInit(): void {
+    this.loadCustomers();
     this.chatService.feedbackReasons().subscribe({
       next: this.onReasons.bind(this),
       error: this.noop.bind(this),
@@ -96,7 +103,47 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this._stopPolling();
+    for (const m of this.messages) m.agentTurn?.sub?.unsubscribe();
+  }
+
+  // ------------------------------------------------------------ customer picker
+
+  /** Admins pick any customer; everyone else acts as the account linked to their own sign-in. */
+  loadCustomers(): void {
+    this.customersFailed = false;
+    this.tier1.meCustomer().subscribe({
+      next: me => {
+        this.accountLoaded = true;
+        this.canChoose = me.can_choose;
+        this.ownAccount = me.customer;
+        if (me.can_choose) this.loadPicker();
+      },
+      error: () => { this.customersFailed = true; },
+    });
+  }
+
+  get hasAccount(): boolean { return this.canChoose ? !!this.customerId : !!this.ownAccount; }
+
+  private loadPicker(): void {
+    this.tier1.customers().subscribe({
+      next: list => {
+        this.customers = list;
+        if (!this.customerId) {
+          this.customerId = (list.find(c => c.policy_version === currentPolicy()) ?? list[0])?.customer_id ?? '';
+        }
+      },
+      error: () => { this.customersFailed = true; },
+    });
+  }
+
+  get customerGroups() { return groupByPolicy(this.customers); }
+
+  get selectedCustomer(): CustomerOption | undefined {
+    return this.customers.find(c => c.customer_id === this.customerId);
+  }
+
+  policyText(c: CustomerOption | undefined): string {
+    return c ? policyLabel(c.policy_version) : '';
   }
 
   // ------------------------------------------------------------ feedback (thumbs up or down)
@@ -185,62 +232,35 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.scrollToBottom();
   }
 
-  toolSteps(steps: AgentStep[]): AgentStep[] {
-    return steps.filter(s => s.type === 'tool_call');
+  // ------------------------------------------------------------ agent answers (Tier-1 assistant)
+
+  sourceList(turn: AgentTurn): { n: number; slug: string }[] {
+    const r = turn.result;
+    return r ? numberedSources(r.customer_reply, r.citations) : [];
   }
 
-  toolPairs(steps: AgentStep[]): Array<{ call: AgentStep; result: AgentStep | null }> {
-    const pairs: Array<{ call: AgentStep; result: AgentStep | null }> = [];
-    for (let i = 0; i < steps.length; i++) {
-      if (steps[i].type === 'tool_call') {
-        const next = steps[i + 1];
-        pairs.push({ call: steps[i], result: next?.type === 'tool_result' ? next : null });
-      }
-    }
-    return pairs;
+  openSource(turn: AgentTurn, slug: string): void {
+    this.drawer = { slug, text: turn.result?.sources.find(x => x.slug === slug)?.text ?? '' };
   }
 
-  friendlyTool(tool: string): string {
-    return _TOOL_LABELS[tool] ?? tool;
+  escalationText(r: TicketAnswer): string { return customerEscalationMessage(r.reason); }
+
+  copyReply(text: string): void {
+    navigator.clipboard?.writeText(text).then(() => this.toast.success('Reply copied.'));
   }
 
-  toolArg(step: AgentStep): string {
-    if (!step.args) return '';
-    const vals = Object.values(step.args);
-    if (!vals.length) return '';
-    const first = String(vals[0]);
-    return first.length <= 24 ? first : first.slice(0, 21) + '...';
+  openReport(turn: AgentTurn): void {
+    turn.report.open = !turn.report.open;
   }
 
-  resultSummary(step: AgentStep): string {
-    const r = step.result;
-    if (!r) return '';
-    if (r['not_found']) return 'Not found';
-    if (r['error']) return String(r['error']).slice(0, 60);
-    if ('ticket_id' in r && 'customer_id' in r)
-      return `Customer ${r['customer_id']} | Order ${r['order_id']}`;
-    if ('order_id' in r && 'amount' in r)
-      return `$${r['amount']} ${r['currency'] ?? ''} | ${r['days_since_purchase']}d ago | ${r['fulfilment_status'] ?? r['status'] ?? ''}`;
-    if ('tier' in r && 'refund_days' in r)
-      return `${r['tier']} tier | ${r['refund_days']}-day refund window`;
-    if (Array.isArray(r['results']))
-      return `${(r['results'] as unknown[]).length} result${(r['results'] as unknown[]).length !== 1 ? 's' : ''} found`;
-    return '';
-  }
-
-  formatResultJson(step: AgentStep): string {
-    if (!step.result) return '';
-    const s = JSON.stringify(step.result, null, 2);
-    return s.length > 600 ? s.slice(0, 597) + '...' : s;
-  }
-
-  toggleToolResult(msgIdx: number, pairIdx: number): void {
-    const key = `${msgIdx}-${pairIdx}`;
-    this._expandedTools.set(key, !this._expandedTools.get(key));
-  }
-
-  isToolExpanded(msgIdx: number, pairIdx: number): boolean {
-    return !!this._expandedTools.get(`${msgIdx}-${pairIdx}`);
+  sendReport(turn: AgentTurn): void {
+    const r = turn.report;
+    if (!turn.result || r.busy || !r.reason) return;
+    r.busy = true;
+    this.tier1.sendFeedback({ trace_id: turn.result.trace_id, reason: r.reason, comment: r.comment.trim() || undefined }).subscribe({
+      next: () => { r.busy = false; r.sent = true; r.open = false; this.toast.success('Thanks. This was sent to the team for review.'); },
+      error: () => { r.busy = false; this.toast.error('Could not send the report. Please try again.'); },
+    });
   }
 
   sendMessage(): void {
@@ -277,72 +297,36 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   }
 
   private _sendAgentMessage(msg: string): void {
-    const ticketMatch = msg.match(/\bT\d{3}\b/i);
-    const wordCount = msg.trim().split(/\s+/).length;
-    const ticketId = ticketMatch && wordCount <= 4 ? ticketMatch[0].toUpperCase() : undefined;
-
-    const agentTurn: AgentTurn = {
-      steps: [],
-      result: null,
-      jobId: '',
-      status: 'running',
-      error: null,
+    if (!this.hasAccount) {
+      this.toast.error(this.canChoose ? 'Choose a customer first.' : 'No customer account is linked to your sign-in.');
+      this.inputText = msg;
+      return;
+    }
+    const turn: AgentTurn = {
+      steps: [], result: null, status: 'running', error: null,
+      report: { open: false, reason: '', comment: '', busy: false, sent: false },
     };
-
     this.messages.push({ role: 'user', text: msg });
-    this.messages.push({ role: 'assistant', text: '', agentTurn });
+    this.messages.push({ role: 'assistant', text: '', agentTurn: turn });
     this.loading = true;
 
-    const body: Record<string, unknown> = { tight_budget: false };
-    if (ticketId) body['ticket_id'] = ticketId;
-    else body['message'] = msg;
-
-    this.agentSvc.startRunRaw(body).subscribe({
-      next: (r) => {
-        agentTurn.jobId = r.job_id;
-        this._startPolling();
+    this.tier1.answer({ text: msg, customer_id: this.canChoose ? this.customerId : undefined }).subscribe({
+      next: ({ job_id }) => {
+        turn.sub = this.tier1.pollJob(job_id).subscribe({
+          next: j => {
+            turn.steps = j.steps;
+            if (j.status === 'done' && j.result) { turn.result = j.result; turn.status = 'done'; this.loading = false; }
+            if (j.status === 'error') { turn.status = 'error'; turn.error = j.error ?? 'The assistant could not finish.'; this.loading = false; }
+          },
+          error: () => { turn.status = 'error'; turn.error = 'Lost contact with the server. Please try again.'; this.loading = false; },
+        });
       },
-      error: (e) => {
-        agentTurn.status = 'error';
-        agentTurn.error = e?.error?.detail ?? 'Failed to start agent.';
+      error: e => {
+        turn.status = 'error';
+        turn.error = e?.status === 429 ? 'The assistant is busy. Try again in a minute.' : 'The assistant could not be started.';
         this.loading = false;
       },
     });
-  }
-
-  private _startPolling(): void {
-    if (this._pollTimer) return;
-    this._pollTimer = setInterval(() => this._pollRunning(), 600);
-  }
-
-  private _stopPolling(): void {
-    if (this._pollTimer) { clearInterval(this._pollTimer); this._pollTimer = null; }
-  }
-
-  private _pollRunning(): void {
-    const agentMessages = this.messages.filter(m => m.agentTurn?.status === 'running' && m.agentTurn.jobId);
-    if (!agentMessages.length) { this._stopPolling(); this.loading = false; return; }
-
-    for (const m of agentMessages) {
-      const turn = m.agentTurn!;
-      this.agentSvc.getStatus(turn.jobId).subscribe({
-        next: (s) => {
-          turn.steps = s.steps;
-          if (s.status === 'done') {
-            turn.status = 'done';
-            turn.result = s.result;
-            this.loading = false;
-          } else if (s.status === 'error') {
-            turn.status = 'error';
-            turn.error = s.error ?? 'Agent run failed.';
-            this.loading = false;
-          }
-        },
-        error: () => {
-          // Transient network error -- keep polling
-        },
-      });
-    }
   }
 
   toggleChunks(index: number): void {

@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { refDescription, refValues } from '../../shared/ref-data';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
@@ -120,15 +121,9 @@ export class TracesComponent implements OnInit, OnDestroy {
     return id.slice(0, 8) + '…';
   }
 
-  queryTypeTitle(qt: string | null): string {
-    const map: Record<string, string> = {
-      'simple':        'Single direct question — one clear answer expected',
-      'multi-part':    'Two or more sub-questions combined in one query',
-      'exact keyword': 'Uses specific codes or technical terms (e.g. HC-BILL-001)',
-      'semantic':      'Meaning-based query — intent must be inferred from natural language',
-    };
-    return qt ? (map[qt] ?? qt) : '';
-  }
+  retrievers() { return refValues('retriever'); }
+
+  queryTypeTitle(qt: string | null): string { return refDescription('query_type', qt) || (qt ?? ''); }
 
   private fetchTraces(): void {
     this.loading = true;

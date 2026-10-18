@@ -1,4 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { refValues } from '../../shared/ref-data';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AgentChatService, AgentStep, AgentResult, TicketInfo } from '../../services/agent-chat.service';
@@ -35,11 +38,12 @@ export class AgentChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   private _pollTimer: ReturnType<typeof setInterval> | null = null;
   private _shouldScroll = false;
 
-  readonly langfuseUrl = environment.production
-    ? 'https://cloud.langfuse.com'
-    : 'https://cloud.langfuse.com';
+  langfuseUrl = '';
+  private http = inject(HttpClient);
 
-  constructor(private svc: AgentChatService) {}
+  constructor(private svc: AgentChatService) {
+    this.http.get<{ langfuse_url?: string }>('/api/obs/meta').subscribe({ next: m => (this.langfuseUrl = m.langfuse_url ?? ''), error: () => {} });
+  }
 
   ngOnInit(): void {
     this.svc.getTickets().subscribe({
@@ -172,11 +176,5 @@ export class AgentChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     return JSON.stringify(result, null, 2);
   }
 
-  readonly suggestedQuestions = [
-    'What is your refund policy?',
-    'Please resolve ticket T001 for customer C101.',
-    'How long does a refund take to process?',
-    'Please check order O201 for a refund request.',
-    'What is the refund window for enterprise customers?',
-  ];
+  get suggestedQuestions(): string[] { return refValues('agent_suggestion').map(v => v.label); }
 }

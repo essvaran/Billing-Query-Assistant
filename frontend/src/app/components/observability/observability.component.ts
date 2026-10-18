@@ -64,7 +64,7 @@ type Tab = 'drill' | 'feedback' | 'cost' | 'alerts' | 'eval';
         @switch (tab) {
           @case ('drill') {
             <app-obs-traces [demoTools]="!!meta && meta.demo_tools_enabled"
-                            [drillBarSeconds]="meta ? meta.drill_bar_seconds : 300"
+                            [drillBarSeconds]="meta?.drill_bar_seconds ?? 0" [drillComplaint]="meta?.drill_complaint ?? ''"
                             [initialTraceId]="initialTraceId"
                             (openEval)="select('eval')" />
           }
@@ -93,7 +93,7 @@ type Tab = 'drill' | 'feedback' | 'cost' | 'alerts' | 'eval';
     .tab:hover { color: var(--text-primary); }
     .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
     .tab--active { color: var(--accent); border-bottom-color: var(--accent); }
-    .tab-badge { display: inline-block; min-width: 1.2rem; margin-left: 0.35rem; padding: 0 0.35rem; border-radius: 999px; background: var(--danger); color: #11111b; font-size: 0.68rem; font-weight: 700; text-align: center; }
+    .tab-badge { display: inline-block; min-width: 1.2rem; margin-left: 0.35rem; padding: 0 0.35rem; border-radius: 999px; background: var(--danger); color: var(--surface-card); font-size: 0.68rem; font-weight: 700; text-align: center; }
     .err { background: rgba(243,139,168,0.1); border: 1px solid rgba(243,139,168,0.4); color: var(--danger); padding: 0.6rem 0.85rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.85rem; }
   `],
 })

@@ -1,0 +1,227 @@
+{
+  "_about": "First-run seed for prompts in data/catalog.db; edit prompts in the app (Admin, Prompts), which keeps versions.",
+  "prompts": [
+    {
+      "name": "tier1.rules",
+      "label": "Tier-1 assistant rules",
+      "description": "The Tier-1 assistant's system prompt (before the tool list).",
+      "used_by": "tier1/prompts.py",
+      "file": "tier1__rules.txt",
+      "placeholders": [
+        "error_code_rule"
+      ],
+      "required_phrases": [
+        "<ticket>",
+        "check_entitlement",
+        "search_help_centre",
+        "escalate",
+        "chunk_id",
+        "Never say a refund has been issued"
+      ]
+    },
+    {
+      "name": "tier1.error_code_rule",
+      "label": "Tier-1 error-code search rule",
+      "description": "Inserted into the rules: tells the model to put error codes into its search query.",
+      "used_by": "tier1/prompts.py",
+      "file": "tier1__error_code_rule.txt",
+      "placeholders": [],
+      "required_phrases": []
+    },
+    {
+      "name": "tier1.prefetch_note",
+      "label": "Tier-1 prefetch note",
+      "description": "Added when the entitlement check and first search were made by code.",
+      "used_by": "tier1/prompts.py",
+      "file": "tier1__prefetch_note.txt",
+      "placeholders": [],
+      "required_phrases": [
+        "Do not repeat them"
+      ]
+    },
+    {
+      "name": "tier1.user_message",
+      "label": "Tier-1 ticket message",
+      "description": "How a ticket is handed to the model. The ticket text stays between the ticket tags (it is untrusted data).",
+      "used_by": "tier1/prompts.py",
+      "file": "tier1__user_message.txt",
+      "placeholders": [
+        "context",
+        "subject",
+        "body"
+      ],
+      "required_phrases": [
+        "<ticket>",
+        "</ticket>"
+      ]
+    },
+    {
+      "name": "docs.system",
+      "label": "Docs mode system prompt",
+      "description": "Rules for Docs mode answers. Traces record its version as v<N> (prompt_version).",
+      "used_by": "src/generation/answer.py",
+      "file": "docs__system.txt",
+      "placeholders": [
+        "refusal_message"
+      ],
+      "required_phrases": [
+        "Use only the supplied context"
+      ],
+      "start_version": 2
+    },
+    {
+      "name": "docs.refusal",
+      "label": "Docs mode refusal message",
+      "description": "What Docs mode says when the help centre has no answer. Alerts and traces recognise refusals by its first sentence.",
+      "used_by": "src/generation/refusal.py",
+      "file": "docs__refusal.txt",
+      "placeholders": [],
+      "required_phrases": []
+    },
+    {
+      "name": "judge.integrated",
+      "label": "Tier-1 eval judge (second opinion)",
+      "description": "Rubric v3b-integrated for grading Tier-1 replies.",
+      "used_by": "evaluation/integrated/judge.py",
+      "file": "judge__integrated.txt",
+      "placeholders": [],
+      "required_phrases": [
+        "VERDICT: GOOD or VERDICT: NOT_GOOD"
+      ]
+    },
+    {
+      "name": "judge.week6_v1",
+      "label": "Week 6 judge v1",
+      "description": "The first Week 6 judge rubric.",
+      "used_by": "evaluation/judge.py",
+      "file": "judge__week6_v1.txt",
+      "placeholders": [],
+      "required_phrases": []
+    },
+    {
+      "name": "judge.week6_v2",
+      "label": "Week 6 judge v2 (validated)",
+      "description": "The validated Week 6 rubric; the integrated eval uses it as its primary judge.",
+      "used_by": "evaluation/judge.py, evaluation/integrated/judge.py",
+      "file": "judge__week6_v2.txt",
+      "placeholders": [],
+      "required_phrases": [
+        "Respond with exactly one word: GOOD or NOT_GOOD"
+      ]
+    },
+    {
+      "name": "week7.system",
+      "label": "Week 7 agent system prompt",
+      "description": "The Week 7 ticket agent.",
+      "used_by": "agent/agent_loop.py",
+      "file": "week7__system.txt",
+      "placeholders": [
+        "support_email"
+      ],
+      "required_phrases": [
+        "get_ticket",
+        "get_order",
+        "get_customer_tier"
+      ]
+    },
+    {
+      "name": "week7.freeform",
+      "label": "Week 7 agent chat prompt",
+      "description": "The Week 7 agent in free-form chat.",
+      "used_by": "agent/agent_loop.py",
+      "file": "week7__freeform.txt",
+      "placeholders": [],
+      "required_phrases": []
+    },
+    {
+      "name": "week7.workflow",
+      "label": "Week 7 fixed workflow prompt",
+      "description": "The fixed-workflow baseline in the race.",
+      "used_by": "agent/workflow.py",
+      "file": "week7__workflow.txt",
+      "placeholders": [
+        "support_email"
+      ],
+      "required_phrases": []
+    },
+    {
+      "name": "week7.ticket_not_found",
+      "label": "Week 7 workflow: ticket not found reply",
+      "description": "Reply when the fixed workflow cannot find the ticket.",
+      "used_by": "agent/workflow.py",
+      "file": "week7__ticket_not_found.txt",
+      "placeholders": [
+        "support_email"
+      ],
+      "required_phrases": []
+    },
+    {
+      "name": "week8.mitigation",
+      "label": "Week 8 tool-use mitigation",
+      "description": "Added to the Week 7 prompt for the trajectory mitigation run.",
+      "used_by": "agent/mitigations.py",
+      "file": "week8__mitigation.txt",
+      "placeholders": [],
+      "required_phrases": []
+    },
+    {
+      "name": "week8.injection_defense",
+      "label": "Week 8 injection defence",
+      "description": "Added to the Week 7 prompt for the defended injection run.",
+      "used_by": "agent/injection_test.py",
+      "file": "week8__injection_defense.txt",
+      "placeholders": [],
+      "required_phrases": []
+    },
+    {
+      "name": "eval.second_contact_followup",
+      "label": "Second-contact eval: customer follow-up",
+      "description": "The simulated customer writing (or not) a follow-up.",
+      "used_by": "evaluation/integrated/second_contact.py",
+      "file": "eval__second_contact_followup.txt",
+      "placeholders": [],
+      "required_phrases": [
+        "NONE"
+      ]
+    },
+    {
+      "name": "eval.second_contact_score",
+      "label": "Second-contact eval: scorer",
+      "description": "Decides whether the reply already answered the follow-up.",
+      "used_by": "evaluation/integrated/second_contact.py",
+      "file": "eval__second_contact_score.txt",
+      "placeholders": [
+        "ticket",
+        "reply",
+        "followup"
+      ],
+      "required_phrases": [
+        "VERDICT"
+      ]
+    },
+    {
+      "name": "week10.triage",
+      "label": "Week 10 triage specialist",
+      "description": "Classifies a Docs question and rewrites the search query (multi-agent race).",
+      "used_by": "evaluation/week10_multi_agent.py",
+      "file": "week10__triage.txt",
+      "placeholders": [],
+      "required_phrases": [
+        "normalized_query"
+      ]
+    },
+    {
+      "name": "week10.synthesis",
+      "label": "Week 10 orchestrator synthesis",
+      "description": "Reviews the specialist's draft against its sources (multi-agent race).",
+      "used_by": "evaluation/week10_multi_agent.py",
+      "file": "week10__synthesis.txt",
+      "placeholders": [
+        "refusal_message"
+      ],
+      "required_phrases": [
+        "4. "
+      ]
+    }
+  ]
+}

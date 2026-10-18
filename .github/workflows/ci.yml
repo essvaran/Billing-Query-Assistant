@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      integration:
+        description: "Also run the model-dependent integration tests (downloads the embedding model)"
+        type: boolean
+        default: false
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install CPU-only torch first so the large CUDA wheels are not pulled
+        run: pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu
+      - run: pip install -r requirements.txt pytest
+      - name: Generate the synthetic corpus (deterministic)
+        run: python scripts/generate_synthetic_corpus.py
+      - name: Unit tests (no network, no model)
+        env:
+          GOOGLE_CLIENT_ID: ci-placeholder
+          JWT_SECRET: ci-placeholder-secret
+          ADMIN_EMAIL: ci@example.com
+          LLM_CACHE: replay          # any accidental model call fails loudly instead of spending quota
+        run: python -m pytest tests -q --deselect tests/test_structure_chunker.py
+      - name: Integration tests (embedding model, real MCP servers)
+        if: github.event_name == 'workflow_dispatch' && inputs.integration
+        env:
+          GOOGLE_CLIENT_ID: ci-placeholder
+          JWT_SECRET: ci-placeholder-secret
+          ADMIN_EMAIL: ci@example.com
+          LLM_CACHE: replay
+        run: |
+          python scripts/ingest_variant_a.py
+          python -m pytest tests -q --deselect tests/test_structure_chunker.py
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npx ng build --configuration production

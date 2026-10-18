@@ -56,11 +56,8 @@ def _db_get_customer(customer_id: str) -> dict | None:
 def get_ticket(ticket_id: str) -> dict:
     record = _db_get_ticket(ticket_id)
     if record is None:
-        from agent.tickets import TICKETS
-        record = TICKETS.get(ticket_id)
-    if record is None:
-        from agent.tickets import TICKETS
-        available = sorted(TICKETS.keys())[:5]
+        from agent import tickets as fx
+        available = sorted(fx.tickets().keys())[:5]
         return {
             "error": "not_found",
             "ticket_id": ticket_id,
@@ -72,12 +69,10 @@ def get_ticket(ticket_id: str) -> dict:
 def get_order(order_id: str) -> dict:
     record = _db_get_order(order_id)
     if record is None:
-        from agent.tickets import ORDERS
-        record = ORDERS.get(order_id)
-    if record is None:
         return {"error": "not_found", "order_id": order_id}
     purchase = date.fromisoformat(record["purchase_date"])
-    days = (date.today() - purchase).days
+    from agent import tickets as fx
+    days = (fx.as_of() - purchase).days
     return {**record, "days_since_purchase": days}
 
 
@@ -120,9 +115,6 @@ def get_customer_tier(customer_id: str, tier: str = "standard") -> dict:
     the record's actual tier is always authoritative.
     """
     record = _db_get_customer(customer_id)
-    if record is None:
-        from agent.tickets import CUSTOMERS
-        record = CUSTOMERS.get(customer_id)
     if record is None:
         return {"error": "not_found", "customer_id": customer_id}
     return dict(record)

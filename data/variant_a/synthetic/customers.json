@@ -1,0 +1,902 @@
+[
+  {
+    "customer_id": "C1000",
+    "name": "Mia Tanaka",
+    "email": "mia.tanaka0@example.com",
+    "address": "910 Oak Street, Region UK",
+    "region": "UK",
+    "plan": "enterprise",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 4,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1001",
+    "name": "Yuki Ortega",
+    "email": "yuki.ortega1@example.com",
+    "address": "132 Station Way, Region UK",
+    "region": "UK",
+    "plan": "standard",
+    "policy_version": "refund-14d",
+    "refund_days": 14,
+    "shipping_sla": {
+      "standard_days": 4,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1002",
+    "name": "Mateo Kowalski",
+    "email": "mateo.kowalski2@example.com",
+    "address": "625 Park Drive, Region CA",
+    "region": "CA",
+    "plan": "premium",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 5,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1003",
+    "name": "Ivan Fraser",
+    "email": "ivan.fraser3@example.com",
+    "address": "707 Cedar Lane, Region CA",
+    "region": "CA",
+    "plan": "premium",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 5,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1004",
+    "name": "Zoe Bennett",
+    "email": "zoe.bennett4@example.com",
+    "address": "267 Park Drive, Region CA",
+    "region": "CA",
+    "plan": "premium",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 5,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1005",
+    "name": "Isla Okafor",
+    "email": "isla.okafor5@example.com",
+    "address": "930 Cedar Lane, Region APAC",
+    "region": "APAC",
+    "plan": "enterprise",
+    "policy_version": "refund-14d",
+    "refund_days": 14,
+    "shipping_sla": {
+      "standard_days": 10,
+      "express_days": 5
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1006",
+    "name": "Lucas Okafor",
+    "email": "lucas.okafor6@example.com",
+    "address": "344 Oak Street, Region UK",
+    "region": "UK",
+    "plan": "standard",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 4,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1007",
+    "name": "Mia Ortega",
+    "email": "mia.ortega7@example.com",
+    "address": "220 Harbor Road, Region AU",
+    "region": "AU",
+    "plan": "standard",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 8,
+      "express_days": 4
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1008",
+    "name": "Hana Patel",
+    "email": "hana.patel8@example.com",
+    "address": "398 Maple Ave, Region EU",
+    "region": "EU",
+    "plan": "premium",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 6,
+      "express_days": 3
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1009",
+    "name": "Isla Rossi",
+    "email": "isla.rossi9@example.com",
+    "address": "342 Harbor Road, Region APAC",
+    "region": "APAC",
+    "plan": "premium",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 10,
+      "express_days": 5
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1010",
+    "name": "Kofi Stone",
+    "email": "kofi.stone10@example.com",
+    "address": "979 Cedar Lane, Region APAC",
+    "region": "APAC",
+    "plan": "standard",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 10,
+      "express_days": 5
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1011",
+    "name": "Yuki Tanaka",
+    "email": "yuki.tanaka11@example.com",
+    "address": "611 Oak Street, Region US",
+    "region": "US",
+    "plan": "premium",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 3,
+      "express_days": 1
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1012",
+    "name": "Ethan Rossi",
+    "email": "ethan.rossi12@example.com",
+    "address": "239 Maple Ave, Region UK",
+    "region": "UK",
+    "plan": "enterprise",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 4,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1013",
+    "name": "Omar Stone",
+    "email": "omar.stone13@example.com",
+    "address": "39 Park Drive, Region CA",
+    "region": "CA",
+    "plan": "enterprise",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 5,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1014",
+    "name": "Hana Patel",
+    "email": "hana.patel14@example.com",
+    "address": "557 Cedar Lane, Region AU",
+    "region": "AU",
+    "plan": "premium",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 8,
+      "express_days": 4
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1015",
+    "name": "Noah Ortega",
+    "email": "noah.ortega15@example.com",
+    "address": "974 Oak Street, Region AU",
+    "region": "AU",
+    "plan": "premium",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 8,
+      "express_days": 4
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1016",
+    "name": "Kofi Nguyen",
+    "email": "kofi.nguyen16@example.com",
+    "address": "525 Station Way, Region UK",
+    "region": "UK",
+    "plan": "premium",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 4,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1017",
+    "name": "Nora Nguyen",
+    "email": "nora.nguyen17@example.com",
+    "address": "57 Station Way, Region EU",
+    "region": "EU",
+    "plan": "enterprise",
+    "policy_version": "refund-14d",
+    "refund_days": 14,
+    "shipping_sla": {
+      "standard_days": 6,
+      "express_days": 3
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1018",
+    "name": "Ivan Okafor",
+    "email": "ivan.okafor18@example.com",
+    "address": "514 Park Drive, Region AU",
+    "region": "AU",
+    "plan": "standard",
+    "policy_version": "refund-14d",
+    "refund_days": 14,
+    "shipping_sla": {
+      "standard_days": 8,
+      "express_days": 4
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1019",
+    "name": "Yuki Larsen",
+    "email": "yuki.larsen19@example.com",
+    "address": "636 Harbor Road, Region CA",
+    "region": "CA",
+    "plan": "enterprise",
+    "policy_version": "refund-14d",
+    "refund_days": 14,
+    "shipping_sla": {
+      "standard_days": 5,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1020",
+    "name": "Sana Larsen",
+    "email": "sana.larsen20@example.com",
+    "address": "598 Elm Court, Region APAC",
+    "region": "APAC",
+    "plan": "standard",
+    "policy_version": "refund-14d",
+    "refund_days": 14,
+    "shipping_sla": {
+      "standard_days": 10,
+      "express_days": 5
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1021",
+    "name": "Sana Silva",
+    "email": "sana.silva21@example.com",
+    "address": "206 Park Drive, Region APAC",
+    "region": "APAC",
+    "plan": "enterprise",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 10,
+      "express_days": 5
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1022",
+    "name": "Sana Rossi",
+    "email": "sana.rossi22@example.com",
+    "address": "856 Harbor Road, Region AU",
+    "region": "AU",
+    "plan": "premium",
+    "policy_version": "refund-14d",
+    "refund_days": 14,
+    "shipping_sla": {
+      "standard_days": 8,
+      "express_days": 4
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1023",
+    "name": "Ivan Tanaka",
+    "email": "ivan.tanaka23@example.com",
+    "address": "214 Park Drive, Region APAC",
+    "region": "APAC",
+    "plan": "standard",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 10,
+      "express_days": 5
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1024",
+    "name": "Omar Tanaka",
+    "email": "omar.tanaka24@example.com",
+    "address": "519 Oak Street, Region UK",
+    "region": "UK",
+    "plan": "standard",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 4,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1025",
+    "name": "Arjun Larsen",
+    "email": "arjun.larsen25@example.com",
+    "address": "100 Park Drive, Region AU",
+    "region": "AU",
+    "plan": "premium",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 8,
+      "express_days": 4
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1026",
+    "name": "Lucas Dube",
+    "email": "lucas.dube26@example.com",
+    "address": "823 Oak Street, Region UK",
+    "region": "UK",
+    "plan": "enterprise",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 4,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1027",
+    "name": "Lucas Bennett",
+    "email": "lucas.bennett27@example.com",
+    "address": "212 Maple Ave, Region CA",
+    "region": "CA",
+    "plan": "standard",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 5,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1028",
+    "name": "Kofi Tanaka",
+    "email": "kofi.tanaka28@example.com",
+    "address": "155 Maple Ave, Region APAC",
+    "region": "APAC",
+    "plan": "enterprise",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 10,
+      "express_days": 5
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1029",
+    "name": "Zoe Stone",
+    "email": "zoe.stone29@example.com",
+    "address": "568 Park Drive, Region EU",
+    "region": "EU",
+    "plan": "enterprise",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 6,
+      "express_days": 3
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1030",
+    "name": "Arjun Dube",
+    "email": "arjun.dube30@example.com",
+    "address": "333 Harbor Road, Region CA",
+    "region": "CA",
+    "plan": "premium",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 5,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1031",
+    "name": "Sana Ortega",
+    "email": "sana.ortega31@example.com",
+    "address": "203 Cedar Lane, Region AU",
+    "region": "AU",
+    "plan": "standard",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 8,
+      "express_days": 4
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1032",
+    "name": "Ava Bennett",
+    "email": "ava.bennett32@example.com",
+    "address": "21 Oak Street, Region UK",
+    "region": "UK",
+    "plan": "premium",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 4,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1033",
+    "name": "Liam Dube",
+    "email": "liam.dube33@example.com",
+    "address": "733 Harbor Road, Region EU",
+    "region": "EU",
+    "plan": "standard",
+    "policy_version": "refund-14d",
+    "refund_days": 14,
+    "shipping_sla": {
+      "standard_days": 6,
+      "express_days": 3
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1034",
+    "name": "Sana Ortega",
+    "email": "sana.ortega34@example.com",
+    "address": "666 Station Way, Region CA",
+    "region": "CA",
+    "plan": "standard",
+    "policy_version": "refund-14d",
+    "refund_days": 14,
+    "shipping_sla": {
+      "standard_days": 5,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1035",
+    "name": "Noah Fraser",
+    "email": "noah.fraser35@example.com",
+    "address": "572 Oak Street, Region EU",
+    "region": "EU",
+    "plan": "enterprise",
+    "policy_version": "refund-14d",
+    "refund_days": 14,
+    "shipping_sla": {
+      "standard_days": 6,
+      "express_days": 3
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1036",
+    "name": "Mateo Dube",
+    "email": "mateo.dube36@example.com",
+    "address": "488 Station Way, Region CA",
+    "region": "CA",
+    "plan": "standard",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 5,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1037",
+    "name": "Ivan Ortega",
+    "email": "ivan.ortega37@example.com",
+    "address": "250 Elm Court, Region APAC",
+    "region": "APAC",
+    "plan": "enterprise",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 10,
+      "express_days": 5
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1038",
+    "name": "Ava Stone",
+    "email": "ava.stone38@example.com",
+    "address": "245 Station Way, Region EU",
+    "region": "EU",
+    "plan": "premium",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 6,
+      "express_days": 3
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1039",
+    "name": "Mateo Silva",
+    "email": "mateo.silva39@example.com",
+    "address": "367 Maple Ave, Region EU",
+    "region": "EU",
+    "plan": "premium",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 6,
+      "express_days": 3
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1040",
+    "name": "Ava Tanaka",
+    "email": "ava.tanaka40@example.com",
+    "address": "434 Park Drive, Region EU",
+    "region": "EU",
+    "plan": "enterprise",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 6,
+      "express_days": 3
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1041",
+    "name": "Elena Nguyen",
+    "email": "elena.nguyen41@example.com",
+    "address": "84 Harbor Road, Region APAC",
+    "region": "APAC",
+    "plan": "enterprise",
+    "policy_version": "refund-14d",
+    "refund_days": 14,
+    "shipping_sla": {
+      "standard_days": 10,
+      "express_days": 5
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1042",
+    "name": "Arjun Patel",
+    "email": "arjun.patel42@example.com",
+    "address": "325 Maple Ave, Region EU",
+    "region": "EU",
+    "plan": "standard",
+    "policy_version": "refund-14d",
+    "refund_days": 14,
+    "shipping_sla": {
+      "standard_days": 6,
+      "express_days": 3
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1043",
+    "name": "Ava Fraser",
+    "email": "ava.fraser43@example.com",
+    "address": "750 Elm Court, Region AU",
+    "region": "AU",
+    "plan": "standard",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 8,
+      "express_days": 4
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1044",
+    "name": "Ava Bennett",
+    "email": "ava.bennett44@example.com",
+    "address": "592 Park Drive, Region EU",
+    "region": "EU",
+    "plan": "enterprise",
+    "policy_version": "refund-14d",
+    "refund_days": 14,
+    "shipping_sla": {
+      "standard_days": 6,
+      "express_days": 3
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1045",
+    "name": "Noah Stone",
+    "email": "noah.stone45@example.com",
+    "address": "481 Station Way, Region APAC",
+    "region": "APAC",
+    "plan": "standard",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 10,
+      "express_days": 5
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1046",
+    "name": "Nora Bennett",
+    "email": "nora.bennett46@example.com",
+    "address": "535 Harbor Road, Region UK",
+    "region": "UK",
+    "plan": "enterprise",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 4,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1047",
+    "name": "Liam Dube",
+    "email": "liam.dube47@example.com",
+    "address": "776 Harbor Road, Region AU",
+    "region": "AU",
+    "plan": "enterprise",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 8,
+      "express_days": 4
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1048",
+    "name": "Yuki Nguyen",
+    "email": "yuki.nguyen48@example.com",
+    "address": "494 Cedar Lane, Region AU",
+    "region": "AU",
+    "plan": "enterprise",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 8,
+      "express_days": 4
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1049",
+    "name": "Noah Kowalski",
+    "email": "noah.kowalski49@example.com",
+    "address": "799 Park Drive, Region UK",
+    "region": "UK",
+    "plan": "enterprise",
+    "policy_version": "refund-14d",
+    "refund_days": 14,
+    "shipping_sla": {
+      "standard_days": 4,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1050",
+    "name": "Mia Patel",
+    "email": "mia.patel50@example.com",
+    "address": "996 Elm Court, Region APAC",
+    "region": "APAC",
+    "plan": "enterprise",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 10,
+      "express_days": 5
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1051",
+    "name": "Nora Silva",
+    "email": "nora.silva51@example.com",
+    "address": "159 Elm Court, Region CA",
+    "region": "CA",
+    "plan": "enterprise",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 5,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1052",
+    "name": "Sana Bennett",
+    "email": "sana.bennett52@example.com",
+    "address": "441 Maple Ave, Region EU",
+    "region": "EU",
+    "plan": "premium",
+    "policy_version": "refund-14d",
+    "refund_days": 14,
+    "shipping_sla": {
+      "standard_days": 6,
+      "express_days": 3
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1053",
+    "name": "Zoe Dube",
+    "email": "zoe.dube53@example.com",
+    "address": "130 Maple Ave, Region US",
+    "region": "US",
+    "plan": "enterprise",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 3,
+      "express_days": 1
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1054",
+    "name": "Yuki Fraser",
+    "email": "yuki.fraser54@example.com",
+    "address": "292 Harbor Road, Region CA",
+    "region": "CA",
+    "plan": "standard",
+    "policy_version": "refund-14d",
+    "refund_days": 14,
+    "shipping_sla": {
+      "standard_days": 5,
+      "express_days": 2
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1055",
+    "name": "Arjun Okafor",
+    "email": "arjun.okafor55@example.com",
+    "address": "527 Station Way, Region US",
+    "region": "US",
+    "plan": "standard",
+    "policy_version": "refund-14d",
+    "refund_days": 14,
+    "shipping_sla": {
+      "standard_days": 3,
+      "express_days": 1
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1056",
+    "name": "Kofi Bennett",
+    "email": "kofi.bennett56@example.com",
+    "address": "903 Park Drive, Region US",
+    "region": "US",
+    "plan": "enterprise",
+    "policy_version": "refund-14d",
+    "refund_days": 14,
+    "shipping_sla": {
+      "standard_days": 3,
+      "express_days": 1
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1057",
+    "name": "Omar Muller",
+    "email": "omar.muller57@example.com",
+    "address": "846 Station Way, Region AU",
+    "region": "AU",
+    "plan": "enterprise",
+    "policy_version": "refund-14d",
+    "refund_days": 14,
+    "shipping_sla": {
+      "standard_days": 8,
+      "express_days": 4
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1058",
+    "name": "Hana Nguyen",
+    "email": "hana.nguyen58@example.com",
+    "address": "616 Elm Court, Region EU",
+    "region": "EU",
+    "plan": "standard",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 6,
+      "express_days": 3
+    },
+    "synthetic": true
+  },
+  {
+    "customer_id": "C1059",
+    "name": "Zoe Silva",
+    "email": "zoe.silva59@example.com",
+    "address": "239 Maple Ave, Region US",
+    "region": "US",
+    "plan": "enterprise",
+    "policy_version": "refund-30d",
+    "refund_days": 30,
+    "shipping_sla": {
+      "standard_days": 3,
+      "express_days": 1
+    },
+    "synthetic": true
+  }
+]

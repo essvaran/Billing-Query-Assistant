@@ -1,4 +1,5 @@
 import { Component, ElementRef, OnDestroy, OnInit, inject } from '@angular/core';
+import { refLabel } from '../../shared/ref-data';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
@@ -228,20 +229,7 @@ export class ObsEvalComponent implements OnInit, OnDestroy {
     this.error = apiError(err);
   }
 
-  changeLabel(change: string): string {
-    switch (change) {
-      case 'fixed':
-        return 'fixed (RED to GREEN)';
-      case 'regressed':
-        return 'REGRESSED (GREEN to RED)';
-      case 'same_fail':
-        return 'still failing';
-      case 'same_pass':
-        return 'still passing';
-      default:
-        return change;
-    }
-  }
+  changeLabel(change: string): string { return refLabel('eval_change', change); }
 
   changeClass(change: string): string {
     switch (change) {

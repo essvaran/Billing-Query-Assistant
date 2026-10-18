@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { refLabel, refValues } from '../../shared/ref-data';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService, AppUser, Customer, Order, Ticket } from '../../services/admin.service';
@@ -11,9 +12,10 @@ import { RaceComponent } from '../race/race.component';
 import { TrajectoryComponent } from '../trajectory/trajectory.component';
 import { MultiAgentComponent } from '../multiagent/multiagent.component';
 import { ObservabilityComponent } from '../observability/observability.component';
+import { BillingAdminComponent } from './billing-admin.component';
 import { ActivatedRoute } from '@angular/router';
 
-type Tab = 'tickets' | 'orders' | 'customers' | 'users' | 'documents'
+type Tab = 'tickets' | 'orders' | 'customers' | 'users' | 'billing' | 'documents'
          | 'observability' | 'traces' | 'sample' | 'taxonomy' | 'eval' | 'race' | 'trajectory' | 'multiagent';
 
 interface Toast { message: string; kind: 'success' | 'error'; id: number }
@@ -23,7 +25,8 @@ interface Toast { message: string; kind: 'success' | 'error'; id: number }
   standalone: true,
   imports: [CommonModule, FormsModule,
     TracesComponent, SampleComponent, TaxonomyComponent,
-    EvalComponent, RaceComponent, TrajectoryComponent, MultiAgentComponent, ObservabilityComponent],
+    EvalComponent, RaceComponent, TrajectoryComponent, MultiAgentComponent, ObservabilityComponent,
+    BillingAdminComponent],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss',
 })
@@ -56,9 +59,10 @@ export class AdminComponent implements OnInit {
   toasts: Toast[] = [];
   private _toastId = 0;
 
-  readonly verdictOptions = ['approve', 'deny', 'escalate'];
-  readonly tierOptions = ['standard', 'premium', 'enterprise'];
-  readonly statusOptions = ['delivered', 'pending', 'cancelled', 'refunded'];
+  get verdictOptions(): string[] { return refValues('verdict').map(v => v.code); }
+  get tierOptions(): string[] { return refValues('plan_tier').map(v => v.code); }
+  get statusOptions(): string[] { return refValues('order_status').map(v => v.code); }
+  label(category: string, code: string): string { return refLabel(category, code); }
 
   uploadState: 'idle' | 'uploading' | 'success' | 'error' = 'idle';
   uploadMessage = '';
@@ -71,6 +75,8 @@ export class AdminComponent implements OnInit {
     const requested = this.route.snapshot.queryParamMap.get('tab');
     if (requested === 'observability') {
       this.activeTab = 'observability';
+    } else if (requested === 'billing') {
+      this.activeTab = 'billing';
     }
     this.loadAll();
   }
@@ -303,6 +309,18 @@ export class AdminComponent implements OnInit {
         this._toast(`${updated.email} is now ${updated.role}`, 'success');
       },
       error: err => { this._toast(err?.error?.detail ?? 'Role update failed', 'error'); this.saving = false; },
+    });
+  }
+
+  setUserActive(user: AppUser, isActive: boolean): void {
+    this.saving = true;
+    this.svc.setUserStatus(user.id, isActive).subscribe({
+      next: res => {
+        user.is_active = res.is_active;
+        this.saving = false;
+        this._toast(`${res.email} ${res.is_active ? 'enabled' : 'disabled'}`, 'success');
+      },
+      error: err => { this._toast(err?.error?.detail ?? 'Status update failed', 'error'); this.saving = false; },
     });
   }
 

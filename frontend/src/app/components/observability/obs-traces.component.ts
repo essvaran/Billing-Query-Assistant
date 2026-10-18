@@ -29,7 +29,8 @@ export class ObsTracesComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   @Input() demoTools = false;
-  @Input() drillBarSeconds = 300;
+  @Input() drillBarSeconds = 0;
+  @Input() drillComplaint = '';
   @Input() initialTraceId: string | null = null;
   @Output() openEval = new EventEmitter<void>();
 

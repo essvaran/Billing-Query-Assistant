@@ -16,7 +16,7 @@ from api.auth import UserOut, require_admin
 log = logging.getLogger("api.multiagent")
 router = APIRouter(prefix="/api/multiagent", tags=["multiagent"])
 
-_OUT_DIR = Path(__file__).resolve().parent.parent / "deliverables" / "week10"
+_OUT_DIR = Path(__file__).resolve().parent.parent / "docs" / "archive" / "deliverables" / "week10"
 _TEXT_FILES = {
     "race_table": "race_table.md",
     "handoffs_log": "handoffs.log",
@@ -113,7 +113,9 @@ def run_race_endpoint(_user: UserOut = Depends(require_admin)):
 def ask_both(body: AskBody, _user: UserOut = Depends(require_admin)):
     """Run one question through the single agent and the orchestrator side by side."""
     from evaluation.assertions import run_assertions
-    from evaluation.week10_multi_agent import COST_PER_1M_TOKENS, run_multi_agent
+    from evaluation.week10_multi_agent import run_multi_agent
+    from src.generation.cost import calculate_cost
+    from src.generation.llm_client import default_model
     from src.generation.answer import answer_question
 
     question = body.question.strip()
@@ -139,7 +141,7 @@ def ask_both(body: AskBody, _user: UserOut = Depends(require_admin)):
         "single": {
             "answer": single.final_answer,
             "tokens": single_tokens,
-            "cost_usd": single_tokens / 1_000_000 * COST_PER_1M_TOKENS,
+            "cost_usd": calculate_cost(default_model(), single.input_tokens, single.output_tokens)["total_cost_usd"],
             "latency_s": single_s,
             "chunk_ids": [c["chunk_id"] for c in single.retrieved_chunks],
             "assertions": _assertions(single.final_answer, single.retrieved_chunks),
@@ -147,7 +149,7 @@ def ask_both(body: AskBody, _user: UserOut = Depends(require_admin)):
         "multi": {
             "answer": multi.final_answer,
             "tokens": multi.total_tokens,
-            "cost_usd": multi.total_tokens / 1_000_000 * COST_PER_1M_TOKENS,
+            "cost_usd": calculate_cost(default_model(), multi.input_tokens, multi.output_tokens)["total_cost_usd"],
             "latency_s": multi_s,
             "chunk_ids": [c["chunk_id"] for c in multi.retrieved_chunks],
             "assertions": _assertions(multi.final_answer, multi.retrieved_chunks),

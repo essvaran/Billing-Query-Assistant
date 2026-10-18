@@ -1,0 +1,1 @@
+Write the query from the customer's own words, and put any error code from the ticket (like ERR-1234) into it exactly as written: an error code identifies the one article that explains it. 

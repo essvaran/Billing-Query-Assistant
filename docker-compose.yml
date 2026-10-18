@@ -1,0 +1,35 @@
+# One command for a stranger:  docker compose up --build   then open http://localhost:8080
+# Requires a .env file (see .env.example) with GROQ_API_KEY, JWT_SECRET (32+ characters), ADMIN_EMAIL and a private
+# PII_HASH_SALT. The API runs in production mode: it refuses to start, naming each fix, if a setting is unsafe.
+services:
+  api:
+    build: .
+    env_file: .env
+    environment:
+      APP_ENV: production
+      LLM_CACHE: "off"            # production: do not keep prompts and answers on disk
+      TIER1_DB_PATH: /data/tier1.db
+      APP_DB_PATH: /data/app.db   # users, subscriptions and invoices survive a container restart
+      CATALOG_DB_PATH: /data/catalog.db   # lists, settings, prompts, guard rules and eval data edited on the Data page
+      TIER1_DEMO_CUSTOMER_ID: ""  # never in production: users are matched to customers by email
+    volumes:
+      - app-data:/data
+    healthcheck:
+      # readiness, not just liveness: configuration valid, databases open, search index present
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/ready')"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+    restart: unless-stopped
+  web:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  app-data:

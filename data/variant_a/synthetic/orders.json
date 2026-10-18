@@ -1,0 +1,2702 @@
+[
+  {
+    "order_id": "O2000",
+    "customer_id": "C1002",
+    "purchase_date": "2026-09-21",
+    "amount": 119.88,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2001",
+    "customer_id": "C1033",
+    "purchase_date": "2026-08-26",
+    "amount": 18.87,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2002",
+    "customer_id": "C1050",
+    "purchase_date": "2026-09-08",
+    "amount": 215.03,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2003",
+    "customer_id": "C1025",
+    "purchase_date": "2026-09-21",
+    "amount": 73.76,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2004",
+    "customer_id": "C1044",
+    "purchase_date": "2026-09-18",
+    "amount": 175.19,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2005",
+    "customer_id": "C1019",
+    "purchase_date": "2026-08-22",
+    "amount": 36.67,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2006",
+    "customer_id": "C1040",
+    "purchase_date": "2026-09-11",
+    "amount": 122.5,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2007",
+    "customer_id": "C1011",
+    "purchase_date": "2026-08-21",
+    "amount": 199.63,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2008",
+    "customer_id": "C1013",
+    "purchase_date": "2026-09-17",
+    "amount": 16.39,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2009",
+    "customer_id": "C1030",
+    "purchase_date": "2026-09-29",
+    "amount": 76.48,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2010",
+    "customer_id": "C1014",
+    "purchase_date": "2026-08-20",
+    "amount": 106.71,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2011",
+    "customer_id": "C1029",
+    "purchase_date": "2026-09-13",
+    "amount": 116.16,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2012",
+    "customer_id": "C1049",
+    "purchase_date": "2026-09-26",
+    "amount": 50.94,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2013",
+    "customer_id": "C1035",
+    "purchase_date": "2026-09-06",
+    "amount": 224.2,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2014",
+    "customer_id": "C1012",
+    "purchase_date": "2026-09-23",
+    "amount": 198.19,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2015",
+    "customer_id": "C1040",
+    "purchase_date": "2026-09-13",
+    "amount": 97.52,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2016",
+    "customer_id": "C1046",
+    "purchase_date": "2026-09-23",
+    "amount": 79.81,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2017",
+    "customer_id": "C1027",
+    "purchase_date": "2026-08-29",
+    "amount": 237.8,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2018",
+    "customer_id": "C1039",
+    "purchase_date": "2026-08-26",
+    "amount": 80.86,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2019",
+    "customer_id": "C1049",
+    "purchase_date": "2026-09-19",
+    "amount": 11.16,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2020",
+    "customer_id": "C1042",
+    "purchase_date": "2026-08-18",
+    "amount": 142.73,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2021",
+    "customer_id": "C1018",
+    "purchase_date": "2026-09-10",
+    "amount": 120.44,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2022",
+    "customer_id": "C1038",
+    "purchase_date": "2026-09-18",
+    "amount": 26.21,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2023",
+    "customer_id": "C1058",
+    "purchase_date": "2026-08-26",
+    "amount": 11.28,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2024",
+    "customer_id": "C1050",
+    "purchase_date": "2026-09-25",
+    "amount": 53.19,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2025",
+    "customer_id": "C1031",
+    "purchase_date": "2026-09-21",
+    "amount": 239.97,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2026",
+    "customer_id": "C1013",
+    "purchase_date": "2026-09-06",
+    "amount": 33.23,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2027",
+    "customer_id": "C1028",
+    "purchase_date": "2026-08-24",
+    "amount": 46.49,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2028",
+    "customer_id": "C1056",
+    "purchase_date": "2026-09-15",
+    "amount": 40.01,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2029",
+    "customer_id": "C1039",
+    "purchase_date": "2026-09-05",
+    "amount": 200.55,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2030",
+    "customer_id": "C1031",
+    "purchase_date": "2026-09-16",
+    "amount": 60.65,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2031",
+    "customer_id": "C1005",
+    "purchase_date": "2026-09-21",
+    "amount": 227.06,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2032",
+    "customer_id": "C1045",
+    "purchase_date": "2026-09-17",
+    "amount": 171.62,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2033",
+    "customer_id": "C1000",
+    "purchase_date": "2026-08-29",
+    "amount": 84.17,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2034",
+    "customer_id": "C1053",
+    "purchase_date": "2026-08-25",
+    "amount": 58.93,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2035",
+    "customer_id": "C1035",
+    "purchase_date": "2026-09-27",
+    "amount": 162.63,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2036",
+    "customer_id": "C1003",
+    "purchase_date": "2026-09-21",
+    "amount": 98.27,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2037",
+    "customer_id": "C1013",
+    "purchase_date": "2026-08-28",
+    "amount": 157.56,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2038",
+    "customer_id": "C1042",
+    "purchase_date": "2026-09-13",
+    "amount": 83.92,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2039",
+    "customer_id": "C1021",
+    "purchase_date": "2026-08-28",
+    "amount": 19.32,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2040",
+    "customer_id": "C1040",
+    "purchase_date": "2026-09-10",
+    "amount": 15.58,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2041",
+    "customer_id": "C1022",
+    "purchase_date": "2026-09-27",
+    "amount": 70.62,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2042",
+    "customer_id": "C1025",
+    "purchase_date": "2026-09-02",
+    "amount": 195.04,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2043",
+    "customer_id": "C1002",
+    "purchase_date": "2026-09-18",
+    "amount": 75.91,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2044",
+    "customer_id": "C1057",
+    "purchase_date": "2026-09-12",
+    "amount": 128.82,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2045",
+    "customer_id": "C1040",
+    "purchase_date": "2026-08-26",
+    "amount": 202.04,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2046",
+    "customer_id": "C1051",
+    "purchase_date": "2026-08-27",
+    "amount": 131.53,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2047",
+    "customer_id": "C1014",
+    "purchase_date": "2026-09-15",
+    "amount": 121.33,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2048",
+    "customer_id": "C1056",
+    "purchase_date": "2026-09-08",
+    "amount": 116.72,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2049",
+    "customer_id": "C1013",
+    "purchase_date": "2026-09-08",
+    "amount": 156.4,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2050",
+    "customer_id": "C1018",
+    "purchase_date": "2026-09-26",
+    "amount": 68.08,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2051",
+    "customer_id": "C1040",
+    "purchase_date": "2026-09-21",
+    "amount": 174.88,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2052",
+    "customer_id": "C1021",
+    "purchase_date": "2026-09-06",
+    "amount": 96.73,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2053",
+    "customer_id": "C1003",
+    "purchase_date": "2026-08-27",
+    "amount": 66.37,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2054",
+    "customer_id": "C1016",
+    "purchase_date": "2026-09-02",
+    "amount": 82.78,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2055",
+    "customer_id": "C1030",
+    "purchase_date": "2026-09-16",
+    "amount": 221.6,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2056",
+    "customer_id": "C1050",
+    "purchase_date": "2026-08-29",
+    "amount": 162.07,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2057",
+    "customer_id": "C1035",
+    "purchase_date": "2026-09-26",
+    "amount": 106.32,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2058",
+    "customer_id": "C1036",
+    "purchase_date": "2026-09-04",
+    "amount": 195.33,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2059",
+    "customer_id": "C1024",
+    "purchase_date": "2026-09-21",
+    "amount": 142.03,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2060",
+    "customer_id": "C1028",
+    "purchase_date": "2026-08-30",
+    "amount": 161.02,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2061",
+    "customer_id": "C1012",
+    "purchase_date": "2026-08-18",
+    "amount": 93.1,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2062",
+    "customer_id": "C1053",
+    "purchase_date": "2026-08-24",
+    "amount": 36.88,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2063",
+    "customer_id": "C1036",
+    "purchase_date": "2026-09-24",
+    "amount": 69.2,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2064",
+    "customer_id": "C1010",
+    "purchase_date": "2026-09-14",
+    "amount": 217.37,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2065",
+    "customer_id": "C1043",
+    "purchase_date": "2026-09-18",
+    "amount": 78.43,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2066",
+    "customer_id": "C1014",
+    "purchase_date": "2026-09-01",
+    "amount": 155.39,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2067",
+    "customer_id": "C1014",
+    "purchase_date": "2026-09-07",
+    "amount": 108.94,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2068",
+    "customer_id": "C1033",
+    "purchase_date": "2026-09-22",
+    "amount": 48.21,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2069",
+    "customer_id": "C1052",
+    "purchase_date": "2026-09-10",
+    "amount": 206.04,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2070",
+    "customer_id": "C1038",
+    "purchase_date": "2026-09-21",
+    "amount": 80.41,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2071",
+    "customer_id": "C1035",
+    "purchase_date": "2026-09-28",
+    "amount": 166.54,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2072",
+    "customer_id": "C1006",
+    "purchase_date": "2026-08-29",
+    "amount": 103.61,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2073",
+    "customer_id": "C1057",
+    "purchase_date": "2026-09-29",
+    "amount": 104.51,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2074",
+    "customer_id": "C1039",
+    "purchase_date": "2026-08-23",
+    "amount": 99.03,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2075",
+    "customer_id": "C1005",
+    "purchase_date": "2026-08-22",
+    "amount": 122.42,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2076",
+    "customer_id": "C1003",
+    "purchase_date": "2026-08-20",
+    "amount": 107.35,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2077",
+    "customer_id": "C1041",
+    "purchase_date": "2026-09-21",
+    "amount": 218.98,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2078",
+    "customer_id": "C1047",
+    "purchase_date": "2026-09-26",
+    "amount": 22.0,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2079",
+    "customer_id": "C1050",
+    "purchase_date": "2026-08-30",
+    "amount": 64.66,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2080",
+    "customer_id": "C1024",
+    "purchase_date": "2026-09-14",
+    "amount": 162.37,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2081",
+    "customer_id": "C1039",
+    "purchase_date": "2026-08-26",
+    "amount": 192.8,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2082",
+    "customer_id": "C1007",
+    "purchase_date": "2026-09-02",
+    "amount": 59.46,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2083",
+    "customer_id": "C1024",
+    "purchase_date": "2026-09-13",
+    "amount": 169.75,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2084",
+    "customer_id": "C1051",
+    "purchase_date": "2026-09-06",
+    "amount": 107.46,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2085",
+    "customer_id": "C1026",
+    "purchase_date": "2026-09-20",
+    "amount": 195.24,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2086",
+    "customer_id": "C1013",
+    "purchase_date": "2026-08-21",
+    "amount": 33.29,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2087",
+    "customer_id": "C1012",
+    "purchase_date": "2026-09-04",
+    "amount": 167.06,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2088",
+    "customer_id": "C1025",
+    "purchase_date": "2026-08-26",
+    "amount": 92.44,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2089",
+    "customer_id": "C1013",
+    "purchase_date": "2026-09-26",
+    "amount": 29.58,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2090",
+    "customer_id": "C1034",
+    "purchase_date": "2026-08-27",
+    "amount": 136.64,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2091",
+    "customer_id": "C1017",
+    "purchase_date": "2026-08-26",
+    "amount": 82.15,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2092",
+    "customer_id": "C1016",
+    "purchase_date": "2026-08-29",
+    "amount": 107.2,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2093",
+    "customer_id": "C1031",
+    "purchase_date": "2026-09-10",
+    "amount": 65.97,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2094",
+    "customer_id": "C1003",
+    "purchase_date": "2026-09-10",
+    "amount": 217.72,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2095",
+    "customer_id": "C1007",
+    "purchase_date": "2026-08-21",
+    "amount": 184.53,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2096",
+    "customer_id": "C1043",
+    "purchase_date": "2026-09-21",
+    "amount": 14.65,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2097",
+    "customer_id": "C1035",
+    "purchase_date": "2026-09-30",
+    "amount": 108.09,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2098",
+    "customer_id": "C1029",
+    "purchase_date": "2026-08-27",
+    "amount": 184.05,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2099",
+    "customer_id": "C1000",
+    "purchase_date": "2026-09-16",
+    "amount": 197.01,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2100",
+    "customer_id": "C1005",
+    "purchase_date": "2026-09-26",
+    "amount": 129.75,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2101",
+    "customer_id": "C1036",
+    "purchase_date": "2026-09-26",
+    "amount": 94.57,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2102",
+    "customer_id": "C1047",
+    "purchase_date": "2026-08-24",
+    "amount": 204.26,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2103",
+    "customer_id": "C1057",
+    "purchase_date": "2026-09-16",
+    "amount": 233.8,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2104",
+    "customer_id": "C1057",
+    "purchase_date": "2026-09-02",
+    "amount": 110.27,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2105",
+    "customer_id": "C1004",
+    "purchase_date": "2026-09-26",
+    "amount": 165.82,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2106",
+    "customer_id": "C1016",
+    "purchase_date": "2026-09-10",
+    "amount": 91.06,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2107",
+    "customer_id": "C1040",
+    "purchase_date": "2026-09-06",
+    "amount": 132.96,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2108",
+    "customer_id": "C1032",
+    "purchase_date": "2026-09-16",
+    "amount": 67.82,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2109",
+    "customer_id": "C1025",
+    "purchase_date": "2026-09-29",
+    "amount": 189.49,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2110",
+    "customer_id": "C1027",
+    "purchase_date": "2026-09-20",
+    "amount": 111.95,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2111",
+    "customer_id": "C1028",
+    "purchase_date": "2026-09-15",
+    "amount": 60.28,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2112",
+    "customer_id": "C1003",
+    "purchase_date": "2026-08-20",
+    "amount": 79.41,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2113",
+    "customer_id": "C1033",
+    "purchase_date": "2026-09-28",
+    "amount": 226.01,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2114",
+    "customer_id": "C1048",
+    "purchase_date": "2026-09-02",
+    "amount": 22.84,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2115",
+    "customer_id": "C1034",
+    "purchase_date": "2026-08-21",
+    "amount": 135.04,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2116",
+    "customer_id": "C1033",
+    "purchase_date": "2026-09-26",
+    "amount": 141.71,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2117",
+    "customer_id": "C1059",
+    "purchase_date": "2026-09-20",
+    "amount": 105.46,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2118",
+    "customer_id": "C1019",
+    "purchase_date": "2026-09-21",
+    "amount": 180.17,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2119",
+    "customer_id": "C1053",
+    "purchase_date": "2026-08-21",
+    "amount": 77.66,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2120",
+    "customer_id": "C1026",
+    "purchase_date": "2026-08-28",
+    "amount": 60.69,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2121",
+    "customer_id": "C1020",
+    "purchase_date": "2026-09-08",
+    "amount": 175.95,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2122",
+    "customer_id": "C1055",
+    "purchase_date": "2026-09-11",
+    "amount": 165.74,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2123",
+    "customer_id": "C1031",
+    "purchase_date": "2026-09-02",
+    "amount": 149.68,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2124",
+    "customer_id": "C1051",
+    "purchase_date": "2026-09-11",
+    "amount": 104.15,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2125",
+    "customer_id": "C1016",
+    "purchase_date": "2026-09-14",
+    "amount": 188.19,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2126",
+    "customer_id": "C1027",
+    "purchase_date": "2026-09-26",
+    "amount": 105.34,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2127",
+    "customer_id": "C1028",
+    "purchase_date": "2026-08-28",
+    "amount": 113.57,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2128",
+    "customer_id": "C1030",
+    "purchase_date": "2026-09-01",
+    "amount": 225.21,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2129",
+    "customer_id": "C1048",
+    "purchase_date": "2026-08-29",
+    "amount": 112.33,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2130",
+    "customer_id": "C1032",
+    "purchase_date": "2026-09-09",
+    "amount": 56.26,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2131",
+    "customer_id": "C1023",
+    "purchase_date": "2026-08-27",
+    "amount": 200.94,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2132",
+    "customer_id": "C1028",
+    "purchase_date": "2026-09-18",
+    "amount": 110.59,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2133",
+    "customer_id": "C1029",
+    "purchase_date": "2026-08-20",
+    "amount": 52.87,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2134",
+    "customer_id": "C1033",
+    "purchase_date": "2026-08-27",
+    "amount": 184.58,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2135",
+    "customer_id": "C1000",
+    "purchase_date": "2026-09-03",
+    "amount": 73.97,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2136",
+    "customer_id": "C1020",
+    "purchase_date": "2026-08-19",
+    "amount": 75.09,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2137",
+    "customer_id": "C1047",
+    "purchase_date": "2026-09-30",
+    "amount": 173.07,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2138",
+    "customer_id": "C1040",
+    "purchase_date": "2026-09-01",
+    "amount": 71.89,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2139",
+    "customer_id": "C1023",
+    "purchase_date": "2026-09-17",
+    "amount": 16.05,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2140",
+    "customer_id": "C1027",
+    "purchase_date": "2026-08-29",
+    "amount": 97.17,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2141",
+    "customer_id": "C1002",
+    "purchase_date": "2026-09-19",
+    "amount": 97.11,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2142",
+    "customer_id": "C1001",
+    "purchase_date": "2026-09-16",
+    "amount": 167.07,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2143",
+    "customer_id": "C1003",
+    "purchase_date": "2026-09-17",
+    "amount": 62.6,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2144",
+    "customer_id": "C1019",
+    "purchase_date": "2026-09-26",
+    "amount": 52.61,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2145",
+    "customer_id": "C1029",
+    "purchase_date": "2026-09-24",
+    "amount": 105.6,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2146",
+    "customer_id": "C1046",
+    "purchase_date": "2026-08-29",
+    "amount": 187.07,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2147",
+    "customer_id": "C1058",
+    "purchase_date": "2026-09-15",
+    "amount": 235.34,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2148",
+    "customer_id": "C1037",
+    "purchase_date": "2026-09-27",
+    "amount": 216.89,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2149",
+    "customer_id": "C1017",
+    "purchase_date": "2026-09-04",
+    "amount": 118.26,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2150",
+    "customer_id": "C1053",
+    "purchase_date": "2026-09-27",
+    "amount": 118.79,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2151",
+    "customer_id": "C1047",
+    "purchase_date": "2026-09-12",
+    "amount": 189.22,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2152",
+    "customer_id": "C1033",
+    "purchase_date": "2026-09-20",
+    "amount": 135.5,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2153",
+    "customer_id": "C1011",
+    "purchase_date": "2026-09-02",
+    "amount": 46.92,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2154",
+    "customer_id": "C1024",
+    "purchase_date": "2026-08-22",
+    "amount": 182.15,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2155",
+    "customer_id": "C1031",
+    "purchase_date": "2026-09-20",
+    "amount": 46.59,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2156",
+    "customer_id": "C1058",
+    "purchase_date": "2026-09-06",
+    "amount": 115.61,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2157",
+    "customer_id": "C1006",
+    "purchase_date": "2026-09-04",
+    "amount": 68.72,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2158",
+    "customer_id": "C1052",
+    "purchase_date": "2026-09-26",
+    "amount": 153.85,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2159",
+    "customer_id": "C1018",
+    "purchase_date": "2026-09-11",
+    "amount": 81.97,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2160",
+    "customer_id": "C1056",
+    "purchase_date": "2026-09-04",
+    "amount": 169.08,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2161",
+    "customer_id": "C1053",
+    "purchase_date": "2026-09-09",
+    "amount": 29.22,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2162",
+    "customer_id": "C1018",
+    "purchase_date": "2026-09-17",
+    "amount": 119.42,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2163",
+    "customer_id": "C1056",
+    "purchase_date": "2026-09-06",
+    "amount": 128.47,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2164",
+    "customer_id": "C1046",
+    "purchase_date": "2026-09-13",
+    "amount": 75.22,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2165",
+    "customer_id": "C1001",
+    "purchase_date": "2026-09-16",
+    "amount": 76.35,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2166",
+    "customer_id": "C1039",
+    "purchase_date": "2026-09-17",
+    "amount": 54.21,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2167",
+    "customer_id": "C1047",
+    "purchase_date": "2026-09-27",
+    "amount": 101.12,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2168",
+    "customer_id": "C1021",
+    "purchase_date": "2026-09-24",
+    "amount": 204.06,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2169",
+    "customer_id": "C1044",
+    "purchase_date": "2026-09-25",
+    "amount": 95.1,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2170",
+    "customer_id": "C1059",
+    "purchase_date": "2026-08-22",
+    "amount": 9.18,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2171",
+    "customer_id": "C1036",
+    "purchase_date": "2026-09-15",
+    "amount": 108.77,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2172",
+    "customer_id": "C1027",
+    "purchase_date": "2026-09-12",
+    "amount": 168.43,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2173",
+    "customer_id": "C1039",
+    "purchase_date": "2026-08-29",
+    "amount": 95.8,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2174",
+    "customer_id": "C1033",
+    "purchase_date": "2026-09-18",
+    "amount": 12.44,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2175",
+    "customer_id": "C1030",
+    "purchase_date": "2026-08-22",
+    "amount": 122.32,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2176",
+    "customer_id": "C1018",
+    "purchase_date": "2026-09-16",
+    "amount": 212.64,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2177",
+    "customer_id": "C1030",
+    "purchase_date": "2026-09-18",
+    "amount": 121.45,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2178",
+    "customer_id": "C1005",
+    "purchase_date": "2026-09-05",
+    "amount": 42.71,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2179",
+    "customer_id": "C1037",
+    "purchase_date": "2026-09-21",
+    "amount": 90.35,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2180",
+    "customer_id": "C1000",
+    "purchase_date": "2026-09-02",
+    "amount": 11.34,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2181",
+    "customer_id": "C1055",
+    "purchase_date": "2026-09-24",
+    "amount": 176.72,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2182",
+    "customer_id": "C1033",
+    "purchase_date": "2026-08-24",
+    "amount": 48.25,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2183",
+    "customer_id": "C1026",
+    "purchase_date": "2026-09-18",
+    "amount": 93.09,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2184",
+    "customer_id": "C1059",
+    "purchase_date": "2026-08-28",
+    "amount": 51.71,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2185",
+    "customer_id": "C1050",
+    "purchase_date": "2026-09-18",
+    "amount": 22.83,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2186",
+    "customer_id": "C1057",
+    "purchase_date": "2026-09-14",
+    "amount": 54.56,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2187",
+    "customer_id": "C1028",
+    "purchase_date": "2026-08-21",
+    "amount": 103.98,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2188",
+    "customer_id": "C1033",
+    "purchase_date": "2026-09-25",
+    "amount": 200.43,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2189",
+    "customer_id": "C1019",
+    "purchase_date": "2026-09-15",
+    "amount": 10.38,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2190",
+    "customer_id": "C1040",
+    "purchase_date": "2026-08-29",
+    "amount": 191.61,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2191",
+    "customer_id": "C1052",
+    "purchase_date": "2026-08-29",
+    "amount": 47.21,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2192",
+    "customer_id": "C1002",
+    "purchase_date": "2026-08-29",
+    "amount": 36.72,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2193",
+    "customer_id": "C1021",
+    "purchase_date": "2026-09-15",
+    "amount": 237.58,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2194",
+    "customer_id": "C1023",
+    "purchase_date": "2026-08-17",
+    "amount": 149.57,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2195",
+    "customer_id": "C1057",
+    "purchase_date": "2026-09-17",
+    "amount": 75.92,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2196",
+    "customer_id": "C1050",
+    "purchase_date": "2026-09-07",
+    "amount": 37.83,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2197",
+    "customer_id": "C1004",
+    "purchase_date": "2026-09-25",
+    "amount": 16.92,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2198",
+    "customer_id": "C1039",
+    "purchase_date": "2026-09-23",
+    "amount": 239.69,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2199",
+    "customer_id": "C1047",
+    "purchase_date": "2026-09-18",
+    "amount": 214.12,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2200",
+    "customer_id": "C1002",
+    "purchase_date": "2026-08-19",
+    "amount": 219.21,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2201",
+    "customer_id": "C1037",
+    "purchase_date": "2026-09-18",
+    "amount": 183.02,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2202",
+    "customer_id": "C1037",
+    "purchase_date": "2026-09-19",
+    "amount": 111.84,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2203",
+    "customer_id": "C1031",
+    "purchase_date": "2026-09-06",
+    "amount": 125.73,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2204",
+    "customer_id": "C1027",
+    "purchase_date": "2026-09-30",
+    "amount": 157.81,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2205",
+    "customer_id": "C1040",
+    "purchase_date": "2026-09-08",
+    "amount": 159.8,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2206",
+    "customer_id": "C1044",
+    "purchase_date": "2026-09-01",
+    "amount": 202.84,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2207",
+    "customer_id": "C1045",
+    "purchase_date": "2026-09-23",
+    "amount": 230.45,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2208",
+    "customer_id": "C1042",
+    "purchase_date": "2026-09-15",
+    "amount": 96.02,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2209",
+    "customer_id": "C1035",
+    "purchase_date": "2026-09-19",
+    "amount": 17.96,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2210",
+    "customer_id": "C1056",
+    "purchase_date": "2026-09-17",
+    "amount": 43.21,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2211",
+    "customer_id": "C1008",
+    "purchase_date": "2026-08-22",
+    "amount": 104.02,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2212",
+    "customer_id": "C1017",
+    "purchase_date": "2026-09-19",
+    "amount": 49.92,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2213",
+    "customer_id": "C1038",
+    "purchase_date": "2026-09-25",
+    "amount": 197.29,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2214",
+    "customer_id": "C1029",
+    "purchase_date": "2026-09-15",
+    "amount": 9.73,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2215",
+    "customer_id": "C1049",
+    "purchase_date": "2026-09-18",
+    "amount": 158.31,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2216",
+    "customer_id": "C1029",
+    "purchase_date": "2026-09-11",
+    "amount": 53.65,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2217",
+    "customer_id": "C1044",
+    "purchase_date": "2026-09-12",
+    "amount": 12.32,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2218",
+    "customer_id": "C1019",
+    "purchase_date": "2026-09-24",
+    "amount": 213.08,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2219",
+    "customer_id": "C1042",
+    "purchase_date": "2026-08-28",
+    "amount": 164.79,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2220",
+    "customer_id": "C1033",
+    "purchase_date": "2026-09-13",
+    "amount": 185.63,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2221",
+    "customer_id": "C1045",
+    "purchase_date": "2026-09-15",
+    "amount": 50.9,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2222",
+    "customer_id": "C1003",
+    "purchase_date": "2026-09-08",
+    "amount": 15.15,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2223",
+    "customer_id": "C1004",
+    "purchase_date": "2026-09-26",
+    "amount": 27.34,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2224",
+    "customer_id": "C1007",
+    "purchase_date": "2026-09-02",
+    "amount": 32.65,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2225",
+    "customer_id": "C1005",
+    "purchase_date": "2026-09-10",
+    "amount": 236.37,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2226",
+    "customer_id": "C1007",
+    "purchase_date": "2026-09-15",
+    "amount": 225.99,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2227",
+    "customer_id": "C1013",
+    "purchase_date": "2026-09-12",
+    "amount": 215.26,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2228",
+    "customer_id": "C1027",
+    "purchase_date": "2026-08-22",
+    "amount": 216.54,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2229",
+    "customer_id": "C1036",
+    "purchase_date": "2026-09-10",
+    "amount": 163.68,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2230",
+    "customer_id": "C1043",
+    "purchase_date": "2026-09-06",
+    "amount": 93.13,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2231",
+    "customer_id": "C1036",
+    "purchase_date": "2026-08-29",
+    "amount": 69.11,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2232",
+    "customer_id": "C1051",
+    "purchase_date": "2026-08-27",
+    "amount": 38.71,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2233",
+    "customer_id": "C1003",
+    "purchase_date": "2026-08-30",
+    "amount": 33.4,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2234",
+    "customer_id": "C1049",
+    "purchase_date": "2026-09-23",
+    "amount": 238.11,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2235",
+    "customer_id": "C1012",
+    "purchase_date": "2026-08-29",
+    "amount": 179.31,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2236",
+    "customer_id": "C1027",
+    "purchase_date": "2026-09-11",
+    "amount": 226.95,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2237",
+    "customer_id": "C1002",
+    "purchase_date": "2026-09-01",
+    "amount": 132.12,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2238",
+    "customer_id": "C1020",
+    "purchase_date": "2026-08-17",
+    "amount": 79.43,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2239",
+    "customer_id": "C1044",
+    "purchase_date": "2026-09-10",
+    "amount": 78.5,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2240",
+    "customer_id": "C1000",
+    "purchase_date": "2026-09-15",
+    "amount": 50.72,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2241",
+    "customer_id": "C1032",
+    "purchase_date": "2026-09-22",
+    "amount": 134.39,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2242",
+    "customer_id": "C1054",
+    "purchase_date": "2026-09-20",
+    "amount": 212.04,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2243",
+    "customer_id": "C1046",
+    "purchase_date": "2026-09-26",
+    "amount": 93.77,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2244",
+    "customer_id": "C1020",
+    "purchase_date": "2026-08-24",
+    "amount": 11.06,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2245",
+    "customer_id": "C1028",
+    "purchase_date": "2026-08-23",
+    "amount": 115.87,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2246",
+    "customer_id": "C1011",
+    "purchase_date": "2026-09-13",
+    "amount": 235.85,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2247",
+    "customer_id": "C1025",
+    "purchase_date": "2026-09-02",
+    "amount": 127.4,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2248",
+    "customer_id": "C1007",
+    "purchase_date": "2026-09-19",
+    "amount": 109.15,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2249",
+    "customer_id": "C1020",
+    "purchase_date": "2026-08-29",
+    "amount": 61.87,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2250",
+    "customer_id": "C1013",
+    "purchase_date": "2026-08-21",
+    "amount": 93.31,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2251",
+    "customer_id": "C1016",
+    "purchase_date": "2026-09-13",
+    "amount": 120.7,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2252",
+    "customer_id": "C1021",
+    "purchase_date": "2026-09-13",
+    "amount": 159.8,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2253",
+    "customer_id": "C1028",
+    "purchase_date": "2026-09-20",
+    "amount": 164.33,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2254",
+    "customer_id": "C1033",
+    "purchase_date": "2026-08-22",
+    "amount": 18.48,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2255",
+    "customer_id": "C1012",
+    "purchase_date": "2026-08-22",
+    "amount": 51.88,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2256",
+    "customer_id": "C1016",
+    "purchase_date": "2026-09-08",
+    "amount": 17.81,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2257",
+    "customer_id": "C1050",
+    "purchase_date": "2026-09-21",
+    "amount": 183.39,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2258",
+    "customer_id": "C1034",
+    "purchase_date": "2026-09-21",
+    "amount": 205.39,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2259",
+    "customer_id": "C1034",
+    "purchase_date": "2026-08-29",
+    "amount": 129.17,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2260",
+    "customer_id": "C1010",
+    "purchase_date": "2026-08-29",
+    "amount": 76.54,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2261",
+    "customer_id": "C1023",
+    "purchase_date": "2026-08-22",
+    "amount": 237.52,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2262",
+    "customer_id": "C1016",
+    "purchase_date": "2026-08-27",
+    "amount": 145.47,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2263",
+    "customer_id": "C1031",
+    "purchase_date": "2026-09-01",
+    "amount": 219.08,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2264",
+    "customer_id": "C1022",
+    "purchase_date": "2026-09-23",
+    "amount": 154.87,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2265",
+    "customer_id": "C1004",
+    "purchase_date": "2026-08-18",
+    "amount": 207.27,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2266",
+    "customer_id": "C1030",
+    "purchase_date": "2026-08-28",
+    "amount": 132.36,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2267",
+    "customer_id": "C1038",
+    "purchase_date": "2026-08-31",
+    "amount": 185.29,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2268",
+    "customer_id": "C1024",
+    "purchase_date": "2026-09-01",
+    "amount": 163.47,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2269",
+    "customer_id": "C1018",
+    "purchase_date": "2026-09-21",
+    "amount": 110.58,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2270",
+    "customer_id": "C1000",
+    "purchase_date": "2026-09-02",
+    "amount": 209.27,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2271",
+    "customer_id": "C1050",
+    "purchase_date": "2026-09-05",
+    "amount": 119.2,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2272",
+    "customer_id": "C1054",
+    "purchase_date": "2026-09-14",
+    "amount": 192.81,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2273",
+    "customer_id": "C1014",
+    "purchase_date": "2026-09-02",
+    "amount": 199.72,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2274",
+    "customer_id": "C1023",
+    "purchase_date": "2026-08-31",
+    "amount": 39.43,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2275",
+    "customer_id": "C1039",
+    "purchase_date": "2026-08-31",
+    "amount": 175.62,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2276",
+    "customer_id": "C1026",
+    "purchase_date": "2026-08-25",
+    "amount": 166.08,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2277",
+    "customer_id": "C1027",
+    "purchase_date": "2026-08-27",
+    "amount": 16.73,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2278",
+    "customer_id": "C1024",
+    "purchase_date": "2026-09-03",
+    "amount": 66.93,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2279",
+    "customer_id": "C1020",
+    "purchase_date": "2026-08-30",
+    "amount": 62.58,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2280",
+    "customer_id": "C1024",
+    "purchase_date": "2026-09-16",
+    "amount": 138.5,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2281",
+    "customer_id": "C1026",
+    "purchase_date": "2026-09-06",
+    "amount": 46.94,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2282",
+    "customer_id": "C1000",
+    "purchase_date": "2026-09-21",
+    "amount": 101.28,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2283",
+    "customer_id": "C1014",
+    "purchase_date": "2026-09-01",
+    "amount": 185.65,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2284",
+    "customer_id": "C1024",
+    "purchase_date": "2026-09-15",
+    "amount": 92.68,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2285",
+    "customer_id": "C1059",
+    "purchase_date": "2026-09-19",
+    "amount": 140.4,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2286",
+    "customer_id": "C1052",
+    "purchase_date": "2026-09-02",
+    "amount": 229.8,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2287",
+    "customer_id": "C1013",
+    "purchase_date": "2026-09-27",
+    "amount": 97.64,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2288",
+    "customer_id": "C1019",
+    "purchase_date": "2026-08-29",
+    "amount": 146.34,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2289",
+    "customer_id": "C1030",
+    "purchase_date": "2026-08-18",
+    "amount": 231.34,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2290",
+    "customer_id": "C1040",
+    "purchase_date": "2026-09-21",
+    "amount": 214.84,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2291",
+    "customer_id": "C1045",
+    "purchase_date": "2026-09-11",
+    "amount": 92.81,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2292",
+    "customer_id": "C1044",
+    "purchase_date": "2026-08-28",
+    "amount": 175.13,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2293",
+    "customer_id": "C1048",
+    "purchase_date": "2026-09-04",
+    "amount": 163.73,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2294",
+    "customer_id": "C1039",
+    "purchase_date": "2026-09-09",
+    "amount": 24.6,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2295",
+    "customer_id": "C1014",
+    "purchase_date": "2026-09-17",
+    "amount": 225.35,
+    "currency": "USD",
+    "status": "processing",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2296",
+    "customer_id": "C1041",
+    "purchase_date": "2026-09-21",
+    "amount": 15.44,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2297",
+    "customer_id": "C1011",
+    "purchase_date": "2026-09-29",
+    "amount": 202.89,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2298",
+    "customer_id": "C1023",
+    "purchase_date": "2026-08-23",
+    "amount": 125.17,
+    "currency": "USD",
+    "status": "delivered",
+    "synthetic": true
+  },
+  {
+    "order_id": "O2299",
+    "customer_id": "C1056",
+    "purchase_date": "2026-09-07",
+    "amount": 179.72,
+    "currency": "USD",
+    "status": "shipped",
+    "synthetic": true
+  }
+]

@@ -34,7 +34,7 @@ interface ShareRow {
 export class MultiAgentComponent implements OnInit, OnDestroy {
   cases: MaCase[] = [];
   results: MaResults | null = null;
-  status: MaStatus = { status: 'idle', started_at: null, error: null, done: 0, total: 10 };
+  status: MaStatus = { status: 'idle', started_at: null, error: null, done: 0, total: 0 };
   loadingResults = false;
 
   metrics: MetricRow[] = [];
@@ -175,8 +175,8 @@ export class MultiAgentComponent implements OnInit, OnDestroy {
     this.metrics = [
       {
         label: 'Pass rate',
-        single: `${s.passes}/10 (${Math.round(s.pass_rate * 100)}%)`,
-        multi: `${m.passes}/10 (${Math.round(m.pass_rate * 100)}%)`,
+        single: `${s.passes}/${this.cases.length || '?'} (${Math.round(s.pass_rate * 100)}%)`,
+        multi: `${m.passes}/${this.cases.length || '?'} (${Math.round(m.pass_rate * 100)}%)`,
         singleWins: s.pass_rate > m.pass_rate,
         multiWins: m.pass_rate > s.pass_rate,
       },

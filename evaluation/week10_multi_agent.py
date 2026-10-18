@@ -19,78 +19,34 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.config import DEFAULT_COLLECTION, MIN_SCORE_HYBRID, TOP_K
+from src.config import DEFAULT_COLLECTION
 from src.generation.citations import extract_citations, validate_citations
 from src.generation.langfuse_client import get_langfuse
-from src.generation.llm_client import GROQ_MODEL, LLM_PROVIDER, OLLAMA_MODEL, ask_llm
-from src.generation.prompts import SYSTEM_PROMPT as POLICY_SYSTEM_PROMPT
+from src.generation.llm_client import ask_llm, default_model
+from src.generation.prompts import system_prompt as policy_system_prompt
 from src.generation.prompts import build_context, build_user_prompt
-from src.generation.refusal import REFUSAL_MESSAGE
+from src.generation.refusal import refusal_message
 
-COST_PER_1M_TOKENS = 0.90
-POLICY_TOOL_MAX_ATTEMPTS = 2
 
-AGENT_CARD = {
-    "name": "billing-support-orchestrator",
-    "description": (
-        "Manager agent for billing-migration support questions. Delegates query "
-        "triage and documentation lookup to two specialists and returns a grounded, "
-        "cited answer or an explicit refusal."
-    ),
-    "version": "1.0.0",
-    "url": "https://billing-support.example.com/a2a",
-    "defaultInputModes": ["text/plain"],
-    "defaultOutputModes": ["text/plain", "application/json"],
-    "capabilities": {"streaming": False, "pushNotifications": False},
-    "authentication": {"schemes": ["bearer"]},
-    "skills": [
-        {
-            "id": "triage-query",
-            "name": "Triage query",
-            "description": "Normalize error and plan codes, classify intent, rewrite the search query.",
-            "inputModes": ["text/plain"],
-            "outputModes": ["application/json"],
-        },
-        {
-            "id": "policy-lookup",
-            "name": "Policy lookup",
-            "description": "Search the billing help-centre corpus and draft a cited answer.",
-            "inputModes": ["text/plain"],
-            "outputModes": ["text/plain"],
-        },
-        {
-            "id": "draft-reply",
-            "name": "Draft reply",
-            "description": "Verify the draft against its sources and return the final grounded answer or refusal.",
-            "inputModes": ["text/plain"],
-            "outputModes": ["text/plain"],
-        },
-    ],
-}
 
-TRIAGE_SYSTEM_PROMPT = (
-    "You are a query-triage specialist for a billing-migration support system. "
-    "You never answer the question. Given a raw customer question, return ONLY a JSON "
-    "object with keys: intent (one of error_code, policy, procedure, rollback, "
-    "permissions, other), mentioned_codes (list of codes written in canonical form such "
-    "as ERR-4032, PAY-1001, PLAN-ENT-V1; expand a bare number like 'error 4032' to "
-    "ERR-4032), normalized_query (one clear question that keeps the customer's meaning "
-    "and includes the canonical codes). No prose, no code fences."
-)
+def _setting(key):
+    from src.catalog import settings
+    return settings.get(key)
 
-SYNTHESIS_SYSTEM_PROMPT = (
-    "You are the orchestrator of a billing-support team. A policy-lookup specialist "
-    "drafted an answer from retrieved documentation. Review the draft against the "
-    "supplied source chunks and return the final customer reply.\n"
-    "Rules:\n"
-    "1. Keep only claims supported by the source chunks. Add no new facts.\n"
-    "2. Keep every citation exactly as written in the draft, in square brackets. Never "
-    "shorten, alter or add a chunk ID.\n"
-    f"3. If the draft is not supported by the chunks, respond exactly: {REFUSAL_MESSAGE}\n"
-    "4. If policy_lookup_failed is true, do not answer from memory and do not invent any "
-    "policy, error meaning, fix or deadline. Say plainly that documentation lookup is "
-    "temporarily unavailable and that the question has been escalated for manual follow-up."
-)
+
+def agent_card() -> dict:
+    """The A2A agent card (setting week10.agent_card)."""
+    return _setting("week10.agent_card")
+
+
+def triage_prompt() -> str:
+    from src.catalog import prompts
+    return prompts.body("week10.triage")
+
+
+def synthesis_prompt() -> str:
+    from src.catalog import prompts
+    return prompts.render("week10.synthesis", refusal_message=refusal_message())
 
 
 @dataclass
@@ -129,9 +85,9 @@ def _retrieve(query, force_http_500):
         return {"status": 500, "error": "http_500 internal server error (injected)", "chunks": []}
     from src.retrieval.hybrid_search import hybrid_search
 
-    raw = hybrid_search(DEFAULT_COLLECTION, query, top_n=TOP_K)
+    raw = hybrid_search(DEFAULT_COLLECTION, query, top_n=_setting("docs.top_k"))
     chunks = [{**c, "score": c.get("rrf_score", 0.0)} for c in raw]
-    if chunks and max(c["score"] for c in chunks) < MIN_SCORE_HYBRID:
+    if chunks and max(c["score"] for c in chunks) < _setting("docs.min_score_hybrid"):
         chunks = []
     return {"status": 200, "chunks": chunks}
 
@@ -146,7 +102,7 @@ def run_triage_worker(question):
         return triage, _handoff("orchestrator_to_triage_worker", 0, 0, 0.0, "skipped_no_code_to_normalize")
 
     t0 = time.perf_counter()
-    text, tok_in, tok_out = ask_llm(TRIAGE_SYSTEM_PROMPT, question)
+    text, tok_in, tok_out = ask_llm(triage_prompt(), question)
     ms = (time.perf_counter() - t0) * 1000
     match = re.search(r"\{.*\}", text, re.S)
     if match:
@@ -167,7 +123,7 @@ def run_policy_worker(query, inject_failure=False):
     chunks = []
     attempts = 0
     lookup_failed = False
-    for attempt in range(1, POLICY_TOOL_MAX_ATTEMPTS + 1):
+    for attempt in range(1, _setting("week10.policy_tool_max_attempts") + 1):
         attempts = attempt
         t0 = time.perf_counter()
         result = _retrieve(query, force_http_500=inject_failure)
@@ -178,15 +134,15 @@ def run_policy_worker(query, inject_failure=False):
             lookup_failed = False
             break
         lookup_failed = True
-        handoffs.append(_handoff("policy_worker_search_tool", 0, 0, ms, f"attempt={attempt} status={result['status']} retrying={attempt < POLICY_TOOL_MAX_ATTEMPTS}"))
+        handoffs.append(_handoff("policy_worker_search_tool", 0, 0, ms, f"attempt={attempt} status={result['status']} retrying={attempt < _setting("week10.policy_tool_max_attempts")}"))
 
     if lookup_failed:
         return {"draft": "", "chunks": [], "lookup_failed": True, "attempts": attempts}, handoffs
     if not chunks:
-        return {"draft": REFUSAL_MESSAGE, "chunks": [], "lookup_failed": False, "attempts": attempts}, handoffs
+        return {"draft": refusal_message(), "chunks": [], "lookup_failed": False, "attempts": attempts}, handoffs
 
     t0 = time.perf_counter()
-    draft, tok_in, tok_out = ask_llm(POLICY_SYSTEM_PROMPT, build_user_prompt(query, chunks))
+    draft, tok_in, tok_out = ask_llm(policy_system_prompt(), build_user_prompt(query, chunks))
     ms = (time.perf_counter() - t0) * 1000
     handoffs.append(_handoff("orchestrator_to_policy_worker", tok_in, tok_out, ms, f"chunks={len(chunks)}"))
     return {"draft": draft, "chunks": chunks, "lookup_failed": False, "attempts": attempts}, handoffs
@@ -194,7 +150,7 @@ def run_policy_worker(query, inject_failure=False):
 
 def run_multi_agent(question, inject_failure=False):
     t_start = time.perf_counter()
-    model = GROQ_MODEL if LLM_PROVIDER == "groq" else OLLAMA_MODEL
+    model = default_model()
     lf = get_langfuse()
     trace = None
     if lf:
@@ -223,10 +179,10 @@ def run_multi_agent(question, inject_failure=False):
     if policy["lookup_failed"]:
         user_msg = f"Question: {question}\n\npolicy_lookup_failed: true\nDraft: (none)"
         t0 = time.perf_counter()
-        final, tok_in, tok_out = ask_llm(SYNTHESIS_SYSTEM_PROMPT, user_msg)
+        final, tok_in, tok_out = ask_llm(synthesis_prompt(), user_msg)
         handoffs.append(_handoff("orchestrator_synthesis", tok_in, tok_out, (time.perf_counter() - t0) * 1000, "degraded_path"))
-    elif not chunks or policy["draft"].strip() == REFUSAL_MESSAGE:
-        final = REFUSAL_MESSAGE
+    elif not chunks or policy["draft"].strip() == refusal_message():
+        final = refusal_message()
         handoffs.append(_handoff("orchestrator_synthesis", 0, 0, 0.0, "skipped_no_llm_refusal_passthrough"))
     else:
         cited = extract_citations(policy["draft"])
@@ -236,14 +192,14 @@ def run_multi_agent(question, inject_failure=False):
             f"Draft:\n{policy['draft']}\n\nSource chunks:\n\n{build_context(cited_chunks)}"
         )
         t0 = time.perf_counter()
-        final, tok_in, tok_out = ask_llm(SYNTHESIS_SYSTEM_PROMPT, user_msg)
+        final, tok_in, tok_out = ask_llm(synthesis_prompt(), user_msg)
         handoffs.append(_handoff("orchestrator_synthesis", tok_in, tok_out, (time.perf_counter() - t0) * 1000, f"cited_chunks={len(cited_chunks)}"))
-        if final.strip() == REFUSAL_MESSAGE:
-            final = REFUSAL_MESSAGE
+        if final.strip() == refusal_message():
+            final = refusal_message()
         else:
             citations_valid = validate_citations(extract_citations(final), retrieved_ids)
             if not citations_valid:
-                final = REFUSAL_MESSAGE
+                final = refusal_message()
 
     latency_ms = (time.perf_counter() - t_start) * 1000
     ans = MultiAgentAnswer(

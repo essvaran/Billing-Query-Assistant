@@ -12,8 +12,8 @@ from src.config import (
     BASELINE_COLLECTION,
     SEMANTIC_COLLECTION,
     STRUCTURE_AWARE_COLLECTION,
-    TOP_K,
 )
+from src.catalog import settings
 from src.generation.answer import answer_question
 from src.generation.llm_client import LLMRequestError
 from src.retrieval.search import search
@@ -83,8 +83,8 @@ def main() -> None:
             continue
 
         if args.compare_filters and where is not None:
-            unfiltered = search(collection, question, k=TOP_K)
-            filtered = search(collection, question, k=TOP_K, where=where)
+            unfiltered = search(collection, question, k=settings.get("docs.top_k"))
+            filtered = search(collection, question, k=settings.get("docs.top_k"), where=where)
             print()
             _print_results("Unfiltered", unfiltered)
             _print_results("Filtered", filtered)

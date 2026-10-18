@@ -3,9 +3,10 @@
   <div class="taxonomy-header">
     <div class="taxonomy-header__left">
       <a class="back-link" routerLink="/sample">← Back to Sample</a>
-      <h1>Failure Taxonomy <span class="seed-badge">seed = 80</span></h1>
+      <h1>Failure Taxonomy <span class="seed-badge">seed = {{ seed }}</span></h1>
       <p class="taxonomy-header__sub">
-        Failed traces from the 20-trace random sample. 4 of 20 traces failed (20% failure rate).
+        Failed traces from the {{ total }}-trace random sample. {{ failedCount }} of {{ total }} traces failed
+        ({{ total ? (failedCount / total * 100 | number:'1.0-0') : 0 }}% failure rate).
       </p>
     </div>
   </div>

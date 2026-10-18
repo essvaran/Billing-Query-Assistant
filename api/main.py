@@ -32,9 +32,12 @@ log = logging.getLogger("api")
 # Internal helpers
 # ---------------------------------------------------------------------------
 _CODE_RE = _re.compile(r"\b[A-Z]{2,}-[A-Z0-9]{2,}(?:-[A-Z0-9]+)+\b")
-_MULTI_PART_MARKERS = (" and ", " as well", " also ", "both ", " plus ", " additionally")
-_SEMANTIC_STARTS = ("why ", "how does ", "how do ", "what happens ", "explain ",
-                    "describe ", "what would ", "when does ", "when do ")
+
+
+def _markers(query_type: str) -> tuple[str, ...]:
+    """Words that mark a Docs query type (catalog list query_type, field markers)."""
+    from src.catalog import ref
+    return tuple(ref.meta("query_type", query_type, "markers", []) or [])
 
 
 def _normalise(text: str) -> str:
@@ -45,11 +48,11 @@ def _classify_query_type(question: str) -> str:
     q = question.lower()
     if question.count("?") > 1:
         return "multi-part"
-    if any(m in q for m in _MULTI_PART_MARKERS) and "?" in question:
+    if any(m in q for m in _markers("multi-part")) and "?" in question:
         return "multi-part"
     if _CODE_RE.search(question):
         return "exact keyword"
-    if q.startswith(_SEMANTIC_STARTS):
+    if q.startswith(_markers("semantic")):
         return "semantic"
     return "simple"
 
@@ -67,10 +70,25 @@ _ARTICLES_DIR = Path(__file__).resolve().parent.parent / "data" / "billing_artic
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Configuration first: in production a bad setting stops the API with a readable message instead of failing
+    # later on a customer's ticket. In development the same findings are logged as warnings.
+    from tier1 import preflight
+    problems = preflight.check_env()
+    for p in problems:
+        log.warning("config %s %s: %s Fix: %s", p.level.upper(), p.key, p.message, p.fix)
+    errors = [p for p in problems if p.level == "error"]
+    if errors and preflight.is_production():
+        raise SystemExit("Refusing to start in production: " + "; ".join(f"{p.key}: {p.fix}" for p in errors))
+
     from api.database import init_db
-    log.info("Initialising database…")
+    log.info("Initialising database")
     init_db()
     log.info("Database ready")
+
+    # Registers the span sink and the customer-name redaction provider in THIS process too, so names typed into
+    # a ticket are scrubbed from API-side traces and logs, not only in the CLI and MCP server processes.
+    from tier1 import tracing_store
+    tracing_store.install()
 
     from src.generation.langfuse_client import get_langfuse
     lf = get_langfuse()
@@ -83,7 +101,7 @@ async def lifespan(app: FastAPI):
 # ---------------------------------------------------------------------------
 # Application
 # ---------------------------------------------------------------------------
-limiter = Limiter(key_func=get_remote_address)
+from api.limiter import limiter
 
 app = FastAPI(
     title="Billing Support RAG API",
@@ -103,19 +121,33 @@ from api.race_router import router as race_router
 from api.agent_router import router as agent_router
 from api.auth import router as auth_router, get_current_user, require_admin
 from api.admin_router import router as admin_router
+from api.account_router import router as account_router
+from api.admin_billing_router import router as admin_billing_router
 from api.trajectory_router import router as trajectory_router
 from api.multiagent_router import router as multiagent_router
+from api.tier1_router import router as tier1_router
 from api.observability_router import router as observability_router
 from api.feedback_router import router as feedback_router
+from api.help_router import router as help_router
+from api.catalog_router import router as catalog_router
+from api.tier1_admin_router import router as tier1_admin_router
+from api.eval_admin_router import router as eval_admin_router
 
 app.include_router(auth_router)
 app.include_router(observability_router)
 app.include_router(feedback_router)
 app.include_router(admin_router)
+app.include_router(account_router)
+app.include_router(admin_billing_router)
 app.include_router(race_router)
 app.include_router(agent_router)
 app.include_router(trajectory_router)
 app.include_router(multiagent_router)
+app.include_router(tier1_router)
+app.include_router(help_router)
+app.include_router(catalog_router)
+app.include_router(tier1_admin_router)
+app.include_router(eval_admin_router)
 
 # ---------------------------------------------------------------------------
 # CORS  —  restrict to configured origins only
@@ -154,7 +186,29 @@ from api.models import (
 
 @app.get("/api/health", tags=["meta"])
 def health():
+    """Liveness: the process is up. Use /api/ready to know whether it can answer tickets."""
     return {"status": "ok"}
+
+
+@app.get("/api/ready", tags=["meta"])
+def ready():
+    """Readiness: configuration valid, databases open, search index built. 503 with the fixes when not ready.
+    Checks only local state (no model call), so a load balancer can poll it cheaply."""
+    from tier1 import db as tier1_db, preflight
+    problems = [p for p in preflight.check_env() + preflight.check_data() if p.level == "error"]
+    try:
+        from api.database import get_db
+        with get_db() as conn:
+            conn.execute("SELECT 1")
+        tier1_db.init_db()
+        with tier1_db.get_conn() as conn:
+            conn.execute("SELECT 1")
+    except Exception as exc:
+        problems.append(preflight.Problem("error", "database", f"A database could not be opened ({type(exc).__name__}).",
+                                          "Check that the data/ folder is writable."))
+    body = {"status": "ready" if not problems else "not_ready", "env": preflight.app_env(),
+            "problems": [{"key": p.key, "message": p.message, "fix": p.fix} for p in problems]}
+    return JSONResponse(body, status_code=200 if not problems else 503)
 
 # ---------------------------------------------------------------------------
 # RAG ask endpoint (authenticated)
@@ -201,7 +255,13 @@ def ask(body: AskRequest, request: Request, _user=Depends(get_current_user)) -> 
 # ---------------------------------------------------------------------------
 # Document upload (admin only, size-limited)
 # ---------------------------------------------------------------------------
-_ALLOWED_UPLOAD_EXTENSIONS = {".pdf", ".md", ".txt", ".docx", ".xlsx", ".xls"}
+
+
+def _allowed_upload_extensions() -> set[str]:
+    """Active catalog list upload_extension, limited to the types the ingestion code has a loader for."""
+    from src.catalog import ref
+    from src.ingestion.ingest_document import SUPPORTED_EXTENSIONS
+    return set(ref.codes("upload_extension")) & set(SUPPORTED_EXTENSIONS)
 
 
 @app.post("/api/upload", response_model=UploadResponse)
@@ -215,10 +275,10 @@ async def upload_document(
 
     filename = file.filename or "upload"
     suffix = Path(filename).suffix.lower()
-    if suffix not in _ALLOWED_UPLOAD_EXTENSIONS:
+    if suffix not in _allowed_upload_extensions():
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported file type '{suffix}'. Allowed: {', '.join(sorted(_ALLOWED_UPLOAD_EXTENSIONS))}",
+            detail=f"Unsupported file type '{suffix}'. Allowed: {', '.join(sorted(_allowed_upload_extensions()))}",
         )
 
     # Stream to a temp buffer and enforce size limit
@@ -282,7 +342,7 @@ def get_traces(
     question: Optional[str] = Query(default=None),
     limit: int = Query(default=50, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
-    _user=Depends(get_current_user),
+    _user=Depends(require_admin),
 ) -> TracesResponse:
     records = _load_jsonl(_TRACES_PATH)
 
@@ -309,8 +369,31 @@ def get_traces(
     return TracesResponse(traces=traces, total=total, offset=offset, limit=limit)
 
 
+@app.get("/api/traces/sample/meta")
+def get_sample_meta(_user=Depends(require_admin)) -> dict:
+    """How the Docs trace sample was drawn (settings docs.sample_seed and docs.sample_size) and how many rows it has."""
+    from src.catalog import settings
+    return {"seed": settings.get("docs.sample_seed"), "size": settings.get("docs.sample_size"), "n": len(_load_jsonl(_SAMPLE_PATH))}
+
+
+@app.get("/api/traces/sample/taxonomy")
+def get_sample_taxonomy(_user=Depends(require_admin)) -> dict:
+    """Failed sample traces with their failure mode (catalog list sample_failure_mode), classified on the server."""
+    import re as _re2
+    from src.generation.refusal import is_refusal
+    records = _load_jsonl(_SAMPLE_PATH)
+    failed = [r for r in records if not r.get("citations_valid")]
+    dash = _re2.compile("HC-BILL-\\d+[\u2013\u2014]")
+    rows = []
+    for r in failed:
+        raw = r.get("raw_output") or r.get("final_answer") or ""
+        mode = "Corpus Gap / False Refusal" if is_refusal(raw) else "Citation Character Error" if dash.search(raw) else "Citation Abbreviation"
+        rows.append({"trace_id": r.get("trace_id"), "question": r.get("question", ""), "mode": mode})
+    return {"total": len(records), "failed": len(rows), "rows": rows}
+
+
 @app.get("/api/traces/sample", response_model=list[TraceRecord])
-def get_sample_traces(_user=Depends(get_current_user)) -> list[TraceRecord]:
+def get_sample_traces(_user=Depends(require_admin)) -> list[TraceRecord]:
     records = _load_jsonl(_SAMPLE_PATH)
     result = []
     for r in records:
@@ -324,8 +407,8 @@ def get_sample_traces(_user=Depends(get_current_user)) -> list[TraceRecord]:
 
 
 @app.get("/api/traces/{trace_id}/prompt", response_model=TracePrompt)
-def get_trace_prompt(trace_id: str, _user=Depends(get_current_user)) -> TracePrompt:
-    from src.generation.prompts import SYSTEM_PROMPT, build_user_prompt
+def get_trace_prompt(trace_id: str, _user=Depends(require_admin)) -> TracePrompt:
+    from src.generation.prompts import build_user_prompt, system_prompt
     from src.retrieval.vector_store import get_collection
 
     trace: Optional[dict] = None
@@ -366,16 +449,16 @@ def get_trace_prompt(trace_id: str, _user=Depends(get_current_user)) -> TracePro
     return TracePrompt(
         trace_id=trace_id,
         query_type=_classify_query_type(trace.get("question", "")),
-        system_prompt=SYSTEM_PROMPT,
+        system_prompt=system_prompt(),
         user_prompt=user_prompt,
     )
 
 
 @app.get("/api/traces/{trace_id}/replay", response_model=ReplayResult)
-def replay_trace(trace_id: str, _user=Depends(get_current_user)) -> ReplayResult:
+def replay_trace(trace_id: str, _user=Depends(require_admin)) -> ReplayResult:
     from src.generation.citations import extract_citations, validate_citations
-    from src.generation.llm_client import LLM_PROVIDER, GROQ_MODEL, OLLAMA_MODEL, LLMRequestError, ask_llm
-    from src.generation.prompts import SYSTEM_PROMPT, build_user_prompt
+    from src.generation.llm_client import LLMRequestError, ask_llm, default_model
+    from src.generation.prompts import build_user_prompt, system_prompt
     from src.retrieval.vector_store import get_collection
 
     trace: Optional[dict] = None
@@ -413,7 +496,7 @@ def replay_trace(trace_id: str, _user=Depends(get_current_user)) -> ReplayResult
     replayed_citations_valid = False
     in_tok = out_tok = 0
     original_model = trace.get("model", "unknown")
-    env_default = GROQ_MODEL if LLM_PROVIDER == "groq" else OLLAMA_MODEL
+    env_default = default_model()
     replay_model = original_model
 
     if chunks_used:
@@ -423,9 +506,9 @@ def replay_trace(trace_id: str, _user=Depends(get_current_user)) -> ReplayResult
         ]
         user_prompt = build_user_prompt(trace["question"], prompt_chunks)
         try:
-            replayed_raw, in_tok, out_tok = ask_llm(SYSTEM_PROMPT, user_prompt, model=original_model)
+            replayed_raw, in_tok, out_tok = ask_llm(system_prompt(), user_prompt, model=original_model)
         except LLMRequestError:
-            replayed_raw, in_tok, out_tok = ask_llm(SYSTEM_PROMPT, user_prompt)
+            replayed_raw, in_tok, out_tok = ask_llm(system_prompt(), user_prompt)
             replay_model = env_default
         retrieved_ids = {c["chunk_id"] for c in chunks_used}
         replayed_citations = extract_citations(replayed_raw)

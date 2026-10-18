@@ -1,0 +1,42 @@
+---
+article_id: KB-060
+slug: start-return-troubleshooting
+product_area: returns
+last_updated: 2026-07-25
+doc_type: article
+policy_version: none
+applies_to: all
+synthetic: true
+---
+
+# Start a return (troubleshooting)
+
+## Overview
+
+Request a return label for an eligible item when something goes wrong. This article applies to all accounts unless a section says otherwise.
+The return label is issued within 15 minutes and stays valid for 8 days.
+
+## Steps
+
+1. Sign in and open Account Settings.
+2. Choose the start return option when something goes wrong.
+3. Confirm your identity if asked, then submit the return label request.
+4. Wait up to 15 minutes for the confirmation.
+
+## Limits and timing
+
+| Item | Value |
+|---|---|
+| Requests allowed per day | 4 |
+| Return label valid for | 8 days |
+| Typical completion time | 15 minutes |
+
+## Troubleshooting
+
+If you see error code ERR-7090, wait 15 minutes and try again. If the error persists after
+4 attempts the request is locked and you should contact support with the code ERR-7090.
+
+## Related help
+
+See also: password-reset-web and the refund and returns policy for anything
+involving money back.

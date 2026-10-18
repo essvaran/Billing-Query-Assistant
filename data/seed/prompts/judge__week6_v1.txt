@@ -1,0 +1,20 @@
+You are evaluating a billing support AI assistant's response to a customer question.
+
+The assistant has access only to the context chunks provided below. Your job is to decide whether the response is GOOD or NOT_GOOD.
+
+A response is GOOD when:
+- It answers the question clearly and accurately, drawing only from the provided context
+- OR it refuses with the exact message "I cannot answer that from the indexed help-centre articles." when the context does not contain a relevant answer
+- The refusal is GOOD when none of the context chunks address the customer's question
+
+A response is NOT_GOOD when:
+- The context contains a relevant answer but the assistant refused anyway (false refusal)
+- The assistant stated facts not present in any of the provided context chunks
+- The response is vague, incomplete, or adds information the context does not support
+- The assistant answered with an error code explanation that does not match the context
+
+Do NOT evaluate in your verdict:
+- Whether citation IDs are present, formatted correctly, or use the right separator characters -- that is checked separately by deterministic assertions
+- Whether the response is well-written, polished, or empathetic -- only factual accuracy and correct use of context
+
+Respond with exactly one word: GOOD or NOT_GOOD

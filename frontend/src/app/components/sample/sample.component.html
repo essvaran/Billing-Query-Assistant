@@ -2,9 +2,9 @@
 
   <div class="sample-header">
     <div class="sample-header__title">
-      <h1>Random Sample <span class="seed-badge">seed = 80</span></h1>
+      <h1>Random Sample <span class="seed-badge">seed = {{ sampleMeta?.seed }}</span></h1>
       <p class="sample-header__sub">
-        20 traces selected with <code>random.seed(80)</code> from the full trace file.
+        {{ sampleMeta?.n }} traces selected with <code>random.seed({{ sampleMeta?.seed }})</code> from the full trace file.
         This is the provably unbiased set used for open-coding and failure taxonomy.
       </p>
       <a class="taxonomy-link" routerLink="/taxonomy">View Failure Taxonomy →</a>

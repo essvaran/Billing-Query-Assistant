@@ -53,6 +53,10 @@
             (click)="setTab('users')" [attr.aria-selected]="activeTab === 'users'">
       Users <span class="tab-count">{{ users.length }}</span>
     </button>
+    <button class="tab-btn" role="tab" [class.active]="activeTab === 'billing'"
+            (click)="setTab('billing')" [attr.aria-selected]="activeTab === 'billing'">
+      Billing
+    </button>
 
     <span class="tab-divider" aria-hidden="true"></span>
 
@@ -105,21 +109,21 @@
           <div class="form-grid">
             <label class="form-field">
               <span>Ticket ID <span class="required">*</span></span>
-              <input [(ngModel)]="newTicket.ticket_id" placeholder="T011" />
+              <input [(ngModel)]="newTicket.ticket_id" placeholder="Tnnn" />
             </label>
             <label class="form-field">
               <span>Customer ID <span class="required">*</span></span>
-              <input [(ngModel)]="newTicket.customer_id" placeholder="C101" />
+              <input [(ngModel)]="newTicket.customer_id" placeholder="Cnnn" />
             </label>
             <label class="form-field">
               <span>Order ID <span class="required">*</span></span>
-              <input [(ngModel)]="newTicket.order_id" placeholder="O201" />
+              <input [(ngModel)]="newTicket.order_id" placeholder="Onnn" />
             </label>
             <label class="form-field">
               <span>Expected Verdict</span>
               <select [(ngModel)]="newTicket.expected_verdict">
                 <option value="">-- none --</option>
-                @for (v of verdictOptions; track v) { <option [value]="v">{{ v }}</option> }
+                @for (v of verdictOptions; track v) { <option [value]="v">{{ label('verdict', v) }}</option> }
               </select>
             </label>
             <label class="form-field form-field--full">
@@ -156,7 +160,7 @@
                     <td>
                       <select [(ngModel)]="editingTicket!.expected_verdict" class="cell-select">
                         <option value="">--</option>
-                        @for (v of verdictOptions; track v) { <option [value]="v">{{ v }}</option> }
+                        @for (v of verdictOptions; track v) { <option [value]="v">{{ label('verdict', v) }}</option> }
                       </select>
                     </td>
                     <td><textarea [(ngModel)]="editingTicket!.text" class="cell-textarea" rows="2"></textarea></td>
@@ -207,7 +211,7 @@
           <div class="form-grid">
             <label class="form-field">
               <span>Order ID <span class="required">*</span></span>
-              <input [(ngModel)]="newOrder.order_id" placeholder="O211" />
+              <input [(ngModel)]="newOrder.order_id" placeholder="Onnn" />
             </label>
             <label class="form-field">
               <span>Purchase Date <span class="required">*</span></span>
@@ -221,7 +225,7 @@
               <span>Status <span class="required">*</span></span>
               <select [(ngModel)]="newOrder.status">
                 <option value="">-- select --</option>
-                @for (s of statusOptions; track s) { <option [value]="s">{{ s }}</option> }
+                @for (s of statusOptions; track s) { <option [value]="s">{{ label('order_status', s) }}</option> }
               </select>
             </label>
           </div>
@@ -248,7 +252,7 @@
                   <td><input type="number" [(ngModel)]="editingOrder!.amount_usd" class="cell-input" step="0.01" min="0" /></td>
                   <td>
                     <select [(ngModel)]="editingOrder!.status" class="cell-select">
-                      @for (s of statusOptions; track s) { <option [value]="s">{{ s }}</option> }
+                      @for (s of statusOptions; track s) { <option [value]="s">{{ label('order_status', s) }}</option> }
                     </select>
                   </td>
                   <td class="action-cell">
@@ -294,13 +298,13 @@
           <div class="form-grid">
             <label class="form-field">
               <span>Customer ID <span class="required">*</span></span>
-              <input [(ngModel)]="newCustomer.customer_id" placeholder="C111" />
+              <input [(ngModel)]="newCustomer.customer_id" placeholder="Cnnn" />
             </label>
             <label class="form-field">
               <span>Tier <span class="required">*</span></span>
               <select [(ngModel)]="newCustomer.tier">
                 <option value="">-- select --</option>
-                @for (t of tierOptions; track t) { <option [value]="t">{{ t }}</option> }
+                @for (t of tierOptions; track t) { <option [value]="t">{{ label('plan_tier', t) }}</option> }
               </select>
             </label>
             <label class="form-field">
@@ -329,7 +333,7 @@
                   <td><span class="badge">{{ c.customer_id }}</span></td>
                   <td>
                     <select [(ngModel)]="editingCustomer!.tier" class="cell-select">
-                      @for (t of tierOptions; track t) { <option [value]="t">{{ t }}</option> }
+                      @for (t of tierOptions; track t) { <option [value]="t">{{ label('plan_tier', t) }}</option> }
                     </select>
                   </td>
                   <td><input type="number" [(ngModel)]="editingCustomer!.refund_days" class="cell-input" min="1" /></td>
@@ -367,7 +371,7 @@
         <div>
           <h3 class="form-title" style="margin:0">User Management</h3>
           <p style="margin:0.25rem 0 0; font-size:0.8rem; color:#6c7086">
-            Users are added automatically on first login. Change roles here — the primary admin account cannot be demoted.
+            Customers sign up themselves. Change roles or disable accounts here. The primary admin account cannot be demoted or disabled.
           </p>
         </div>
       </div>
@@ -375,16 +379,21 @@
       <div class="table-wrap">
         <table class="data-table" role="grid">
           <thead>
-            <tr><th>Email</th><th>Role</th><th>Joined</th><th>Change Role</th></tr>
+            <tr><th>Email</th><th>Name</th><th>Role</th><th>Plan</th><th>Status</th><th>Joined</th><th>Change Role</th></tr>
           </thead>
           <tbody>
             @for (u of users; track u.id) {
               <tr>
                 <td>{{ u.email }}</td>
+                <td class="muted">{{ u.full_name || '-' }}</td>
                 <td>
                   <span class="chip chip--{{ u.role === 'admin' ? 'info' : 'neutral' }}">
                     {{ u.role }}
                   </span>
+                </td>
+                <td class="muted">{{ u.plan_name || '-' }}<span *ngIf="u.subscription_status === 'cancelled'"> (cancelled)</span></td>
+                <td>
+                  <span class="chip chip--{{ u.is_active === false ? 'neutral' : 'info' }}">{{ u.is_active === false ? 'disabled' : 'active' }}</span>
                 </td>
                 <td class="muted" style="font-size:0.8rem">{{ u.created_at | slice:0:10 }}</td>
                 <td class="action-cell">
@@ -397,6 +406,11 @@
                       Demote to User
                     </button>
                   }
+                  @if (u.is_active === false) {
+                    <button class="btn btn--sm btn--primary" (click)="setUserActive(u, true)" [disabled]="saving">Enable</button>
+                  } @else {
+                    <button class="btn btn--sm btn--danger" (click)="setUserActive(u, false)" [disabled]="saving">Disable</button>
+                  }
                 </td>
               </tr>
             }
@@ -405,6 +419,9 @@
       </div>
     </div>
   }
+
+  <!-- ===== BILLING ===== -->
+  @if (activeTab === 'billing') { <app-billing-admin></app-billing-admin> }
 
   <!-- ===== DEV / RESEARCH TOOLS ===== -->
   @if (activeTab === 'observability') { <app-observability></app-observability> }

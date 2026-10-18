@@ -58,6 +58,8 @@ export class TrajectoryComponent implements OnInit, OnDestroy {
     this.stopAllPolls();
   }
 
+  adversarialIds(): string { return this.sequences.filter((s: any) => s.adversarial).map((s: any) => s.ticket_id).join(', '); }
+
   selectTab(tab: Tab) {
     this.activeTab = tab;
   }

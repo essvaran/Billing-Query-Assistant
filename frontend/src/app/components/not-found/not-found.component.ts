@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-not-found',
@@ -7,10 +7,11 @@ import { RouterLink } from '@angular/router';
   imports: [RouterLink],
   template: `
     <div class="nf-shell">
-      <span class="nf-code">404</span>
-      <h1 class="nf-title">Page not found</h1>
-      <p class="nf-desc">The page you are looking for does not exist.</p>
-      <a class="nf-btn" routerLink="/">Go home</a>
+      <span class="nf-code">{{ code }}</span>
+      <h1 class="nf-title">{{ title }}</h1>
+      <p class="nf-desc">{{ desc }}</p>
+      <a class="nf-btn" routerLink="/">Go to the chat</a>
+      <a class="nf-help" routerLink="/help">How to use this app</a>
     </div>
   `,
   styles: [`
@@ -37,7 +38,8 @@ import { RouterLink } from '@angular/router';
       font-weight: 600;
       color: var(--text-primary);
     }
-    .nf-desc { margin: 0; color: var(--text-muted); font-size: 0.9rem; }
+    .nf-desc { margin: 0; color: var(--text-muted); font-size: 0.9rem; max-width: 32rem; padding: 0 1rem; }
+    .nf-help { color: var(--accent); font-size: 0.85rem; }
     .nf-btn {
       margin-top: 0.5rem;
       padding: 0.5rem 1.5rem;
@@ -52,4 +54,10 @@ import { RouterLink } from '@angular/router';
     }
   `],
 })
-export class NotFoundComponent {}
+export class NotFoundComponent {
+  /** Also serves the "no access" page: the route passes code, title and desc in its data. */
+  private data = inject(ActivatedRoute).snapshot.data;
+  code = this.data['code'] ?? '404';
+  title = this.data['title'] ?? 'Page not found';
+  desc = this.data['desc'] ?? 'The page you are looking for does not exist.';
+}

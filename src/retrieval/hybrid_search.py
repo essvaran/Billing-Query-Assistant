@@ -13,6 +13,7 @@ def hybrid_search(
     bm25_k: int = 25,
     rrf_k: int = 60,
     top_n: int = 3,
+    where: dict | None = None,
 ) -> list[dict]:
     """
     Fuse dense and BM25 ranked lists with Reciprocal Rank Fusion.
@@ -22,8 +23,8 @@ def hybrid_search(
 
     rrf_k=60 is the value from the original Cormack et al. (2009) paper.
     """
-    dense_hits = search(collection_name, query, k=dense_k)
-    bm25_hits = bm25_search(collection_name, query, k=bm25_k)
+    dense_hits = search(collection_name, query, k=dense_k, where=where)
+    bm25_hits = bm25_search(collection_name, query, k=bm25_k, where=where)
 
     # accumulate RRF scores keyed by chunk_id
     rrf_scores: dict[str, float] = {}
@@ -54,6 +55,11 @@ def hybrid_search(
                 "source_file": meta.get("source_file"),
                 "section": meta.get("section"),
                 "product_area": meta.get("product_area"),
+                "slug": meta.get("slug"),
+                "doc_type": meta.get("doc_type"),
+                "policy_version": meta.get("policy_version"),
+                "applies_to": meta.get("applies_to"),
+                "last_updated": meta.get("last_updated"),
                 "rrf_score": round(score, 6),
                 "text": meta.get("text", ""),
             }

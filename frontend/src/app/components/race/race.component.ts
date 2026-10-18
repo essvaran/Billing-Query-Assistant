@@ -1,4 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RaceService, RaceResults, TicketInfo, TicketResult, RaceStatus } from '../../services/race.service';
 
@@ -27,14 +29,19 @@ export class RaceComponent implements OnInit, OnDestroy {
   workflowByTicket: Record<string, TicketResult> = {};
   metrics: MetricRow[] = [];
 
-  langfuseUrl = (window as any).__langfuseHost ||
-    'https://cloud.langfuse.com';
+  langfuseUrl = '';
+  tools: { name: string; description: string }[] = [];
+  ticketCount: number | null = null;
+  private http = inject(HttpClient);
 
   private _pollTimer: any = null;
 
   constructor(private svc: RaceService) {}
 
   ngOnInit(): void {
+    this.http.get<{ langfuse_url?: string }>('/api/obs/meta').subscribe({ next: m => (this.langfuseUrl = m.langfuse_url ?? ''), error: () => {} });
+    this.svc.getTools().subscribe({ next: t => (this.tools = t), error: () => {} });
+    this.svc.getTickets().subscribe({ next: t => (this.ticketCount = t.length), error: () => {} });
     this._fetchStatus();
     this._fetchResults();
   }

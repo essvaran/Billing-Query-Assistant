@@ -78,7 +78,8 @@ def ensure_dataset(lf, labels: list) -> None:
     except Exception:
         pass  # already exists
 
-    cases = _load_jsonl(_EVAL_SET)
+    from src.catalog import eval_store
+    cases = eval_store.cases("docs")   # the Docs eval set lives in the catalog (Admin, Eval cases)
     for case in cases:
         human = label_map.get(case["case_id"])
         lf.create_dataset_item(

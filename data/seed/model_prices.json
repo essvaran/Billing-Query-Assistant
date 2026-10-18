@@ -1,0 +1,11 @@
+{
+  "_about": "First-run seed for model prices (USD per 1M tokens, on-demand) in data/catalog.db. Edited afterwards in the app (Admin, Model prices).",
+  "prices": [
+    {"model": "openai/gpt-oss-120b", "input_per_1m": 0.15, "output_per_1m": 0.60, "source": "https://console.groq.com/docs/models", "checked_on": "2026-10-18"},
+    {"model": "openai/gpt-oss-20b", "input_per_1m": 0.075, "output_per_1m": 0.30, "source": "https://console.groq.com/docs/models", "checked_on": "2026-10-18"},
+    {"model": "openai/gpt-oss-safeguard-20b", "input_per_1m": 0.075, "output_per_1m": 0.30, "source": "https://console.groq.com/docs/models", "checked_on": "2026-10-18"},
+    {"model": "qwen/qwen3.8-27b", "input_per_1m": 0.80, "output_per_1m": 4.00, "source": "https://console.groq.com/docs/models", "checked_on": "2026-10-18"},
+    {"model": "llama-3.1-8b-instant", "input_per_1m": 0.05, "output_per_1m": 0.08, "source": "historical; the provider now shows Contact sales", "checked_on": "2026-10-18"},
+    {"model": "default", "input_per_1m": 0.05, "output_per_1m": 0.08, "source": "used for any model not listed", "checked_on": "2026-10-18"}
+  ]
+}

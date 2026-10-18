@@ -19,6 +19,14 @@ from api.main import app
 client = TestClient(app)
 
 
+@pytest.fixture(autouse=True)
+def _temp_db(tmp_path, monkeypatch):
+    """Auth now reads the users table, so give each test a migrated throwaway database instead of data/app.db."""
+    import api.database as database
+    monkeypatch.setattr(database, "DB_PATH", tmp_path / "app.db")
+    database.init_db()
+
+
 def _make_jwt(email: str, role: str = "user") -> str:
     from jose import jwt
     from api.config import JWT_SECRET, JWT_ALGORITHM
@@ -80,8 +88,16 @@ def test_traces_unauthenticated():
     assert response.status_code == 401
 
 
-def test_traces_authenticated():
+def test_traces_are_admin_only():
+    # the trace explorer shows other users' questions and its replay spends model quota
     token = _make_jwt("user@example.com")
+    assert client.get("/api/traces", headers={"Authorization": f"Bearer {token}"}).status_code == 403
+    for path in ("/api/agent/tickets", "/api/race/status", "/api/trajectory/status"):
+        assert client.get(path, headers={"Authorization": f"Bearer {token}"}).status_code == 403, path
+
+
+def test_traces_authenticated():
+    token = _make_jwt("lead@example.com", role="admin")
     response = client.get(
         "/api/traces",
         headers={"Authorization": f"Bearer {token}"},

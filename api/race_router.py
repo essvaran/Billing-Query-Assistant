@@ -10,7 +10,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 
-from api.auth import UserOut, get_current_user
+from api.auth import UserOut, require_admin  # research tools: admin only (they spend model quota)
 
 log = logging.getLogger("api.race")
 router = APIRouter(prefix="/api/race", tags=["race"])
@@ -22,24 +22,24 @@ _status_lock = threading.Lock()
 
 
 @router.get("/tickets")
-def get_tickets(_user: UserOut = Depends(get_current_user)):
-    """Return the 10 synthetic ticket fixtures with expected verdicts."""
-    from agent.tickets import BRANCHING_IDS, EXPECTED, TICKETS
+def get_tickets(_user: UserOut = Depends(require_admin)):
+    """The Week 7 ticket fixtures with expected verdicts (database, Admin, Tickets)."""
+    from agent import tickets as fx
     return [
         {
             "ticket_id": tid,
             "text": t["text"],
             "customer_id": t["customer_id"],
             "order_id": t["order_id"],
-            "expected": EXPECTED[tid],
-            "branching": tid in BRANCHING_IDS,
+            "expected": t.get("expected_verdict"),
+            "branching": tid in fx.branching_ids(),
         }
-        for tid, t in TICKETS.items()
+        for tid, t in fx.tickets().items()
     ]
 
 
 @router.get("/results")
-def get_results(_user: UserOut = Depends(get_current_user)):
+def get_results(_user: UserOut = Depends(require_admin)):
     if not _RESULTS_PATH.exists():
         raise HTTPException(404, "No race results yet — run a race first")
     try:
@@ -51,13 +51,13 @@ def get_results(_user: UserOut = Depends(get_current_user)):
 
 
 @router.get("/status")
-def get_status(_user: UserOut = Depends(get_current_user)):
+def get_status(_user: UserOut = Depends(require_admin)):
     with _status_lock:
         return dict(_status)
 
 
 @router.post("/run")
-def run_race(_user: UserOut = Depends(get_current_user)):
+def run_race(_user: UserOut = Depends(require_admin)):
     with _status_lock:
         if _status["status"] == "running":
             return {"status": "already_running"}

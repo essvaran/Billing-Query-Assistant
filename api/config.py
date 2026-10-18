@@ -29,7 +29,9 @@ def _get(name: str, default: str = "") -> str:
 # ---------------------------------------------------------------------------
 # Auth
 # ---------------------------------------------------------------------------
-GOOGLE_CLIENT_ID: str = _require("GOOGLE_CLIENT_ID")
+# Optional: without it the Google button is hidden and only email + password sign-in works.
+GOOGLE_CLIENT_ID: str = _get("GOOGLE_CLIENT_ID")
+PASSWORD_AUTH_ENABLED: bool = _get("PASSWORD_AUTH_ENABLED", "true").lower() not in ("0", "false", "no", "off")
 JWT_SECRET: str = _require("JWT_SECRET")
 JWT_ALGORITHM: str = "HS256"
 JWT_EXPIRE_DAYS: int = 7

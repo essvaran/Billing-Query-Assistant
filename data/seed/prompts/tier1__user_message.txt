@@ -1,0 +1,10 @@
+Trusted context from the ticketing system:
+{{context}}
+
+<ticket>
+Subject: {{subject}}
+
+{{body}}
+</ticket>
+
+Resolve this ticket following your rules.

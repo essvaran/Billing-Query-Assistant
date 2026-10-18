@@ -129,10 +129,12 @@ def fake(monkeypatch):
 def client(tmp_path, monkeypatch, fake):
     monkeypatch.setattr(database, "DB_PATH", tmp_path / "test.db")
     database.init_db()
-    eval_file = tmp_path / "eval_set.jsonl"
-    eval_file.write_text(json.dumps({"case_id": "G01", "question": "Can I get a refund?", "mode": "corpus_gap",
-                                     "expected_behavior": "refusal"}) + "\n", encoding="utf-8")
-    monkeypatch.setattr(eval_runner, "EVAL_SET", eval_file)
+    from src.catalog import db as catalog_db, eval_store
+    with catalog_db.connect() as conn:                       # the Docs suite holds only this test's case
+        conn.execute("DELETE FROM eval_cases WHERE suite='docs'")
+        catalog_db.bump(conn)
+    eval_store.save_case("G01", "docs", {"question": "Can I get a refund?", "mode": "corpus_gap",
+                                          "expected_behavior": "refusal"}, "test", create=True)
     monkeypatch.setattr(eval_runner, "_current_prompt_version", lambda: "vtest")
     for key in ("ALERT_EMAIL_FROM", "ALERT_EMAIL_TO", "ALERT_EMAIL_PASSWORD", "OBS_DEMO_TOOLS"):
         monkeypatch.delenv(key, raising=False)
@@ -447,7 +449,8 @@ def test_one_vote_per_user_and_email_only_for_a_new_thumbs_down(fclient):
 
 
 def test_feedback_rate_limit(fclient, monkeypatch):
-    monkeypatch.setattr(fb, "SUBMIT_LIMIT", 2)
+    from src.catalog import settings
+    settings.set("feedback.submit_limit", 2, "test")
     assert vote(fclient, "up").status_code == 201
     assert vote(fclient, "up").status_code == 201
     assert vote(fclient, "up").status_code == 429

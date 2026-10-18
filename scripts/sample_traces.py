@@ -14,32 +14,21 @@ from pathlib import Path
 
 TRACES_PATH = Path(__file__).resolve().parents[1] / "evaluation" / "traces.jsonl"
 SAMPLE_PATH = Path(__file__).resolve().parents[1] / "evaluation" / "sample.jsonl"
-SEED = 80
-SAMPLE_SIZE = 20
+import sys  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from src.catalog import settings  # noqa: E402
+
+SEED = settings.get("docs.sample_seed")          # Admin, Settings, Docs mode retrieval
+SAMPLE_SIZE = settings.get("docs.sample_size")
 REQUIRED_RETRIEVER = "hybrid-bm25-rrf"
 
-_MULTI_PART_PATTERNS = [
-    " and ", " as well", " also ", "both ", " plus ", " additionally",
-]
-_SEMANTIC_STARTS = (
-    "why ", "how does ", "how do ", "what happens ", "explain ", "describe ",
-    "what would ", "when does ", "when do ",
-)
 _CODE_PATTERN = __import__("re").compile(r"\b[A-Z]{2,}-[A-Z0-9]{2,}(?:-[A-Z0-9]+)+\b")
 
 
 def classify_query_type(question: str) -> str:
-    """Heuristically classify a question into one of four types."""
-    q = question.lower()
-    if question.count("?") > 1:
-        return "multi-part"
-    if any(pat in q for pat in _MULTI_PART_PATTERNS) and "?" in question:
-        return "multi-part"
-    if _CODE_PATTERN.search(question):
-        return "exact keyword"
-    if q.startswith(_SEMANTIC_STARTS):
-        return "semantic"
-    return "simple"
+    """Classify a question into a Docs query type (the API's own classifier; word lists are catalog list query_type)."""
+    from api.main import _classify_query_type
+    return _classify_query_type(question)
 
 
 def main() -> None:

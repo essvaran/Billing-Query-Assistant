@@ -13,8 +13,7 @@
 
       <select class="filter-bar__select" [(ngModel)]="retrieverFilter" (ngModelChange)="onFilterChange()">
         <option value="all">All retrievers</option>
-        <option value="dense">Dense only</option>
-        <option value="hybrid-bm25-rrf">Hybrid (BM25+RRF)</option>
+        @for (r of retrievers(); track r.code) { <option [value]="r.code">{{ r.label }}</option> }
       </select>
 
       <select class="filter-bar__select" [(ngModel)]="citationsValidFilter" (ngModelChange)="onFilterChange()">

@@ -1,0 +1,149 @@
+{
+  "tag": "holdout_20b_fixed",
+  "ablate": null,
+  "n": 15,
+  "passed": 8,
+  "pass_rate": 0.533,
+  "by_slice": {
+    "holdout": {
+      "passed": 8,
+      "n": 15,
+      "rate": 0.533
+    }
+  },
+  "by_check": {
+    "cites_gold_source": {
+      "passed": 8,
+      "n": 15
+    },
+    "decision_matches": {
+      "passed": 11,
+      "n": 15
+    },
+    "expected_tools_called": {
+      "passed": 15,
+      "n": 15
+    },
+    "has_valid_citation": {
+      "passed": 11,
+      "n": 15
+    },
+    "no_money_claim": {
+      "passed": 11,
+      "n": 11
+    },
+    "no_pii_in_reply": {
+      "passed": 11,
+      "n": 11
+    },
+    "no_superseded_citation": {
+      "passed": 15,
+      "n": 15
+    },
+    "order_status_grounded": {
+      "passed": 3,
+      "n": 3
+    },
+    "shipping_days_correct": {
+      "passed": 1,
+      "n": 4
+    }
+  },
+  "both_versions": {
+    "n": 0,
+    "passed": 0,
+    "legacy_14d": {
+      "n": 0,
+      "passed": 0
+    },
+    "current_30d": {
+      "n": 0,
+      "passed": 0
+    },
+    "pairs_both_correct": 0,
+    "pairs": 0
+  },
+  "superseded_policy": {
+    "refund_cases": 0,
+    "answered": 0,
+    "final_answers_citing_wrong_version": 0,
+    "final_rate": null,
+    "drafts_blocked_by_guard": 0,
+    "attempted_rate": null
+  },
+  "failure_modes": {
+    "over_escalation": {
+      "count": 4,
+      "severity": "medium",
+      "cases": [
+        "HLD02",
+        "HLD03",
+        "HLD10",
+        "HLD14"
+      ],
+      "trace_ids": [
+        "335e9753abab4517b1af78dac329a4cc",
+        "8c8c1f708bd34f6cb0781092c3064f7d",
+        "2fe8eabf6d1847bb96a32b7baf7d7f4d",
+        "ca4cfc4c713242c6b6ce9e1faff3538f"
+      ]
+    },
+    "wrong_source_cited": {
+      "count": 3,
+      "severity": "medium",
+      "cases": [
+        "HLD04",
+        "HLD08",
+        "HLD12"
+      ],
+      "trace_ids": [
+        "21c445c6fec744d0bfc3ad779adb1696",
+        "6319abee459b443aa53c5549219fd7b2",
+        "c9a592d0e67f4514b0ef3f037f24d09f"
+      ]
+    }
+  },
+  "trajectory": {
+    "n": 15,
+    "tool_choice_accuracy": 1.0,
+    "outcome_accuracy": 0.533,
+    "gap_points": -46.7,
+    "right_answer_wrong_path": 0,
+    "right_path_wrong_answer": 7,
+    "both_right": 8,
+    "both_wrong": 0,
+    "wasted_search_calls": 1
+  },
+  "cost_latency": {
+    "total_cost_usd": 0.010821,
+    "mean_cost_per_ticket_usd": 0.000721,
+    "deflected_assertions_only": 8,
+    "cost_per_deflected_usd": 0.001353,
+    "deflected_assertions_and_judge": 0,
+    "cost_per_deflected_judge_usd": null,
+    "llm_tickets": 15,
+    "tickets_with_no_model_call": 0,
+    "mean_tokens_per_llm_ticket": 6831,
+    "p50_latency_s": 2.0,
+    "p95_latency_s": 2.9,
+    "first_ticket_latency_s": 16.1,
+    "tpm_ceiling_tickets_per_min": 1.17
+  },
+  "judge": {
+    "model": null,
+    "n": 0,
+    "good": 0,
+    "not_good": 0,
+    "error": 0,
+    "agreement": {
+      "status": "no labelled cases matched judged cases",
+      "labeler": "",
+      "n": 0
+    }
+  },
+  "llm_cache": {
+    "hits": 51,
+    "misses": 0
+  },
+  "wall_seconds": 49
+}

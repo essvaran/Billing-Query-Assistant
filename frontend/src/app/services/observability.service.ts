@@ -8,6 +8,9 @@ export interface ObsMeta {
   alerts_enabled: boolean;
   langfuse_configured: boolean;
   drill_bar_seconds: number;
+  drill_complaint: string;
+  tenx_baseline_rpm: number;
+  tenx_multiplier: number;
   langfuse_url: string | null;
   feedback_new_down: number;
 }

@@ -1,0 +1,123 @@
+{
+  "version": 2,
+  "deflection_rate": 0.76,
+  "deflected": 19,
+  "answerable_cases": 25,
+  "assistant": {
+    "n": 10,
+    "reopened": 6,
+    "simulated_reopen_rate": 0.6,
+    "no_followup": 4,
+    "followup_but_pre_empted": 0
+  },
+  "human_reply_control": {
+    "n": 5,
+    "reopened": 4,
+    "simulated_reopen_rate": 0.8,
+    "no_followup": 1,
+    "followup_but_pre_empted": 0
+  },
+  "model": "qwen/qwen3.8-27b",
+  "n": 10,
+  "simulated_reopen_rate": 0.6,
+  "caveat": "Follow-ups are written and graded by a model, not real customers; n is small. The human control replies are short synthetic templates, so a similar re-open rate means the method cannot separate good from poor replies.",
+  "rows": [
+    {
+      "case_id": "RAN17",
+      "followup": "How do I actually check the service status?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply only provides troubleshooting steps for the specific error code and does not explain how to check the general service status as requested."
+    },
+    {
+      "case_id": "SHI03",
+      "followup": null,
+      "verdict": "NO_FOLLOWUP",
+      "reason": "customer says it is solved"
+    },
+    {
+      "case_id": "BOT03",
+      "followup": "Is there any exception to the 14-day policy for items that are defective or significantly different from the description?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply only cites the standard 14-day window and does not mention any exceptions for defective or misdescribed items."
+    },
+    {
+      "case_id": "RAN08",
+      "followup": "Which shipping method was used for my order, and can you provide the tracking number so I can monitor the delivery myself?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply does not specify which shipping method was actually used for the order nor does it provide the tracking number requested in the follow-up."
+    },
+    {
+      "case_id": "BOT02",
+      "followup": "Will I receive a confirmation email once the refund is processed, and how long does it typically take for the funds to appear in my account?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply does not mention whether a confirmation email will be sent or provide an estimated timeframe for the funds to appear in the customer's account."
+    },
+    {
+      "case_id": "BOT04",
+      "followup": "Will the refund be issued automatically, or do I need to take any specific action to process it?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply states that a support agent will confirm the next steps but does not specify whether the refund is automatic or requires customer action."
+    },
+    {
+      "case_id": "RAN16",
+      "followup": "Will I receive a confirmation email once the refund is processed, and how long does it typically take for the funds to appear in my account?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply does not mention whether a confirmation email will be sent or provide any information regarding the processing time for the funds to appear in the customer's account."
+    },
+    {
+      "case_id": "SHI01",
+      "followup": null,
+      "verdict": "NO_FOLLOWUP",
+      "reason": "customer says it is solved"
+    },
+    {
+      "case_id": "RAN05",
+      "followup": null,
+      "verdict": "NO_FOLLOWUP",
+      "reason": "customer says it is solved"
+    },
+    {
+      "case_id": "RAN09",
+      "followup": null,
+      "verdict": "NO_FOLLOWUP",
+      "reason": "customer says it is solved"
+    }
+  ],
+  "control_rows": [
+    {
+      "case_id": "RAN17",
+      "human_reply": "Please follow the steps in service-status-team. For error ERR-7440 wait 60 minutes and retry.",
+      "followup": "Where can I find the steps for service-status-team, and what should I do if the error persists after waiting 60 minutes?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply references \"service-status-team\" without providing a link or location for the steps, and it does not specify any actions to take if the error persists after the 60-minute wait."
+    },
+    {
+      "case_id": "RAN08",
+      "human_reply": "Standard delivery to Asia Pacific is 10 business days.",
+      "followup": "Can you provide the specific estimated delivery date for my order O2168?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply provides a general duration (10 business days) but lacks the specific calendar date required to answer the follow-up question."
+    },
+    {
+      "case_id": "RAN16",
+      "human_reply": "Your account is on the 30-day policy and the order is 20 days old, so it is eligible and I have started the refund.",
+      "followup": null,
+      "verdict": "NO_FOLLOWUP",
+      "reason": "customer says it is solved"
+    },
+    {
+      "case_id": "RAN05",
+      "human_reply": "Standard delivery to United Kingdom is 4 business days.",
+      "followup": "Can you confirm the specific expected delivery date for my order O2262 based on when it was shipped?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply provides a general delivery timeframe but lacks the specific shipping date required to calculate the exact expected delivery date for the customer's order."
+    },
+    {
+      "case_id": "RAN09",
+      "human_reply": "Standard delivery to European Union is 6 business days.",
+      "followup": "Can you confirm the specific expected delivery date for my order O2217 based on when it was shipped?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply provides a general delivery timeframe but lacks the specific shipping date required to calculate the exact expected delivery date for the customer's order."
+    }
+  ]
+}

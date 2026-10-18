@@ -4,11 +4,10 @@ from uuid import uuid4
 
 from src.generation.cost import calculate_cost
 
-BAD_ANSWER = (
-    "Yes, if your billing migration fails you are entitled to a full refund within 30 days. "
-    "Contact support with your migration ID and they will return the money to your original "
-    "payment method. [HC-BILL-006--when-a-rollback-is-possible--prose-001]"
-)
+def _incident() -> dict:
+    """The planted incident (setting demo.incident, editable in Admin, Settings)."""
+    from src.catalog import settings
+    return settings.get("demo.incident")
 
 
 def yesterday_afternoon():
@@ -19,42 +18,22 @@ def yesterday_afternoon():
 
 
 def build_bad_refund_record(model, trace_id=None, timestamp=None):
-    input_tokens, output_tokens = 921, 74
-    cost = calculate_cost(model, input_tokens, output_tokens)["total_cost_usd"]
-    question = "Can I get a refund if my billing migration fails?"
+    inc = dict(_incident())
+    cost = calculate_cost(model, inc["input_tokens"], inc["output_tokens"])["total_cost_usd"]
+    inc.pop("user_email", None)
+    inc.pop("complaint", None)
     return {
+        **inc,
         "trace_id": trace_id or str(uuid4()),
         "timestamp": timestamp or yesterday_afternoon(),
-        "question": question,
-        "original_query": question,
+        "original_query": inc["question"],
         "rewritten_query": None,
-        "prompt_version": "v1",
         "model": model,
-        "temperature": 0.0,
-        "retriever": "hybrid-bm25-rrf",
-        "top_k": 3,
-        "collection": "billing_structure_aware",
-        "retrieved_chunks": [
-            {"chunk_id": "HC-BILL-001--related-articles--prose-001", "document_id": "HC-BILL-001", "score": 0.030536, "rank": 1},
-            {"chunk_id": "HC-BILL-006--when-a-rollback-is-possible--prose-001", "document_id": "HC-BILL-006", "score": 0.029324, "rank": 2},
-            {"chunk_id": "HC-BILL-002--frequently-asked-questions-about-error-codes--prose-001", "document_id": "HC-BILL-002", "score": 0.028034, "rank": 3},
-        ],
-        "raw_output": BAD_ANSWER,
-        "final_answer": BAD_ANSWER,
-        "citations": ["hc-bill-006--when-a-rollback-is-possible--prose-001"],
-        "citations_valid": False,
-        "retrieval_ms": 58.4,
-        "generation_ms": 1043.7,
-        "total_ms": 1102.1,
-        "input_tokens": input_tokens,
-        "output_tokens": output_tokens,
+        "raw_output": inc["final_answer"],
         "cost_usd": cost,
         "cost_by_stage": {"retrieval_usd": 0.0, "generation_usd": cost, "tools_usd": 0.0},
         "error": None,
     }
-
-
-DEMO_USER = "demo-customer@example.com"
 
 
 def plant_bad_trace(model, trace_id=None, timestamp=None):
@@ -66,12 +45,12 @@ def plant_bad_trace(model, trace_id=None, timestamp=None):
     if lf is None:
         raise RuntimeError("Langfuse is not configured, so a demo trace cannot be planted.")
     record = build_bad_refund_record(model, trace_id, timestamp)
-    record["user_email"] = DEMO_USER
+    record["user_email"] = _incident().get("user_email", "demo-customer@example.com")
     when = datetime.fromisoformat(record["timestamp"])
     trace = lf.trace(
         id=record["trace_id"],
         name="answer_question",
-        user_id=DEMO_USER,
+        user_id=record["user_email"],
         version=record["prompt_version"],
         tags=[f"prompt:{record['prompt_version']}", "demo-planted"],
         timestamp=when,

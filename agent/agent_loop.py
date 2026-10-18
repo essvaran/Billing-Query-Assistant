@@ -3,7 +3,7 @@
 Enforces four budgets on every lap:
   MAX_ITERS      -- maximum LLM laps (one lap = one LLM call)
   MAX_TOKENS     -- cumulative input+output tokens across all laps
-  MAX_COST_USD   -- derived from tokens * per-token price
+  MAX_COST_USD   -- input and output tokens priced from the catalog's model prices
   MAX_WALL_SECS  -- wall-clock time from loop start
 
 Langfuse traces every run: one trace per ticket, one span per lap,
@@ -26,6 +26,8 @@ import requests
 from dotenv import load_dotenv
 
 from agent.mcp_client import MCPManager
+from src.generation.cost import calculate_cost
+from src.observability import tracing
 from agent.tickets import score_reply
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -33,81 +35,63 @@ if hasattr(sys.stdout, "reconfigure"):
 
 load_dotenv()
 
-_mcp: MCPManager | None = None
+_mcps: dict[str, MCPManager] = {}
 
 
-def _get_mcp() -> MCPManager:
-    """Lazily connect the MCP manager on first use; retry if previous connect discovered no tools."""
-    global _mcp
-    if _mcp is None or not _mcp.get_tool_schemas():
-        _mcp = MCPManager("mcp_config.json", log_wire=True)
-        _mcp.connect()
-    return _mcp
+_mcp_failed_at: dict[str, float] = {}
+MCP_RETRY_COOLDOWN_S = 60.0
+
+
+def _get_mcp(config_path: str = "mcp_config.json", tool_timeout: float = 30.0,
+             connect_timeout: float = 30.0) -> MCPManager:
+    """One MCP manager per config file, connected on first use.
+
+    A manager whose event loop died, or that discovered no tools, is abandoned and replaced. After a failed
+    connection the next attempts fail immediately for a minute instead of each waiting out the full connect
+    timeout: when the servers are down, a ticket should escalate in milliseconds, not after three minutes.
+    """
+    mgr = _mcps.get(config_path)
+    if mgr is not None and (not mgr.is_alive() or not mgr.get_tool_schemas()):
+        mgr.close()
+        _mcps.pop(config_path, None)
+        mgr = None
+    if mgr is None:
+        since = time.monotonic() - _mcp_failed_at.get(config_path, -1e9)
+        if since < MCP_RETRY_COOLDOWN_S:
+            raise RuntimeError(f"MCP servers unavailable: the last connection attempt failed {since:.0f}s ago")
+        mgr = MCPManager(config_path, log_wire=True, tool_timeout=tool_timeout, connect_timeout=connect_timeout)
+        try:
+            mgr.connect()
+        except Exception:
+            _mcp_failed_at[config_path] = time.monotonic()
+            raise
+        _mcps[config_path] = mgr
+    return mgr
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
-MODEL = os.getenv("LLM_MODEL", "llama-3.3-70b-versatile")
+from src.catalog import prompts, settings  # noqa: E402
 
 # Langfuse host for building trace URLs
 _LANGFUSE_HOST = os.getenv("LANGFUSE_HOST", os.getenv("LANGFUSE_BASE_URL", "https://cloud.langfuse.com")).rstrip("/")
 
-COST_PER_1M_TOKENS = 0.90  # USD per 1M tokens
 
-MAX_ITERS = 8
-MAX_TOKENS = 8000
-MAX_COST_USD = 0.05
-MAX_WALL_SECS = 25
+# Model, budgets and prompts come from the catalog (Admin, Settings and Admin, Prompts), read at call time.
+def model() -> str:
+    return settings.get("models.agent")
 
-DEMO_MAX_ITERS = 2   # tight budget used for the budget-demo run
 
-SYSTEM_PROMPT = (
-    "You are a billing support agent resolving refund requests. "
-    "You have EXACTLY FOUR tools available -- no others exist:\n"
-    "  get_ticket, get_order, get_customer_tier, search_knowledge_base\n"
-    "NEVER call any tool not listed above. If you generate a call to any other tool "
-    "it will be rejected as an error.\n\n"
-    "For each ticket, call the tools in this order:\n"
-    "1. get_ticket -- retrieve the ticket text, customer ID, and order ID.\n"
-    "2. get_order -- fetch purchase date, amount, and fulfilment status. "
-    "If the order is not found, note it as missing.\n"
-    "3. get_customer_tier -- retrieve the customer's refund window in days.\n"
-    "4. Draft a concise reply: approve the refund if days_since_purchase is within "
-    "refund_days, deny it if outside, or escalate (tell the customer to email "
-    "billing@company.com) if the order could not be found.\n"
-    "You also have search_knowledge_base, but it is NOT needed for ordinary refund "
-    "requests (duplicate charge, wrong amount, order not found, etc.) -- those are "
-    "resolved from get_ticket/get_order/get_customer_tier alone. Only call "
-    "search_knowledge_base if the ticket text contains an explicit error code "
-    "(format like ERR-nnnn or PAY-nnnn) or explicitly asks about a named policy, "
-    "migration procedure, or account-role rule you cannot answer from the ticket/order "
-    "data. When in doubt, do not call it.\n"
-    "Do not guess -- always call all three tools before drafting the reply."
-)
+def budget(name: str):
+    """Week 7 loop budgets: max_iters, max_tokens, max_cost_usd, max_wall_s, demo_max_iters."""
+    return settings.get(f"week7.{name}")
 
-FREEFORM_SYSTEM_PROMPT = (
-    "You are a helpful billing support agent for an e-commerce company. "
-    "You have EXACTLY FOUR tools available -- no others exist:\n"
-    "  search_knowledge_base, get_ticket, get_order, get_customer_tier\n"
-    "NEVER call any tool not listed above. If you generate a call to any other tool "
-    "it will be rejected as an error.\n\n"
-    "Tool descriptions:\n"
-    "- search_knowledge_base(query): search the billing knowledge base for policies, error codes, "
-    "migration procedures, and documented answers\n"
-    "- get_ticket(ticket_id): look up a support ticket by ID (e.g. T001)\n"
-    "- get_order(order_id): look up an order by ID (e.g. O201)\n"
-    "- get_customer_tier(customer_id): look up a customer's service tier and refund window\n\n"
-    "RULES -- follow these strictly, do not skip:\n"
-    "1. Only call search_knowledge_base if the question contains an explicit error code "
-    "(format like ERR-nnnn or PAY-nnnn) or explicitly names a documented policy, migration "
-    "procedure, or account-role rule you cannot answer from ticket/order data. Do NOT call it "
-    "for ordinary refund, order-status, or ticket-history questions. Call it at most once per "
-    "question -- never repeat it with a reworded query.\n"
-    "2. If the question mentions a ticket ID (T001...) -- call get_ticket, then get_order, then "
-    "get_customer_tier, unless the question is only asking about ticket history or escalation.\n"
-    "3. Only answer directly (without tools) for purely conversational messages like greetings.\n"
-    "4. Never call the same tool with the same arguments more than once.\n"
-    "After retrieving results, give a concise, grounded answer based only on what the tools returned."
-)
+
+def system_prompt() -> str:
+    return prompts.render("week7.system", support_email=settings.get("week7.support_email"))
+
+
+def freeform_system_prompt() -> str:
+    return prompts.body("week7.freeform")
 
 
 @dataclass
@@ -134,102 +118,70 @@ class BudgetExceeded(Exception):
 
 
 def _groq_call(messages: list[dict], tools: list[dict]) -> dict:
-    if not GROQ_API_KEY:
-        raise RuntimeError("GROQ_API_KEY not set in .env")
+    """One LLM call through the shared gateway (cache, token limiter, retries)."""
+    from src.generation import gateway
+
     if not tools:
         raise RuntimeError(
             "No MCP tools available -- MCP server is not connected. "
             "Restart the backend server to reconnect."
         )
-
-    payload = {
-        "model": MODEL,
-        "messages": messages,
-        "tools": tools,
-        "tool_choice": "auto",
-        "temperature": 0.0,
-    }
-
-    wait = 10
-    for attempt in range(4):
-        try:
-            resp = requests.post(
-                f"{GROQ_BASE_URL}/chat/completions",
-                json=payload,
-                headers={
-                    "Authorization": f"Bearer {GROQ_API_KEY}",
-                    "Content-Type": "application/json",
+    try:
+        return gateway.chat(messages, tools=tools, model=model())
+    except gateway.ToolUseFailed as exc:
+        import re as _re
+        m = _re.search(r'"name"\s*:\s*"([^"]+)"', exc.failed_generation or "")
+        unknown_name = m.group(1) if m else "unknown_tool"
+        # Synthetic response so the loop can feed "unknown tool" back to the model
+        # and let it retry with a real tool.
+        return {
+            "choices": [{
+                "finish_reason": "tool_calls",
+                "message": {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [{
+                        "id": "call_hallucinated_0",
+                        "type": "function",
+                        "function": {"name": unknown_name, "arguments": "{}"},
+                    }],
                 },
-                timeout=60,
-            )
-        except requests.RequestException as exc:
-            raise RuntimeError(f"Groq request failed: {exc}") from exc
-
-        if resp.status_code == 429:
-            if attempt == 3:
-                raise RuntimeError("Groq 429 rate-limit after 4 retries")
-            retry_after = int(resp.headers.get("Retry-After", wait))
-            print(f"  [rate-limit] 429 -- retrying in {retry_after}s", flush=True)
-            time.sleep(retry_after)
-            wait = min(wait * 2, 60)
-            continue
-
-        if resp.status_code == 400:
-            try:
-                err_body = resp.json().get("error", {})
-                if err_body.get("code") == "tool_use_failed":
-                    import re as _re
-                    failed_gen = err_body.get("failed_generation", "{}")
-                    m = _re.search(r'"name"\s*:\s*"([^"]+)"', failed_gen)
-                    unknown_name = m.group(1) if m else "unknown_tool"
-                    # Return a synthetic response so the agent loop can feed back
-                    # "unknown tool" to the model and let it retry with a real tool.
-                    return {
-                        "choices": [{
-                            "finish_reason": "tool_calls",
-                            "message": {
-                                "role": "assistant",
-                                "content": None,
-                                "tool_calls": [{
-                                    "id": "call_hallucinated_0",
-                                    "type": "function",
-                                    "function": {
-                                        "name": unknown_name,
-                                        "arguments": "{}",
-                                    },
-                                }],
-                            },
-                        }],
-                        "usage": {"total_tokens": 50, "prompt_tokens": 50, "completion_tokens": 0},
-                    }
-            except Exception:
-                pass
-
-        try:
-            resp.raise_for_status()
-        except requests.RequestException as exc:
-            raise RuntimeError(f"Groq API error {resp.status_code}: {resp.text[:200]}") from exc
-
-        return resp.json()
-
-    raise RuntimeError("Groq call failed after all retries")
+            }],
+            "usage": {"total_tokens": 50, "prompt_tokens": 50, "completion_tokens": 0},
+        }
+    except gateway.RateLimited as exc:
+        raise RuntimeError(f"rate_limited: {exc}") from exc
+    except gateway.GatewayError as exc:
+        raise RuntimeError(str(exc)) from exc
 
 
 def run_agent(
     ticket_id: str = "",
     expected_verdict: str | None = None,
-    max_iters: int = MAX_ITERS,
-    max_tokens: int = MAX_TOKENS,
-    max_cost: float = MAX_COST_USD,
-    max_wall: float = MAX_WALL_SECS,
+    max_iters: int | None = None,      # None = the Week 7 budget from settings
+    max_tokens: int | None = None,
+    max_cost: float | None = None,
+    max_wall: float | None = None,
     verbose: bool = False,
     on_step=None,  # callable(dict) -- receives live step events for streaming UIs
     user_message: str | None = None,       # free-form text; overrides ticket_id user turn
     system_prompt_override: str | None = None,  # replaces SYSTEM_PROMPT when set
     dispatch_override=None,  # callable(name, args_json) -- replaces dispatch_tool when set
+    mcp_config: str = "mcp_config.json",   # which MCP servers (and allow-list) this run may use
+    request_trace_id: str | None = None,   # id minted at the entry point; injected into MCP tool calls
+    tool_timeout: float = 30.0,
+    connect_timeout: float = 30.0,         # servers that warm up a model need longer than the default
+    tool_call_caps: dict[str, int] | None = None,  # e.g. {"search_help_centre": 2}; enforced in code
+    prefetch=None,  # callable(call) run before lap 1; call(name, args) -> result dict, recorded as origin="code"
 ) -> AgentResult:
     t_start = time.monotonic()
+    max_iters = budget("max_iters") if max_iters is None else max_iters
+    max_tokens = budget("max_tokens") if max_tokens is None else max_tokens
+    max_cost = budget("max_cost_usd") if max_cost is None else max_cost
+    max_wall = budget("max_wall_s") if max_wall is None else max_wall
+    MODEL = model()
     cumulative_tokens = 0
+    cumulative_cost = 0.0
     laps = 0
 
     # --- Langfuse setup ---
@@ -242,8 +194,8 @@ def run_agent(
     lf_trace = None
     if lf:
         try:
-            from agent.tickets import TICKETS
-            ticket_text = TICKETS.get(ticket_id, {}).get("text", "")
+            from agent import tickets as fx
+            ticket_text = fx.tickets().get(ticket_id, {}).get("text", "")
             lf_trace = lf.trace(
                 name="agent_run",
                 input={"ticket_id": ticket_id, "ticket_text": ticket_text},
@@ -261,17 +213,19 @@ def run_agent(
         except Exception:
             lf_trace = None
 
-    active_system = system_prompt_override or SYSTEM_PROMPT
+    active_system = system_prompt_override or system_prompt()
     active_user = user_message if user_message else f"Resolve ticket {ticket_id}."
     messages: list[dict] = [
         {"role": "system", "content": active_system},
         {"role": "user", "content": active_user},
     ]
     _seen_calls: set[tuple[str, str]] = set()
+    _calls_per_tool: dict[str, int] = {}
 
     def _check_budgets():
+        nonlocal cumulative_cost
         elapsed = time.monotonic() - t_start
-        cost = (cumulative_tokens / 1_000_000) * COST_PER_1M_TOKENS
+        cost = cumulative_cost
         if laps >= max_iters:
             raise BudgetExceeded("max_iters", laps, max_iters)
         if cumulative_tokens >= max_tokens:
@@ -290,7 +244,78 @@ def run_agent(
             except Exception:
                 pass
 
+    def _run_tool(mcp, fn_name: str, fn_args: str, lap: int, origin: str) -> str:
+        """Run one tool call (from the model, or prefetched by code) with the duplicate and cap rules."""
+        try:
+            args_dict_emit = json.loads(fn_args)
+        except Exception:
+            args_dict_emit = {"raw": fn_args}
+        mcp_server = mcp.get_server_for_tool(fn_name)
+        _emit({"type": "tool_call", "lap": lap, "tool": fn_name, "args": args_dict_emit,
+               "mcp_server": mcp_server, "origin": origin})
+
+        call_key = (fn_name, fn_args)
+        with tracing.span(f"tool:{fn_name}", "tool", trace_id=request_trace_id,
+                          server=mcp_server, lap=lap, origin=origin) as tool_span:
+            if call_key in _seen_calls:
+                # Same tool + same arguments already ran this turn -- refuse to
+                # re-dispatch (prevents an unproductive retry loop from burning
+                # the iteration/token budget) and tell the model to move on.
+                result_str = json.dumps({
+                    "error": "duplicate_call",
+                    "hint": f"{fn_name} was already called with these exact arguments. "
+                            "Use the earlier result -- do not repeat this call.",
+                })
+            elif tool_call_caps and _calls_per_tool.get(fn_name, 0) >= tool_call_caps.get(fn_name, 10**9):
+                # A prompt asking for "at most twice" is a request; this is the limit.
+                result_str = json.dumps({
+                    "error": "call_limit_reached",
+                    "tool": fn_name,
+                    "limit": tool_call_caps[fn_name],
+                    "instruction": "Do not call this tool again. Answer from what you have, or escalate.",
+                })
+            else:
+                _seen_calls.add(call_key)
+                _calls_per_tool[fn_name] = _calls_per_tool.get(fn_name, 0) + 1
+                if dispatch_override:
+                    result_str = dispatch_override(fn_name, fn_args)
+                else:
+                    result_str = mcp.dispatch_tool(fn_name, fn_args, trace_id=request_trace_id,
+                                                   parent_span_id=tool_span.span_id)
+            try:
+                _tool_ok = "error" not in json.loads(result_str)
+            except Exception:
+                _tool_ok = True
+            tool_span.set(ok=_tool_ok, status="ok" if _tool_ok else "error")
+        try:
+            result_dict_emit = json.loads(result_str)
+        except Exception:
+            result_dict_emit = {"raw": result_str}
+        _emit({"type": "tool_result", "lap": lap, "tool": fn_name, "result": result_dict_emit,
+               "mcp_server": mcp_server, "origin": origin})
+        return result_str
+
     try:
+        # Connected inside the try so a connection failure becomes an error result, not a crash.
+        mcp = _get_mcp(mcp_config, tool_timeout, connect_timeout)
+
+        if prefetch:
+            # Calls code always makes (the model would make them on lap 1 anyway). Their results enter the
+            # conversation as completed tool calls, so the model usually answers in one lap instead of three.
+            # Every other tool stays available to the model.
+            def _prefetch_call(name: str, args: dict) -> dict:
+                call_id = f"prefetch_{len(messages)}"
+                fn_args = json.dumps(args)
+                result_str = _run_tool(mcp, name, fn_args, 0, "code")
+                messages.append({"role": "assistant", "content": None, "tool_calls": [
+                    {"id": call_id, "type": "function", "function": {"name": name, "arguments": fn_args}}]})
+                messages.append({"role": "tool", "tool_call_id": call_id, "content": result_str})
+                try:
+                    return json.loads(result_str)
+                except Exception:
+                    return {"raw": result_str}
+            prefetch(_prefetch_call)
+
         while True:
             _check_budgets()
 
@@ -309,11 +334,25 @@ def run_agent(
                 except Exception:
                     lf_lap_span = None
 
-            data = _groq_call(messages, _get_mcp().get_tool_schemas())
+            with tracing.span("llm_call", "llm", trace_id=request_trace_id, model=MODEL, lap=laps + 1) as llm_span:
+                data = _groq_call(messages, mcp.get_tool_schemas())
+                _usage = data.get("usage") or {}
+                _gw = data.get("gateway") or {}
+                _in, _out = _usage.get("prompt_tokens", 0), _usage.get("completion_tokens", 0)
+                llm_span.set(
+                    input_tokens=_in,
+                    output_tokens=_out,
+                    cost_usd=calculate_cost(MODEL, _in, _out)["total_cost_usd"],
+                    cache=_gw.get("cache"),
+                    waited_s=_gw.get("waited_s", 0),
+                    attempts=_gw.get("attempts"),
+                    finish_reason=data["choices"][0].get("finish_reason"),
+                )
             choice = data["choices"][0]
             usage = data.get("usage", {})
             lap_tokens = usage.get("total_tokens", 0)
             cumulative_tokens += lap_tokens
+            cumulative_cost += calculate_cost(MODEL, usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0))["total_cost_usd"]
             laps += 1
 
             finish_reason = choice.get("finish_reason", "")
@@ -359,7 +398,7 @@ def run_agent(
                         "The model returned an empty response. "
                         "Try rephrasing your question or including a ticket ID."
                     )
-                cost = (cumulative_tokens / 1_000_000) * COST_PER_1M_TOKENS
+                cost = cumulative_cost
                 latency = time.monotonic() - t_start
                 passed = score_reply(reply, expected_verdict)
                 _emit({"type": "done", "reply": reply, "laps": laps, "total_tokens": cumulative_tokens, "cost_usd": round(cost, 6), "latency_s": round(latency, 3), "passed": passed})
@@ -412,32 +451,7 @@ def run_agent(
             for tc in tool_calls:
                 fn_name = tc["function"]["name"]
                 fn_args = tc["function"]["arguments"]
-                try:
-                    args_dict_emit = json.loads(fn_args)
-                except Exception:
-                    args_dict_emit = {"raw": fn_args}
-                mcp_server = _get_mcp().get_server_for_tool(fn_name)
-                _emit({"type": "tool_call", "lap": laps, "tool": fn_name, "args": args_dict_emit, "mcp_server": mcp_server})
-
-                call_key = (fn_name, fn_args)
-                if call_key in _seen_calls:
-                    # Same tool + same arguments already ran this turn -- refuse to
-                    # re-dispatch (prevents an unproductive retry loop from burning
-                    # the iteration/token budget) and tell the model to move on.
-                    result_str = json.dumps({
-                        "error": "duplicate_call",
-                        "hint": f"{fn_name} was already called with these exact arguments. "
-                                "Use the earlier result -- do not repeat this call.",
-                    })
-                else:
-                    _seen_calls.add(call_key)
-                    _dispatch = dispatch_override if dispatch_override else _get_mcp().dispatch_tool
-                    result_str = _dispatch(fn_name, fn_args)
-                try:
-                    result_dict_emit = json.loads(result_str)
-                except Exception:
-                    result_dict_emit = {"raw": result_str}
-                _emit({"type": "tool_result", "lap": laps, "tool": fn_name, "result": result_dict_emit, "mcp_server": mcp_server})
+                result_str = _run_tool(mcp, fn_name, fn_args, laps, "model")
 
                 if verbose:
                     args_short = fn_args[:60].replace("\n", " ")
@@ -469,7 +483,7 @@ def run_agent(
             lf_lap_span = None
 
     except BudgetExceeded as exc:
-        cost = (cumulative_tokens / 1_000_000) * COST_PER_1M_TOKENS
+        cost = cumulative_cost
         latency = time.monotonic() - t_start
         log_line = (
             f"BUDGET_HIT budget={exc.budget} value={exc.value} "
@@ -518,7 +532,7 @@ def run_agent(
         )
 
     except Exception as exc:
-        cost = (cumulative_tokens / 1_000_000) * COST_PER_1M_TOKENS
+        cost = cumulative_cost
         latency = time.monotonic() - t_start
 
         if lf_lap_span:
@@ -556,16 +570,15 @@ def run_agent(
 
 
 if __name__ == "__main__":
-    from agent.tickets import EXPECTED
-
+    from agent import tickets as fx
     ticket_id = sys.argv[1] if len(sys.argv) > 1 else "T001"
     tight = "--tight" in sys.argv
 
     print(f"\n=== Agent run: {ticket_id} {'(tight budget: MAX_ITERS=2)' if tight else ''} ===")
     result = run_agent(
         ticket_id,
-        expected_verdict=EXPECTED.get(ticket_id),
-        max_iters=DEMO_MAX_ITERS if tight else MAX_ITERS,
+        expected_verdict=fx.expected().get(ticket_id),
+        max_iters=budget("demo_max_iters") if tight else budget("max_iters"),
         verbose=True,
     )
     print(f"\nReply:\n{result.reply[:400]}")

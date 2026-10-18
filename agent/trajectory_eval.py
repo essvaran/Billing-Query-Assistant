@@ -12,16 +12,7 @@ import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 
-from agent.tickets import (
-    BRANCHING_IDS,
-    CUSTOMERS,
-    EXPECTED,
-    EXPECTED_ARGS,
-    EXPECTED_SEQUENCES,
-    ORDERS,
-    TICKET_IDS,
-    TICKETS,
-)
+from agent import tickets as fx
 
 
 @dataclass
@@ -140,7 +131,7 @@ def _validate_args(step: ToolStep, ticket_id: str, resolved_context: dict) -> bo
         return args.get("ticket_id") == ticket_id
 
     if tool == "get_order":
-        ticket_data = TICKETS.get(ticket_id, {})
+        ticket_data = fx.tickets().get(ticket_id, {})
         expected_order = ticket_data.get("order_id", "")
         actual_order = args.get("order_id", "")
         if actual_order == expected_order:
@@ -150,7 +141,7 @@ def _validate_args(step: ToolStep, ticket_id: str, resolved_context: dict) -> bo
         return False
 
     if tool == "get_customer_tier":
-        ticket_data = TICKETS.get(ticket_id, {})
+        ticket_data = fx.tickets().get(ticket_id, {})
         expected_customer = ticket_data.get("customer_id", "")
         actual_customer = args.get("customer_id", "")
         return actual_customer == expected_customer
@@ -194,11 +185,11 @@ def _classify_failures(
     for step in steps:
         if not step.valid_args:
             if step.tool in ("get_ticket", "get_order", "get_customer_tier"):
-                expected_args = EXPECTED_ARGS.get(ticket_id, {}).get(step.tool, {})
+                expected_args = fx.expected_args().get(ticket_id, {}).get(step.tool, {})
                 actual_val = list(step.args.values())[0] if step.args else ""
                 expected_val = list(expected_args.values())[0] if expected_args else ""
 
-                all_known_ids = set(TICKETS.keys()) | set(ORDERS.keys()) | set(CUSTOMERS.keys())
+                all_known_ids = set(fx.tickets().keys()) | set(fx.orders().keys()) | set(fx.customers().keys())
                 if actual_val and actual_val not in all_known_ids and actual_val != "O208-ALT":
                     failures.append(FailureMode("hallucinated_args", ticket_id,
                         f"{step.tool} called with invented ID '{actual_val}'"))
@@ -237,8 +228,8 @@ def run_single_trajectory(
     """Run the agent on one ticket and evaluate its trajectory."""
     from agent.agent_loop import run_agent
 
-    expected_verdict = EXPECTED.get(ticket_id, "")
-    expected_seqs = EXPECTED_SEQUENCES.get(ticket_id, [["get_ticket", "get_order", "get_customer_tier"]])
+    expected_verdict = fx.expected().get(ticket_id, "")
+    expected_seqs = fx.expected_sequences().get(ticket_id, [["get_ticket", "get_order", "get_customer_tier"]])
 
     recorder = TrajectoryRecorder()
 
@@ -310,9 +301,9 @@ def run_full_eval(
 
     results: list[TrajectoryResult] = []
 
-    for i, ticket_id in enumerate(TICKET_IDS):
+    for i, ticket_id in enumerate(fx.ticket_ids()):
         if on_progress:
-            on_progress({"type": "ticket_start", "ticket_id": ticket_id, "index": i, "total": len(TICKET_IDS)})
+            on_progress({"type": "ticket_start", "ticket_id": ticket_id, "index": i, "total": len(fx.ticket_ids())})
 
         traj = run_single_trajectory(ticket_id, dispatch_override=dispatch_override, system_prompt_override=system_prompt_override)
         results.append(traj)

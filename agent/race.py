@@ -2,7 +2,7 @@
 
 Produces:
   agent/race.csv          -- 2 rows x 4 columns (the 8-number table)
-  agent/EXPLANATION.md    -- explanation doc with tool diff, results, budget log, verdict
+  docs/archive/agent/EXPLANATION.md -- explanation doc with tool diff, results, budget log, verdict
 
 Also prints a per-ticket table, the 4-metric summary, the budget-demo run,
 and the verdict paragraph to stdout.
@@ -24,8 +24,9 @@ import os
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-from agent.tickets import EXPECTED, TICKET_IDS, BRANCHING_IDS, TICKETS
-from agent.agent_loop import run_agent, DEMO_MAX_ITERS, MODEL
+from agent import tickets as fx
+from src.catalog import settings
+from agent.agent_loop import budget, model, run_agent
 from agent.workflow import run_workflow
 
 HERE = Path(__file__).parent
@@ -44,9 +45,9 @@ def race() -> tuple[dict, dict]:
     )
     print("-" * 80)
 
-    for tid in TICKET_IDS:
-        expected = EXPECTED[tid]
-        is_branching = tid in BRANCHING_IDS
+    for tid in fx.ticket_ids():
+        expected = fx.expected()[tid]
+        is_branching = tid in fx.branching_ids()
 
         ar = run_agent(tid, expected_verdict=expected)
         wr = run_workflow(tid, expected_verdict=expected)
@@ -100,12 +101,14 @@ def race() -> tuple[dict, dict]:
     # Write race_results.json (consumed by the FastAPI endpoint and Angular UI)
     _write_results_json(agent_results, workflow_results, a_agg, w_agg, budget_log="")
 
-    # Budget demo -- T008 with MAX_ITERS=2 to trigger a clean budget hit
-    print(f"\n=== Budget Demo (T008, MAX_ITERS={DEMO_MAX_ITERS}) ===")
+    # Budget demo: one ticket (setting week7.budget_demo_ticket) with a tight iteration budget, for a clean budget hit
+    from src.catalog import settings
+    demo_ticket = settings.get("week7.budget_demo_ticket")
+    print(f"\n=== Budget Demo ({demo_ticket}, MAX_ITERS={budget('demo_max_iters')}) ===")
     demo_result = run_agent(
-        "T008",
-        expected_verdict=EXPECTED["T008"],
-        max_iters=DEMO_MAX_ITERS,
+        demo_ticket,
+        expected_verdict=fx.expected().get(demo_ticket),
+        max_iters=budget("demo_max_iters"),
         verbose=True,
     )
     budget_log = demo_result.budget_hit or "no budget triggered (agent finished within tight limits)"
@@ -133,24 +136,24 @@ def _write_results_json(
 ) -> None:
     def _ticket_dict(r) -> dict:
         d = asdict(r) if hasattr(r, "__dataclass_fields__") else vars(r)
-        d["branching"] = r.ticket_id in BRANCHING_IDS
+        d["branching"] = r.ticket_id in fx.branching_ids()
         return d
 
     tickets_meta = [
         {
             "ticket_id": tid,
-            "text": TICKETS[tid]["text"],
-            "customer_id": TICKETS[tid]["customer_id"],
-            "order_id": TICKETS[tid]["order_id"],
-            "expected": EXPECTED[tid],
-            "branching": tid in BRANCHING_IDS,
+            "text": fx.tickets()[tid]["text"],
+            "customer_id": fx.tickets()[tid]["customer_id"],
+            "order_id": fx.tickets()[tid]["order_id"],
+            "expected": fx.expected()[tid],
+            "branching": tid in fx.branching_ids(),
         }
-        for tid in TICKET_IDS
+        for tid in fx.ticket_ids()
     ]
 
     payload = {
         "run_at": datetime.now(timezone.utc).isoformat(),
-        "model": MODEL,
+        "model": model(),
         "agent": {**a_agg, "tickets": [_ticket_dict(r) for r in agent_results]},
         "workflow": {**w_agg, "tickets": [_ticket_dict(r) for r in workflow_results]},
         "budget_demo_log": budget_log,
@@ -185,7 +188,7 @@ def _verdict_text(a_agg: dict, w_agg: dict) -> str:
     if workflow_wins_all:
         return (
             "Decision rule: does the path vary by input in a way that cannot be "
-            "pre-enumerated? The three branching tickets (T008, T009, T010) do vary -- "
+            f"pre-enumerated? The branching tickets ({', '.join(sorted(fx.branching_ids()))}) do vary -- "
             "order missing or enterprise tier -- but both variants are finite and encodable "
             "as if/else in the workflow. The workflow matched or beat the agent on all four "
             "numbers: pass rate, p50 latency, total tokens, and cost per ticket. "
@@ -200,13 +203,14 @@ def _verdict_text(a_agg: dict, w_agg: dict) -> str:
             wins.append("pass rate")
         msg = (
             "Decision rule: does the path vary by input in a way that cannot be "
-            "pre-enumerated? The branching tickets (T008, T009, T010) introduce paths "
+            f"pre-enumerated? The branching tickets ({', '.join(sorted(fx.branching_ids()))}) introduce paths "
             f"that genuinely depend on runtime results. The agent achieved "
             f"{a_agg['pass_rate']:.0%} pass rate vs workflow {w_agg['pass_rate']:.0%}. "
         )
         if wins:
             msg += (
-                f"The agent wins on {', '.join(wins)}. For T008/T009 (missing order) the "
+                f"The agent wins on {', '.join(wins)}. For "
+                f"{'/'.join(sorted(t for t in fx.branching_ids() if fx.expected().get(t) == 'escalate')) or 'the missing-order tickets'} (missing order) the "
                 "agent can adaptively probe alternate order IDs -- a fixed workflow cannot "
                 "without hard-coding the alternate. Mixed verdict: agent for the missing-order "
                 "class; workflow for standard approve/deny tickets."
@@ -252,11 +256,11 @@ No two descriptions share a noun that the model might confuse.
 | Agent | {a_agg['pass_rate']:.0%} | {a_agg['p50_latency_s']:.2f} | {a_agg['total_tokens']:,} | ${a_agg['cost_per_ticket']:.5f} |
 | Workflow | {w_agg['pass_rate']:.0%} | {w_agg['p50_latency_s']:.2f} | {w_agg['total_tokens']:,} | ${w_agg['cost_per_ticket']:.5f} |
 
-Tickets marked branching (*): T008, T009 (order not found -> escalate), T010 (enterprise tier -> approve outside standard window).
+Tickets marked branching (*): {', '.join(sorted(fx.branching_ids()))} (missing orders and non-standard tiers that change the path).
 
 ## Budget Termination Log
 
-Demo run of T008 with MAX_ITERS={DEMO_MAX_ITERS} (tight budget):
+Demo run of {settings.get('week7.budget_demo_ticket')} with MAX_ITERS={budget('demo_max_iters')} (tight budget):
 
 ```
 {budget_log}
@@ -266,11 +270,11 @@ The loop raises `BudgetExceeded`, prints the structured log line, and returns
 an `AgentResult` with `passed=False` and `budget_hit` set. No exception
 propagates; the loop terminates cleanly on the first budget breach.
 
-All four budgets are enforced in code (`agent/agent_loop.py`):
-- `MAX_ITERS = 8` -- checked: `if laps >= max_iters`
-- `MAX_TOKENS = 8000` -- checked: `if cumulative_tokens >= max_tokens`
-- `MAX_COST_USD = 0.05` -- checked: `if cost >= max_cost`
-- `MAX_WALL_SECS = 25` -- checked: `if elapsed >= max_wall`
+All four budgets are enforced in code (`agent/agent_loop.py`); their values are settings (Admin, Settings, Week 7 agent):
+- `max_iters = {budget('max_iters')}` -- checked: `if laps >= max_iters`
+- `max_tokens = {budget('max_tokens')}` -- checked: `if cumulative_tokens >= max_tokens`
+- `max_cost_usd = {budget('max_cost_usd')}` -- checked: `if cost >= max_cost`
+- `max_wall_s = {budget('max_wall_s')}` -- checked: `if elapsed >= max_wall`
 
 All four are checked at the top of every lap before any LLM call.
 
@@ -278,7 +282,7 @@ All four are checked at the top of every lap before any LLM call.
 
 {verdict}
 """
-    path = HERE / "EXPLANATION.md"
+    path = HERE.parent / "docs" / "archive" / "agent" / "EXPLANATION.md"
     path.write_text(md, encoding="utf-8")
     print(f"Wrote {path}")
 

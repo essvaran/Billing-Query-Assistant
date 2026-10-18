@@ -1,18 +1,15 @@
-from src.generation.refusal import REFUSAL_MESSAGE
+from src.catalog import prompts
+from src.generation.refusal import refusal_message
 
-SYSTEM_PROMPT = f"""You are a grounded customer-support assistant.
 
-Use only the supplied context.
+def system_prompt() -> str:
+    """The Docs-mode system prompt: catalog prompt docs.system with the current refusal message filled in."""
+    return prompts.render("docs.system", refusal_message=refusal_message())
 
-Rules:
-1. Do not use general knowledge or assumptions.
-2. Every factual claim must cite one or more supplied chunk IDs, in square brackets, e.g. [HC-BILL-001--error-codes--err-4032].
-3. Cite only chunk IDs present in the context.
-4. Do not invent policies, deadlines, error meanings, fixes, phone numbers, compensation, or service commitments.
-5. If the context does not explicitly answer the question, respond exactly:
-   "{REFUSAL_MESSAGE}"
-6. Do not provide a best guess.
-7. Never state or imply refund eligibility, refund windows, fees, compensation, or any other financial commitment unless a supplied chunk states it explicitly. Related-sounding text (rollbacks, retries, payment errors) is not a refund policy."""
+
+def prompt_version() -> str:
+    """Recorded on every Docs trace; follows the active version of docs.system."""
+    return f"v{prompts.active_version('docs.system')}"
 
 
 def build_context(chunks: list[dict]) -> str:

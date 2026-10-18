@@ -77,13 +77,27 @@ export class AuthService {
   loginWithGoogle(credential: string): Observable<{ token: string; user: AuthUser }> {
     return this.http
       .post<{ token: string; user: AuthUser }>('/api/auth/google', { credential })
-      .pipe(
-        tap(res => {
-          localStorage.setItem(TOKEN_KEY, res.token);
-          localStorage.setItem(USER_KEY, JSON.stringify(res.user));
-          this._user$.next(res.user);
-        }),
-      );
+      .pipe(tap(res => this._store(res)));
+  }
+
+  authConfig(): Observable<{ google_client_id: string; password_auth_enabled: boolean }> {
+    return this.http.get<{ google_client_id: string; password_auth_enabled: boolean }>('/api/auth/config');
+  }
+
+  loginWithPassword(email: string, password: string): Observable<{ token: string; user: AuthUser }> {
+    return this.http.post<{ token: string; user: AuthUser }>('/api/auth/login', { email, password })
+      .pipe(tap(res => this._store(res)));
+  }
+
+  register(email: string, password: string, fullName: string): Observable<{ token: string; user: AuthUser }> {
+    return this.http.post<{ token: string; user: AuthUser }>('/api/auth/register',
+      { email, password, full_name: fullName }).pipe(tap(res => this._store(res)));
+  }
+
+  private _store(res: { token: string; user: AuthUser }): void {
+    localStorage.setItem(TOKEN_KEY, res.token);
+    localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+    this._user$.next(res.user);
   }
 
   logout(): void {

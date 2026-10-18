@@ -1,11 +1,16 @@
-from src.config import TOP_K
 from src.retrieval.vector_store import get_collection, get_embeddings
 
 
-def search(collection_name: str, query: str, k: int = TOP_K, where: dict | None = None) -> list[dict]:
+def search(collection_name: str, query: str, k: int | None = None, where: dict | None = None) -> list[dict]:
+    if k is None:
+        from src.catalog import settings
+        k = settings.get("docs.top_k")
+    from src.retrieval.filters import to_chroma_where
+
     collection = get_collection(collection_name)
     embeddings = get_embeddings()
     query_vector = embeddings.embed_query(query)
+    where = to_chroma_where(where)
 
     results = collection.query(
         query_embeddings=[query_vector],
@@ -31,6 +36,11 @@ def search(collection_name: str, query: str, k: int = TOP_K, where: dict | None 
                 "source_file": metadata.get("source_file"),
                 "section": metadata.get("section"),
                 "product_area": metadata.get("product_area"),
+                "slug": metadata.get("slug"),
+                "doc_type": metadata.get("doc_type"),
+                "policy_version": metadata.get("policy_version"),
+                "applies_to": metadata.get("applies_to"),
+                "last_updated": metadata.get("last_updated"),
                 "score": round(similarity, 4),
                 "text": document,
             }

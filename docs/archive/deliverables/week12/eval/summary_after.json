@@ -1,0 +1,202 @@
+{
+  "tag": "after",
+  "ablate": null,
+  "n": 39,
+  "passed": 33,
+  "pass_rate": 0.846,
+  "by_slice": {
+    "random": {
+      "passed": 14,
+      "n": 20,
+      "rate": 0.7
+    },
+    "both_versions": {
+      "passed": 6,
+      "n": 6,
+      "rate": 1.0
+    },
+    "shipping": {
+      "passed": 3,
+      "n": 3,
+      "rate": 1.0
+    },
+    "escalate": {
+      "passed": 4,
+      "n": 4,
+      "rate": 1.0
+    },
+    "not_tier1": {
+      "passed": 2,
+      "n": 2,
+      "rate": 1.0
+    },
+    "injection": {
+      "passed": 2,
+      "n": 2,
+      "rate": 1.0
+    },
+    "missing_order": {
+      "passed": 2,
+      "n": 2,
+      "rate": 1.0
+    }
+  },
+  "by_check": {
+    "cites_gold_source": {
+      "passed": 19,
+      "n": 25
+    },
+    "decision_matches": {
+      "passed": 38,
+      "n": 39
+    },
+    "eligibility_consistent": {
+      "passed": 11,
+      "n": 11
+    },
+    "escalation_reason_ok": {
+      "passed": 13,
+      "n": 13
+    },
+    "expected_tools_called": {
+      "passed": 27,
+      "n": 27
+    },
+    "handoff_created": {
+      "passed": 13,
+      "n": 13
+    },
+    "has_valid_citation": {
+      "passed": 25,
+      "n": 26
+    },
+    "names_policy_version": {
+      "passed": 11,
+      "n": 11
+    },
+    "no_money_claim": {
+      "passed": 25,
+      "n": 25
+    },
+    "no_pii_in_reply": {
+      "passed": 25,
+      "n": 25
+    },
+    "no_superseded_citation": {
+      "passed": 26,
+      "n": 26
+    },
+    "nothing_customer_facing": {
+      "passed": 13,
+      "n": 13
+    },
+    "order_status_grounded": {
+      "passed": 3,
+      "n": 3
+    },
+    "shipping_days_correct": {
+      "passed": 6,
+      "n": 6
+    },
+    "states_correct_window": {
+      "passed": 11,
+      "n": 11
+    }
+  },
+  "both_versions": {
+    "n": 6,
+    "passed": 6,
+    "legacy_14d": {
+      "n": 3,
+      "passed": 3
+    },
+    "current_30d": {
+      "n": 3,
+      "passed": 3
+    },
+    "pairs_both_correct": 3,
+    "pairs": 3
+  },
+  "superseded_policy": {
+    "refund_cases": 10,
+    "answered": 10,
+    "final_answers_citing_wrong_version": 0,
+    "final_rate": 0.0,
+    "drafts_blocked_by_guard": 0,
+    "attempted_rate": 0.0
+  },
+  "failure_modes": {
+    "wrong_source_cited": {
+      "count": 5,
+      "severity": "medium",
+      "cases": [
+        "RAN02",
+        "RAN06",
+        "RAN14",
+        "RAN19",
+        "RAN20"
+      ],
+      "trace_ids": [
+        "3e247f3442c14efb83f4eab701589157",
+        "d3f9377500434fe69de12bddcadf40b6",
+        "152cbfbacf2e4048af807e9257d11d64",
+        "46532339dcdf4773acd6ee05c7ac3b3a",
+        "508dc8c53b8a46e48fcbac718be149b6"
+      ]
+    },
+    "over_escalation": {
+      "count": 1,
+      "severity": "medium",
+      "cases": [
+        "RAN10"
+      ],
+      "trace_ids": [
+        "0c376962bcb749f5adf7ec69c8649683"
+      ]
+    }
+  },
+  "trajectory": {
+    "n": 27,
+    "tool_choice_accuracy": 1.0,
+    "outcome_accuracy": 0.778,
+    "gap_points": -22.2,
+    "right_answer_wrong_path": 0,
+    "right_path_wrong_answer": 6,
+    "both_right": 21,
+    "both_wrong": 0,
+    "wasted_search_calls": 3
+  },
+  "cost_latency": {
+    "total_cost_usd": 0.031352,
+    "mean_cost_per_ticket_usd": 0.000804,
+    "deflected_assertions_only": 20,
+    "cost_per_deflected_usd": 0.001568,
+    "deflected_assertions_and_judge": 20,
+    "cost_per_deflected_judge_usd": 0.001568,
+    "llm_tickets": 30,
+    "tickets_with_no_model_call": 9,
+    "mean_tokens_per_llm_ticket": 5511,
+    "p50_latency_s": 2.1,
+    "p95_latency_s": 8.3,
+    "first_ticket_latency_s": 30.4,
+    "tpm_ceiling_tickets_per_min": 1.45
+  },
+  "judge": {
+    "model": "qwen/qwen3.8-27b",
+    "n": 25,
+    "good": 23,
+    "not_good": 2,
+    "error": 0,
+    "agreement": {
+      "status": "no labelled cases matched judged cases",
+      "labeler": "",
+      "n": 0
+    }
+  },
+  "wall_seconds": 237,
+  "llm_cache": {
+    "hits": 96,
+    "misses": 25,
+    "note": "reconstructed: recorded live from the next run onward"
+  }
+}

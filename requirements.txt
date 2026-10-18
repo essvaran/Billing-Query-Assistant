@@ -22,7 +22,7 @@ xlrd==2.0.1
 rank-bm25==0.2.2
 
 # Observability
-langfuse>=2,<3
+langfuse==2.60.10
 
 # Auth
 google-auth==2.38.0
@@ -36,4 +36,8 @@ httpx==0.28.1
 slowapi==0.1.9
 
 # MCP (Model Context Protocol)
-mcp[cli]>=1.0.0
+mcp[cli]==1.12.4
+
+# Tests
+pytest==9.1.1
+bcrypt==5.0.0

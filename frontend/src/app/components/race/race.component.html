@@ -76,7 +76,7 @@
       <div class="budget-card">
         <pre class="budget-log">{{ results.budget_demo_log }}</pre>
         <p class="note">
-          T008 run with MAX_ITERS=2 (tight). The loop raised
+          The budget-demo ticket ran with a tight iteration budget (Admin, Settings, Week 7 agent). The loop raised
           <code>BudgetExceeded</code>, logged the line above, and returned cleanly.
           All four budgets (iters, tokens, cost, wall-clock) are checked each lap.
         </p>
@@ -221,22 +221,16 @@
       <div class="empty-icon">&#9654;</div>
       <h3>No race results yet</h3>
       <p>
-        Click <strong>Run Race</strong> to run the agent and workflow over all 10 tickets.
-        The race takes ~3-5 minutes (Groq rate limits apply).
+        Click <strong>Run Race</strong> to run the agent and workflow over all {{ ticketCount ?? '' }} tickets.
+        Provider rate limits apply, so it takes a few minutes.
       </p>
       <div class="tools-preview">
-        <div class="tool-card">
-          <div class="tool-name">get_ticket</div>
-          <div class="tool-desc">Retrieve a ticket by ID &mdash; returns text, customer ID, order ID</div>
-        </div>
-        <div class="tool-card">
-          <div class="tool-name">get_order</div>
-          <div class="tool-desc">Fetch an order record &mdash; returns purchase date, amount, status</div>
-        </div>
-        <div class="tool-card new-tool">
-          <div class="tool-name">get_customer_tier <span class="new-badge">NEW</span></div>
-          <div class="tool-desc">Return the SLA tier &mdash; used exclusively to select the refund window</div>
-        </div>
+        @for (t of tools; track t.name) {
+          <div class="tool-card">
+            <div class="tool-name">{{ t.name }}</div>
+            <div class="tool-desc">{{ t.description }}</div>
+          </div>
+        }
       </div>
     </div>
   }

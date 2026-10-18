@@ -1,0 +1,509 @@
+{
+  "summary": {
+    "trace_id": "5a3189088df04645a1271c60de2accbc",
+    "spans": 12,
+    "total_ms": 17688.66,
+    "cost_usd": 0.00092205,
+    "input_tokens": 4539,
+    "output_tokens": 402,
+    "llm_calls": 3,
+    "llm_ms": 3272.1,
+    "queue_wait_s": 0,
+    "tool_calls": 2,
+    "tool_ms": 296.5,
+    "mcp_server_spans": 2,
+    "mcp_servers_seen": [
+      "help-centre",
+      "tier1-tools"
+    ],
+    "errors": []
+  },
+  "spans": [
+    {
+      "span_id": "7506286f9bd44d17",
+      "trace_id": "5a3189088df04645a1271c60de2accbc",
+      "parent_id": "ce4c333e2e7b4c72",
+      "name": "pre_guard",
+      "kind": "guard",
+      "started_at": "2026-10-16T05:55:26.705254+00:00",
+      "duration_ms": 0.05,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": null,
+      "status": "ok",
+      "attrs": {
+        "blocked": false,
+        "category": null
+      }
+    },
+    {
+      "span_id": "ce4c333e2e7b4c72",
+      "trace_id": "5a3189088df04645a1271c60de2accbc",
+      "parent_id": null,
+      "name": "ticket",
+      "kind": "request",
+      "started_at": "2026-10-16T05:55:26.705254+00:00",
+      "duration_ms": 17688.66,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": null,
+      "status": "ok",
+      "attrs": {
+        "ticket_id": "TK3042",
+        "customer_id": "cust_6c6c76887c",
+        "body_chars": 56,
+        "decision": "ANSWER",
+        "reason": null,
+        "laps": 3,
+        "tools": [
+          "check_entitlement",
+          "search_help_centre"
+        ],
+        "violations": []
+      }
+    },
+    {
+      "span_id": "b3c5acc7091048ac",
+      "trace_id": "5a3189088df04645a1271c60de2accbc",
+      "parent_id": "ce4c333e2e7b4c72",
+      "name": "mcp_connect",
+      "kind": "setup",
+      "started_at": "2026-10-16T05:55:26.787208+00:00",
+      "duration_ms": 12191.57,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": null,
+      "status": "ok",
+      "attrs": {
+        "tools": 4,
+        "blocked": 0
+      }
+    },
+    {
+      "span_id": "dc6e8b83d4434d28",
+      "trace_id": "5a3189088df04645a1271c60de2accbc",
+      "parent_id": "ce4c333e2e7b4c72",
+      "name": "llm_call",
+      "kind": "llm",
+      "started_at": "2026-10-16T05:55:40.119184+00:00",
+      "duration_ms": 1166.62,
+      "input_tokens": 1273,
+      "output_tokens": 142,
+      "cost_usd": 0.00027615,
+      "status": "ok",
+      "attrs": {
+        "model": "openai/gpt-oss-120b",
+        "lap": 1,
+        "cache": "miss",
+        "waited_s": 0.0,
+        "attempts": 1,
+        "finish_reason": "tool_calls"
+      }
+    },
+    {
+      "span_id": "2f76ce19dc1f43ce",
+      "trace_id": "5a3189088df04645a1271c60de2accbc",
+      "parent_id": "ce4c333e2e7b4c72",
+      "name": "tool:check_entitlement",
+      "kind": "tool",
+      "started_at": "2026-10-16T05:55:41.365607+00:00",
+      "duration_ms": 117.03,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": null,
+      "status": "ok",
+      "attrs": {
+        "server": "tier1-tools",
+        "lap": 1,
+        "ok": true
+      }
+    },
+    {
+      "span_id": "545c0549ad3d4efd",
+      "trace_id": "5a3189088df04645a1271c60de2accbc",
+      "parent_id": "2f76ce19dc1f43ce",
+      "name": "server:check_entitlement",
+      "kind": "mcp_server",
+      "started_at": "2026-10-16T05:55:41.368609+00:00",
+      "duration_ms": 16.84,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": null,
+      "status": "ok",
+      "attrs": {
+        "server": "tier1-tools",
+        "tool": "check_entitlement",
+        "ok": true
+      }
+    },
+    {
+      "span_id": "e3b492d1edfd4e6d",
+      "trace_id": "5a3189088df04645a1271c60de2accbc",
+      "parent_id": "ce4c333e2e7b4c72",
+      "name": "llm_call",
+      "kind": "llm",
+      "started_at": "2026-10-16T05:55:41.555248+00:00",
+      "duration_ms": 797.24,
+      "input_tokens": 1400,
+      "output_tokens": 79,
+      "cost_usd": 0.0002574,
+      "status": "ok",
+      "attrs": {
+        "model": "openai/gpt-oss-120b",
+        "lap": 2,
+        "cache": "miss",
+        "waited_s": 0.0,
+        "attempts": 1,
+        "finish_reason": "tool_calls"
+      }
+    },
+    {
+      "span_id": "6739a85e0b134f06",
+      "trace_id": "5a3189088df04645a1271c60de2accbc",
+      "parent_id": "ce4c333e2e7b4c72",
+      "name": "tool:search_help_centre",
+      "kind": "tool",
+      "started_at": "2026-10-16T05:55:42.467794+00:00",
+      "duration_ms": 179.51,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": null,
+      "status": "ok",
+      "attrs": {
+        "server": "help-centre",
+        "lap": 2,
+        "ok": true
+      }
+    },
+    {
+      "span_id": "0dcb86373fa64d2a",
+      "trace_id": "5a3189088df04645a1271c60de2accbc",
+      "parent_id": "e05f0ee8de754961",
+      "name": "retrieval",
+      "kind": "retrieval",
+      "started_at": "2026-10-16T05:55:42.470794+00:00",
+      "duration_ms": 36.59,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": 0.0,
+      "status": "ok",
+      "attrs": {
+        "embedding_model": "BAAI/bge-base-en-v1.5",
+        "cost_note": "local, no API cost",
+        "results": 3
+      }
+    },
+    {
+      "span_id": "e05f0ee8de754961",
+      "trace_id": "5a3189088df04645a1271c60de2accbc",
+      "parent_id": "6739a85e0b134f06",
+      "name": "server:search_help_centre",
+      "kind": "mcp_server",
+      "started_at": "2026-10-16T05:55:42.470794+00:00",
+      "duration_ms": 106.44,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": null,
+      "status": "ok",
+      "attrs": {
+        "server": "help-centre",
+        "tool": "search_help_centre",
+        "query_chars": 33,
+        "policy_filter": "refund-30d",
+        "ok": true,
+        "results": 3
+      }
+    },
+    {
+      "span_id": "fc35bafa0bb14826",
+      "trace_id": "5a3189088df04645a1271c60de2accbc",
+      "parent_id": "ce4c333e2e7b4c72",
+      "name": "llm_call",
+      "kind": "llm",
+      "started_at": "2026-10-16T05:55:42.696266+00:00",
+      "duration_ms": 1308.28,
+      "input_tokens": 1866,
+      "output_tokens": 181,
+      "cost_usd": 0.0003885,
+      "status": "ok",
+      "attrs": {
+        "model": "openai/gpt-oss-120b",
+        "lap": 3,
+        "cache": "miss",
+        "waited_s": 0.0,
+        "attempts": 1,
+        "finish_reason": "stop"
+      }
+    },
+    {
+      "span_id": "e0687cbf1f554ccb",
+      "trace_id": "5a3189088df04645a1271c60de2accbc",
+      "parent_id": "ce4c333e2e7b4c72",
+      "name": "post_guard",
+      "kind": "guard",
+      "started_at": "2026-10-16T05:55:44.335506+00:00",
+      "duration_ms": 0.23,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": null,
+      "status": "ok",
+      "attrs": {
+        "violations": [],
+        "citations": 2,
+        "reply_chars": 430
+      }
+    }
+  ],
+  "tree": [
+    {
+      "span_id": "ce4c333e2e7b4c72",
+      "trace_id": "5a3189088df04645a1271c60de2accbc",
+      "parent_id": null,
+      "name": "ticket",
+      "kind": "request",
+      "started_at": "2026-10-16T05:55:26.705254+00:00",
+      "duration_ms": 17688.66,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": null,
+      "status": "ok",
+      "attrs": {
+        "ticket_id": "TK3042",
+        "customer_id": "cust_6c6c76887c",
+        "body_chars": 56,
+        "decision": "ANSWER",
+        "reason": null,
+        "laps": 3,
+        "tools": [
+          "check_entitlement",
+          "search_help_centre"
+        ],
+        "violations": []
+      },
+      "children": [
+        {
+          "span_id": "7506286f9bd44d17",
+          "trace_id": "5a3189088df04645a1271c60de2accbc",
+          "parent_id": "ce4c333e2e7b4c72",
+          "name": "pre_guard",
+          "kind": "guard",
+          "started_at": "2026-10-16T05:55:26.705254+00:00",
+          "duration_ms": 0.05,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": null,
+          "status": "ok",
+          "attrs": {
+            "blocked": false,
+            "category": null
+          },
+          "children": []
+        },
+        {
+          "span_id": "b3c5acc7091048ac",
+          "trace_id": "5a3189088df04645a1271c60de2accbc",
+          "parent_id": "ce4c333e2e7b4c72",
+          "name": "mcp_connect",
+          "kind": "setup",
+          "started_at": "2026-10-16T05:55:26.787208+00:00",
+          "duration_ms": 12191.57,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": null,
+          "status": "ok",
+          "attrs": {
+            "tools": 4,
+            "blocked": 0
+          },
+          "children": []
+        },
+        {
+          "span_id": "dc6e8b83d4434d28",
+          "trace_id": "5a3189088df04645a1271c60de2accbc",
+          "parent_id": "ce4c333e2e7b4c72",
+          "name": "llm_call",
+          "kind": "llm",
+          "started_at": "2026-10-16T05:55:40.119184+00:00",
+          "duration_ms": 1166.62,
+          "input_tokens": 1273,
+          "output_tokens": 142,
+          "cost_usd": 0.00027615,
+          "status": "ok",
+          "attrs": {
+            "model": "openai/gpt-oss-120b",
+            "lap": 1,
+            "cache": "miss",
+            "waited_s": 0.0,
+            "attempts": 1,
+            "finish_reason": "tool_calls"
+          },
+          "children": []
+        },
+        {
+          "span_id": "2f76ce19dc1f43ce",
+          "trace_id": "5a3189088df04645a1271c60de2accbc",
+          "parent_id": "ce4c333e2e7b4c72",
+          "name": "tool:check_entitlement",
+          "kind": "tool",
+          "started_at": "2026-10-16T05:55:41.365607+00:00",
+          "duration_ms": 117.03,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": null,
+          "status": "ok",
+          "attrs": {
+            "server": "tier1-tools",
+            "lap": 1,
+            "ok": true
+          },
+          "children": [
+            {
+              "span_id": "545c0549ad3d4efd",
+              "trace_id": "5a3189088df04645a1271c60de2accbc",
+              "parent_id": "2f76ce19dc1f43ce",
+              "name": "server:check_entitlement",
+              "kind": "mcp_server",
+              "started_at": "2026-10-16T05:55:41.368609+00:00",
+              "duration_ms": 16.84,
+              "input_tokens": null,
+              "output_tokens": null,
+              "cost_usd": null,
+              "status": "ok",
+              "attrs": {
+                "server": "tier1-tools",
+                "tool": "check_entitlement",
+                "ok": true
+              },
+              "children": []
+            }
+          ]
+        },
+        {
+          "span_id": "e3b492d1edfd4e6d",
+          "trace_id": "5a3189088df04645a1271c60de2accbc",
+          "parent_id": "ce4c333e2e7b4c72",
+          "name": "llm_call",
+          "kind": "llm",
+          "started_at": "2026-10-16T05:55:41.555248+00:00",
+          "duration_ms": 797.24,
+          "input_tokens": 1400,
+          "output_tokens": 79,
+          "cost_usd": 0.0002574,
+          "status": "ok",
+          "attrs": {
+            "model": "openai/gpt-oss-120b",
+            "lap": 2,
+            "cache": "miss",
+            "waited_s": 0.0,
+            "attempts": 1,
+            "finish_reason": "tool_calls"
+          },
+          "children": []
+        },
+        {
+          "span_id": "6739a85e0b134f06",
+          "trace_id": "5a3189088df04645a1271c60de2accbc",
+          "parent_id": "ce4c333e2e7b4c72",
+          "name": "tool:search_help_centre",
+          "kind": "tool",
+          "started_at": "2026-10-16T05:55:42.467794+00:00",
+          "duration_ms": 179.51,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": null,
+          "status": "ok",
+          "attrs": {
+            "server": "help-centre",
+            "lap": 2,
+            "ok": true
+          },
+          "children": [
+            {
+              "span_id": "e05f0ee8de754961",
+              "trace_id": "5a3189088df04645a1271c60de2accbc",
+              "parent_id": "6739a85e0b134f06",
+              "name": "server:search_help_centre",
+              "kind": "mcp_server",
+              "started_at": "2026-10-16T05:55:42.470794+00:00",
+              "duration_ms": 106.44,
+              "input_tokens": null,
+              "output_tokens": null,
+              "cost_usd": null,
+              "status": "ok",
+              "attrs": {
+                "server": "help-centre",
+                "tool": "search_help_centre",
+                "query_chars": 33,
+                "policy_filter": "refund-30d",
+                "ok": true,
+                "results": 3
+              },
+              "children": [
+                {
+                  "span_id": "0dcb86373fa64d2a",
+                  "trace_id": "5a3189088df04645a1271c60de2accbc",
+                  "parent_id": "e05f0ee8de754961",
+                  "name": "retrieval",
+                  "kind": "retrieval",
+                  "started_at": "2026-10-16T05:55:42.470794+00:00",
+                  "duration_ms": 36.59,
+                  "input_tokens": null,
+                  "output_tokens": null,
+                  "cost_usd": 0.0,
+                  "status": "ok",
+                  "attrs": {
+                    "embedding_model": "BAAI/bge-base-en-v1.5",
+                    "cost_note": "local, no API cost",
+                    "results": 3
+                  },
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "span_id": "fc35bafa0bb14826",
+          "trace_id": "5a3189088df04645a1271c60de2accbc",
+          "parent_id": "ce4c333e2e7b4c72",
+          "name": "llm_call",
+          "kind": "llm",
+          "started_at": "2026-10-16T05:55:42.696266+00:00",
+          "duration_ms": 1308.28,
+          "input_tokens": 1866,
+          "output_tokens": 181,
+          "cost_usd": 0.0003885,
+          "status": "ok",
+          "attrs": {
+            "model": "openai/gpt-oss-120b",
+            "lap": 3,
+            "cache": "miss",
+            "waited_s": 0.0,
+            "attempts": 1,
+            "finish_reason": "stop"
+          },
+          "children": []
+        },
+        {
+          "span_id": "e0687cbf1f554ccb",
+          "trace_id": "5a3189088df04645a1271c60de2accbc",
+          "parent_id": "ce4c333e2e7b4c72",
+          "name": "post_guard",
+          "kind": "guard",
+          "started_at": "2026-10-16T05:55:44.335506+00:00",
+          "duration_ms": 0.23,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": null,
+          "status": "ok",
+          "attrs": {
+            "violations": [],
+            "citations": 2,
+            "reply_chars": 430
+          },
+          "children": []
+        }
+      ]
+    }
+  ]
+}

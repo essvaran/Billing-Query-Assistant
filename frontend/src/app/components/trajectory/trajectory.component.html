@@ -108,7 +108,7 @@
           <span class="pulse">*</span>
           Evaluating agent trajectories...
           @if (evalStatus.progress) {
-            ({{ evalStatus.progress['ticket_id'] ?? '' }} - {{ $any(evalStatus.progress['index'] ?? 0) | number }}/{{ $any(evalStatus.progress['total'] ?? 10) | number }})
+            ({{ evalStatus.progress['ticket_id'] ?? '' }} - {{ $any(evalStatus.progress['index'] ?? 0) | number }}/{{ $any(evalStatus.progress['total'] ?? sequences.length) | number }})
           }
         }
         @if (evalStatus.status === 'done') { Trajectory evaluation complete. }
@@ -374,7 +374,7 @@
     <div class="section">
       <h2 class="section-title">Mitigation: Prompt Hardening + Argument Validation</h2>
       <p class="section-desc">
-        Two-layer mitigation targeting adversarial tickets (T011, T012, T013).
+        Two-layer mitigation targeting adversarial tickets ({{ adversarialIds() }}).
         <strong>Layer 1 -- System Prompt Hardening:</strong> instructs the agent to always call all three tools
         and use IDs only from get_ticket results, never from ticket text.
         <strong>Layer 2 -- Argument Validation:</strong> wraps dispatch_tool to catch wrong IDs at runtime
@@ -395,7 +395,7 @@
         @if (mitigationStatus.status === 'idle') { Ready to apply mitigation and compare. }
         @if (mitigationStatus.status === 'running') {
           <span class="pulse">*</span>
-          Running baseline + mitigated eval (20 total runs)...
+          Running baseline + mitigated eval ({{ sequences.length * 2 }} total runs)...
           @if (mitigationStatus.progress) {
             Phase: {{ mitigationStatus.progress['phase'] ?? '' }}
             @if (mitigationStatus.progress['ticket_id']) {

@@ -10,15 +10,21 @@ from src.observability.email_template import render_alert, render_test
 
 logger = logging.getLogger(__name__)
 
-RATE_LIMIT_SECONDS = 300
 _last_sent = {}
 _lock = threading.Lock()
 
-REFUSAL_PREFIXES = (
-    "I don't have enough information to answer that",
-    "I cannot answer that from the indexed help-centre articles",
-)
-BLOCKLIST_KEYWORDS = ("refund", "compensation", "guarantee")
+
+
+def _setting(key: str):
+    from src.catalog import settings
+    return settings.get(key)
+
+
+def blocklist_keywords() -> list[str]:
+    from src.catalog import ref
+    return [v["label"].lower() for v in ref.values("alert_blocklist_keyword")]
+
+
 REQUIRED_SETTINGS = ("ALERT_EMAIL_FROM", "ALERT_EMAIL_TO", "ALERT_EMAIL_PASSWORD")
 
 
@@ -47,22 +53,21 @@ def config_status():
         "email_to": _mask_email(os.getenv("ALERT_EMAIL_TO", "")),
         "password_set": bool(os.getenv("ALERT_EMAIL_PASSWORD", "").strip()),
         "missing": missing_settings(),
-        "cost_threshold_usd": float(os.getenv("ALERT_COST_THRESHOLD", "0.001")),
-        "latency_threshold_ms": float(os.getenv("ALERT_LATENCY_THRESHOLD_MS", "10000")),
-        "rate_limit_seconds": RATE_LIMIT_SECONDS,
-        "conditions": [
-            "ungrounded_answer: non-refusal answer without valid citations",
-            "cost_outlier: cost above the cost threshold",
-            "slow_request: latency above the latency threshold",
-            "pipeline_error: any error recorded on the trace",
-            "blocklist_keyword: answer mentions refund, compensation or guarantee",
-            "negative_feedback: a user gives an answer a thumbs down (one email per vote, up to the hourly cap)",
-        ],
+        "cost_threshold_usd": _setting("alerts.cost_threshold_usd"),
+        "latency_threshold_ms": _setting("alerts.latency_threshold_ms"),
+        "rate_limit_seconds": _setting("alerts.rate_limit_s"),
+        "conditions": _conditions(),
     }
 
 
+def _conditions() -> list[str]:
+    from src.catalog import ref
+    return [f"{v['code']}: {v['label']}" for v in ref.values("alert_type") if v["code"] not in ("test", "default")]
+
+
 def _is_refusal(answer):
-    return answer.strip().startswith(REFUSAL_PREFIXES)
+    from src.generation.refusal import is_refusal
+    return is_refusal(answer)
 
 
 def evaluate_conditions(record):
@@ -70,8 +75,8 @@ def evaluate_conditions(record):
     alerts = []
     answer = record.get("final_answer") or ""
     refusal = _is_refusal(answer)
-    cost_threshold = float(os.getenv("ALERT_COST_THRESHOLD", "0.001"))
-    latency_threshold = float(os.getenv("ALERT_LATENCY_THRESHOLD_MS", "10000"))
+    cost_threshold = _setting("alerts.cost_threshold_usd")
+    latency_threshold = _setting("alerts.latency_threshold_ms")
 
     if not refusal and not record.get("citations_valid"):
         alerts.append(("ungrounded_answer", "non-refusal answer without valid citations"))
@@ -81,8 +86,9 @@ def evaluate_conditions(record):
         alerts.append(("slow_request", f"total_ms {record['total_ms']} above {latency_threshold}"))
     if record.get("error"):
         alerts.append(("pipeline_error", str(record["error"])[:200]))
-    if not refusal and any(k in answer.lower() for k in BLOCKLIST_KEYWORDS):
-        alerts.append(("blocklist_keyword", "answer makes refund/compensation/guarantee claims"))
+    found = [k for k in blocklist_keywords() if k in answer.lower()]
+    if not refusal and found:
+        alerts.append(("blocklist_keyword", "answer mentions " + ", ".join(found)))
     return alerts
 
 
@@ -111,15 +117,18 @@ def _record(alert_type, status, trace_id=None, reason=None, detail=None):
 
 
 def _send_alerts(alerts, record):
+    from src.observability.redact import redact
+
+    record = redact(record)  # alert emails leave the system; scrub what they quote
     for alert_type, reason in alerts:
         now = time.time()
         with _lock:
-            if now - _last_sent.get(alert_type, 0.0) < RATE_LIMIT_SECONDS:
+            if now - _last_sent.get(alert_type, 0.0) < _setting("alerts.rate_limit_s"):
                 _record(alert_type, "suppressed", record.get("trace_id"), reason, "rate limited")
                 continue
             _last_sent[alert_type] = now
         try:
-            subject, body, html = render_alert(alert_type, reason, record, RATE_LIMIT_SECONDS // 60)
+            subject, body, html = render_alert(alert_type, reason, record, _setting("alerts.rate_limit_s") // 60)
             send_alert_email(subject, body, html)
             _record(alert_type, "sent", record.get("trace_id"), reason)
             logger.info("alert sent: %s", subject)

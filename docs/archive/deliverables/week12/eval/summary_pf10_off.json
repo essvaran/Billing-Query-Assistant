@@ -1,0 +1,183 @@
+{
+  "tag": "pf10_off",
+  "ablate": "prefetch",
+  "n": 10,
+  "passed": 8,
+  "pass_rate": 0.8,
+  "by_slice": {
+    "random": {
+      "passed": 8,
+      "n": 10,
+      "rate": 0.8
+    }
+  },
+  "by_check": {
+    "cites_gold_source": {
+      "passed": 7,
+      "n": 9
+    },
+    "decision_matches": {
+      "passed": 9,
+      "n": 10
+    },
+    "eligibility_consistent": {
+      "passed": 2,
+      "n": 2
+    },
+    "escalation_reason_ok": {
+      "passed": 1,
+      "n": 1
+    },
+    "expected_tools_called": {
+      "passed": 9,
+      "n": 9
+    },
+    "handoff_created": {
+      "passed": 1,
+      "n": 1
+    },
+    "has_valid_citation": {
+      "passed": 8,
+      "n": 9
+    },
+    "names_policy_version": {
+      "passed": 2,
+      "n": 2
+    },
+    "no_money_claim": {
+      "passed": 8,
+      "n": 8
+    },
+    "no_pii_in_reply": {
+      "passed": 8,
+      "n": 8
+    },
+    "no_superseded_citation": {
+      "passed": 9,
+      "n": 9
+    },
+    "nothing_customer_facing": {
+      "passed": 1,
+      "n": 1
+    },
+    "order_status_grounded": {
+      "passed": 1,
+      "n": 1
+    },
+    "shipping_days_correct": {
+      "passed": 3,
+      "n": 3
+    },
+    "states_correct_window": {
+      "passed": 2,
+      "n": 2
+    }
+  },
+  "both_versions": {
+    "n": 0,
+    "passed": 0,
+    "legacy_14d": {
+      "n": 0,
+      "passed": 0
+    },
+    "current_30d": {
+      "n": 0,
+      "passed": 0
+    },
+    "pairs_both_correct": 0,
+    "pairs": 0
+  },
+  "superseded_policy": {
+    "refund_cases": 2,
+    "answered": 2,
+    "final_answers_citing_wrong_version": 0,
+    "final_rate": 0.0,
+    "drafts_blocked_by_guard": 0,
+    "attempted_rate": 0.0
+  },
+  "failure_modes": {
+    "wrong_source_cited": {
+      "count": 1,
+      "severity": "medium",
+      "cases": [
+        "RAN02"
+      ],
+      "trace_ids": [
+        "77219a3efa91452cb8e2ed62ddeec931"
+      ]
+    },
+    "over_escalation": {
+      "count": 1,
+      "severity": "medium",
+      "cases": [
+        "RAN10"
+      ],
+      "trace_ids": [
+        "1539045d47404c9fbdb396303a1e9494"
+      ]
+    }
+  },
+  "trajectory": {
+    "n": 9,
+    "tool_choice_accuracy": 1.0,
+    "outcome_accuracy": 0.778,
+    "gap_points": -22.2,
+    "right_answer_wrong_path": 0,
+    "right_path_wrong_answer": 2,
+    "both_right": 7,
+    "both_wrong": 0,
+    "wasted_search_calls": 1,
+    "model_choice": {
+      "n": 9,
+      "prefetched_cases": 0,
+      "accuracy": 0.889,
+      "outcome_accuracy": 0.778,
+      "gap_points": -11.1,
+      "right_answer_wrong_path": 0,
+      "right_path_wrong_answer": 1,
+      "mean_model_calls": 2.56
+    }
+  },
+  "cost_latency": {
+    "total_cost_usd": 0.01166,
+    "mean_cost_per_ticket_usd": 0.001166,
+    "deflected_assertions_only": 7,
+    "cost_per_deflected_usd": 0.001666,
+    "deflected_assertions_and_judge": 0,
+    "cost_per_deflected_judge_usd": null,
+    "llm_tickets": 9,
+    "tickets_with_no_model_call": 1,
+    "mean_tokens_per_llm_ticket": 6590,
+    "p50_latency_s": 60.4,
+    "p95_latency_s": 119.5,
+    "first_ticket_latency_s": 19.4,
+    "tpm_ceiling_tickets_per_min": 1.21
+  },
+  "judge": {
+    "model": null,
+    "version": "v3b-integrated",
+    "n": 0,
+    "good": 0,
+    "not_good": 0,
+    "error": 0,
+    "agreement": {
+      "status": "no labelled cases matched judged cases",
+      "labeler": "",
+      "n": 0
+    }
+  },
+  "llm_cache": {
+    "hits": 1,
+    "misses": 30
+  },
+  "wall_seconds": 510,
+  "resumed_from_partial": 0,
+  "settings": {
+    "ablate": "prefetch",
+    "cases": "main",
+    "only": null,
+    "limit": 10,
+    "case_id": null,
+    "judge": false
+  }
+}

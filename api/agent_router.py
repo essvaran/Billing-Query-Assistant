@@ -15,7 +15,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from api.auth import UserOut, get_current_user
+from api.auth import UserOut, require_admin  # research tools: admin only (they spend model quota)
 from api.database import get_db
 
 log = logging.getLogger("api.agent")
@@ -86,44 +86,25 @@ class RunRequest(BaseModel):
 # Endpoints
 # ---------------------------------------------------------------------------
 
-@router.get("/tickets")
-def list_tickets(_user: UserOut = Depends(get_current_user)):
-    """Return the current ticket fixtures (reads from SQLite, falls back to hardcoded)."""
-    try:
-        with get_db() as conn:
-            rows = conn.execute("SELECT * FROM tickets ORDER BY ticket_id").fetchall()
-        if rows:
-            from agent.tickets import EXPECTED, BRANCHING_IDS
-            return [
-                {
-                    "ticket_id": r["ticket_id"],
-                    "text": r["text"],
-                    "customer_id": r["customer_id"],
-                    "order_id": r["order_id"],
-                    "expected": r["expected_verdict"],
-                    "branching": r["ticket_id"] in BRANCHING_IDS,
-                }
-                for r in rows
-            ]
-    except Exception as exc:
-        log.warning("SQLite unavailable for tickets, using hardcoded: %s", exc)
+@router.get("/tools")
+def list_tools(_user: UserOut = Depends(require_admin)):
+    """The Week 7 agent's tools, from their schemas in agent/tools.py (the definition the model receives)."""
+    from agent.tools import TOOL_SCHEMAS
+    return [{"name": t["function"]["name"], "description": t["function"].get("description", "")} for t in TOOL_SCHEMAS]
 
-    from agent.tickets import TICKETS, EXPECTED, BRANCHING_IDS
-    return [
-        {
-            "ticket_id": tid,
-            "text": t["text"],
-            "customer_id": t["customer_id"],
-            "order_id": t["order_id"],
-            "expected": EXPECTED[tid],
-            "branching": tid in BRANCHING_IDS,
-        }
-        for tid, t in TICKETS.items()
-    ]
+
+@router.get("/tickets")
+def list_tickets(_user: UserOut = Depends(require_admin)):
+    """The Week 7 ticket fixtures from the database (Admin, Tickets)."""
+    from agent import tickets as fx
+    return [{"ticket_id": tid, "text": t["text"], "customer_id": t["customer_id"], "order_id": t["order_id"],
+             "expected": t.get("expected_verdict"), "branching": t.get("category") == "branching",
+             "category": t.get("category")}
+            for tid, t in fx.tickets().items()]
 
 
 @router.post("/run")
-def run_agent_job(req: RunRequest, user: UserOut = Depends(get_current_user)):
+def run_agent_job(req: RunRequest, user: UserOut = Depends(require_admin)):
     if not req.ticket_id and not req.message:
         raise HTTPException(400, "Provide ticket_id or message")
 
@@ -132,8 +113,8 @@ def run_agent_job(req: RunRequest, user: UserOut = Depends(get_current_user)):
 
     def _worker():
         try:
-            from agent.agent_loop import DEMO_MAX_ITERS, FREEFORM_SYSTEM_PROMPT, MAX_ITERS, run_agent
-            from agent.tickets import EXPECTED
+            from agent.agent_loop import budget, freeform_system_prompt, run_agent
+            from agent import tickets as fx
             from dataclasses import asdict
 
             def on_step(step: dict):
@@ -142,11 +123,11 @@ def run_agent_job(req: RunRequest, user: UserOut = Depends(get_current_user)):
             freeform = bool(req.message and not req.ticket_id)
             result = run_agent(
                 ticket_id=req.ticket_id or "",
-                expected_verdict=EXPECTED.get(req.ticket_id or "") if req.ticket_id else None,
-                max_iters=DEMO_MAX_ITERS if req.tight_budget else MAX_ITERS,
+                expected_verdict=fx.expected().get(req.ticket_id or "") if req.ticket_id else None,
+                max_iters=budget("demo_max_iters") if req.tight_budget else budget("max_iters"),
                 on_step=on_step,
                 user_message=req.message if freeform else None,
-                system_prompt_override=FREEFORM_SYSTEM_PROMPT if freeform else None,
+                system_prompt_override=freeform_system_prompt() if freeform else None,
             )
             if result.error or result.reply in ("[error]", "") or not result.reply.strip():
                 _fail_job(job_id, result.error or "The agent did not produce a response. Please try again.")
@@ -161,7 +142,7 @@ def run_agent_job(req: RunRequest, user: UserOut = Depends(get_current_user)):
 
 
 @router.get("/status/{job_id}")
-def get_job_status(job_id: str, _user: UserOut = Depends(get_current_user)):
+def get_job_status(job_id: str, _user: UserOut = Depends(require_admin)):
     job = _get_job(job_id)
     if not job:
         raise HTTPException(404, "Job not found")

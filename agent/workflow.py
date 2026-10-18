@@ -26,18 +26,17 @@ if hasattr(sys.stdout, "reconfigure"):
 
 load_dotenv()
 
-COST_PER_1M_TOKENS = 0.90  # USD per 1M tokens
-MODEL = os.getenv("LLM_MODEL", "openai/gpt-oss-120b")
 _LANGFUSE_HOST = os.getenv("LANGFUSE_HOST", os.getenv("LANGFUSE_BASE_URL", "https://cloud.langfuse.com")).rstrip("/")
 
-SYSTEM_PROMPT = (
-    "You are a billing support agent. Draft a concise refund reply based on the "
-    "information provided.\n"
-    "- Approve the refund if days_since_purchase is within the customer's refund_days window.\n"
-    "- Deny the refund if outside the window.\n"
-    "- Escalate (instruct the customer to email billing@company.com) if the order record "
-    "cannot be found."
-)
+
+def _model() -> str:
+    from agent.agent_loop import model
+    return model()
+
+
+def _system_prompt() -> str:
+    from src.catalog import prompts, settings
+    return prompts.render("week7.workflow", support_email=settings.get("week7.support_email"))
 
 
 @dataclass
@@ -70,15 +69,15 @@ def run_workflow(
     lf_trace = None
     if lf:
         try:
-            from agent.tickets import TICKETS
-            ticket_text = TICKETS.get(ticket_id, {}).get("text", "")
+            from agent import tickets as fx
+            ticket_text = fx.tickets().get(ticket_id, {}).get("text", "")
             lf_trace = lf.trace(
                 name="workflow_run",
                 input={"ticket_id": ticket_id, "ticket_text": ticket_text},
                 tags=["workflow", "week7-task-a"],
                 metadata={
                     "system": "workflow",
-                    "model": MODEL,
+                    "model": _model(),
                     "expected_verdict": expected_verdict,
                 },
             )
@@ -107,7 +106,8 @@ def run_workflow(
 
     if "error" in ticket:
         latency = time.monotonic() - t_start
-        reply = "We could not locate that support ticket. Please contact support@company.com."
+        from src.catalog import prompts, settings
+        reply = prompts.render("week7.ticket_not_found", support_email=settings.get("week7.support_email"))
         if verbose:
             print("  [step 1] ticket not found", flush=True)
 
@@ -180,9 +180,9 @@ def run_workflow(
         try:
             lf_gen = lf_trace.generation(
                 name="llm_call",
-                model=MODEL,
+                model=_model(),
                 input=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "system", "content": _system_prompt()},
                     {"role": "user", "content": user_prompt},
                 ],
                 metadata={"temperature": 0.0, "order_missing": order_missing},
@@ -190,7 +190,7 @@ def run_workflow(
         except Exception:
             lf_gen = None
 
-    text, in_tok, out_tok = ask_llm(SYSTEM_PROMPT, user_prompt)
+    text, in_tok, out_tok = ask_llm(_system_prompt(), user_prompt, model=_model())
 
     if lf_gen:
         try:
@@ -202,7 +202,8 @@ def run_workflow(
             pass
 
     total_tokens = in_tok + out_tok
-    cost = (total_tokens / 1_000_000) * COST_PER_1M_TOKENS
+    from src.generation.cost import calculate_cost
+    cost = calculate_cost(_model(), in_tok, out_tok)["total_cost_usd"]
     latency = time.monotonic() - t_start
     passed = score_reply(text, expected_verdict)
 
@@ -244,11 +245,10 @@ def _finalize_trace(lf, lf_trace, output: dict, metadata: dict) -> tuple[str | N
 
 
 if __name__ == "__main__":
-    from agent.tickets import EXPECTED
-
+    from agent import tickets as fx
     ticket_id = sys.argv[1] if len(sys.argv) > 1 else "T001"
     print(f"\n=== Workflow run: {ticket_id} ===")
-    result = run_workflow(ticket_id, expected_verdict=EXPECTED.get(ticket_id), verbose=True)
+    result = run_workflow(ticket_id, expected_verdict=fx.expected().get(ticket_id), verbose=True)
     print(f"\nReply:\n{result.reply[:400]}")
     print(
         f"\nTokens: {result.total_tokens} | Cost: ${result.cost_usd:.6f} | "

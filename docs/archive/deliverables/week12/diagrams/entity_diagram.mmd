@@ -1,0 +1,115 @@
+erDiagram
+  CUSTOMERS ||--o{ ORDERS : places
+  CUSTOMERS ||--o{ TICKETS : sends
+  ORDERS ||--o{ TICKETS : "is about"
+  TICKETS ||--o{ AI_RESULTS : "gets drafts"
+  TICKETS ||--o{ DECISIONS : "gets human decisions"
+  TICKETS ||--o{ TICKET_FEEDBACK : "gets reports"
+  TICKETS ||--o{ HANDOFFS : "may escalate to"
+  AI_RESULTS }o--o{ SPANS : "same trace_id"
+  JOBS }o--o{ SPANS : "same trace_id"
+  SPANS ||--o{ SPANS : "parent_id"
+
+  CUSTOMERS {
+    text customer_id PK
+    text name "PII"
+    text email "PII"
+    text address "PII"
+    text region
+    text plan
+    text policy_version "refund-14d or refund-30d"
+    int refund_days
+    int standard_days
+    int express_days
+  }
+  ORDERS {
+    text order_id PK
+    text customer_id FK
+    text purchase_date
+    real amount
+    text currency
+    text status
+  }
+  TICKETS {
+    text ticket_id PK
+    text customer_id FK
+    text order_id FK
+    text subject
+    text body
+    text kind "eval ground truth, never sent to the UI"
+    text expected_decision "eval ground truth"
+    text gold_slug "eval ground truth"
+    text expected_policy_version "eval ground truth"
+  }
+  AI_RESULTS {
+    int id PK
+    text ticket_id FK
+    text trace_id
+    text created_at
+    text decision "ANSWER or ESCALATE"
+    text reason
+    real cost_usd
+    real latency_ms
+    int total_tokens
+    text response_json
+  }
+  DECISIONS {
+    int id PK
+    text ticket_id FK
+    text trace_id
+    text created_at
+    text action "approve, edit, escalate, reject"
+    text final_text
+    real edit_ratio
+    text user_email
+  }
+  TICKET_FEEDBACK {
+    int id PK
+    text ticket_id FK
+    text trace_id
+    text created_at
+    text reason
+    text comment
+    text user_email
+    text status "open or case_created"
+    text eval_case_id
+  }
+  HANDOFFS {
+    text handoff_id PK
+    text ticket_ref "ticket id, no foreign key"
+    text created_at
+    text reason
+    text summary "redacted"
+    text trace_id
+    text status "queued, claimed, resolved"
+    text claimed_by
+    text claimed_at
+  }
+  SPANS {
+    text span_id PK
+    text trace_id
+    text parent_id FK
+    text name
+    text kind
+    text started_at
+    real duration_ms
+    int input_tokens
+    int output_tokens
+    real cost_usd
+    text status
+    text attrs "redacted JSON"
+  }
+  JOBS {
+    text job_id PK
+    text created_at
+    text user_email
+    text status
+    text trace_id
+    text steps
+    text result
+    text error
+  }
+  META {
+    text key PK "as_of, synthetic"
+    text value
+  }

@@ -22,10 +22,6 @@ logger = logging.getLogger(__name__)
 
 TRACE_NAME = "answer_question"
 PAGE_SIZE = 100
-REFUSAL_PREFIXES = (
-    "I don't have enough information to answer that",
-    "I cannot answer that from the indexed help",
-)
 TRACE_ID_RE = re.compile(r"^[0-9A-Za-z-]{8,64}$")
 RECENT_MAX = 500
 RECENT_AGE_SECONDS = 3600
@@ -162,7 +158,8 @@ def _parse(ts):
 
 
 def _is_refusal(answer):
-    return (answer or "").startswith(REFUSAL_PREFIXES)
+    from src.generation.refusal import is_refusal
+    return is_refusal(answer)
 
 
 def _finish(item):

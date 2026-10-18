@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { refValues } from '../../shared/ref-data';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
@@ -13,6 +14,7 @@ import { fmtUsd, fmtUtc, shortId } from './obs-format';
   styleUrl: './obs-shared.scss',
 })
 export class ObsAlertsComponent implements OnInit, OnDestroy {
+  alertStatuses() { return refValues('alert_status'); }
   private api = inject(ObservabilityService);
   private destroy$ = new Subject<void>();
 

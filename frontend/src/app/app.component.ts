@@ -1,32 +1,49 @@
-import { Component, OnDestroy } from '@angular/core';
+import { RefDataService } from './shared/ref-data';
+import { inject, Component, OnDestroy } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { AuthService } from './services/auth.service';
+import { ThemeService } from './services/theme.service';
+import { ToastHostComponent } from './shared/toast';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, ToastHostComponent],
   template: `
     @if (showNav) {
       <nav class="nav" role="navigation" aria-label="Main navigation">
-        <a class="nav__brand" routerLink="/" aria-label="Billing Support RAG home">
+        <a class="nav__brand" routerLink="/" aria-label="Chat home">
           <span class="nav__brand-icon">⚡</span>
-          <span class="nav__brand-text">Billing Support</span>
+          <span class="nav__brand-text">Tier-1 Workspace</span>
         </a>
 
         <div class="nav__links" role="menubar">
-          <a class="nav__link" routerLink="/" routerLinkActive="nav__link--active"
-             [routerLinkActiveOptions]="{exact:true}" role="menuitem">Chat</a>
+          <a class="nav__link" routerLink="/" routerLinkActive="nav__link--active" [routerLinkActiveOptions]="{ exact: true }" role="menuitem">Chat</a>
+          <a class="nav__link" routerLink="/account" routerLinkActive="nav__link--active" role="menuitem">Account</a>
+          <a class="nav__link" routerLink="/help" routerLinkActive="nav__link--active" role="menuitem">Help</a>
           @if (isAdmin) {
+            <a class="nav__link nav__link--admin" routerLink="/tickets" routerLinkActive="nav__link--active" role="menuitem">Tickets</a>
+            <a class="nav__link nav__link--admin" routerLink="/escalations" routerLinkActive="nav__link--active" role="menuitem">Escalations</a>
+            <a class="nav__link nav__link--admin" routerLink="/try" routerLinkActive="nav__link--active" role="menuitem">Try a ticket</a>
+            <a class="nav__link nav__link--admin" routerLink="/insights"
+               routerLinkActive="nav__link--active" role="menuitem">Insights</a>
+            <a class="nav__link nav__link--admin" routerLink="/label"
+               routerLinkActive="nav__link--active" role="menuitem">Label replies</a>
+            <a class="nav__link nav__link--admin" routerLink="/data"
+               routerLinkActive="nav__link--active" role="menuitem">Data</a>
             <a class="nav__link nav__link--admin" routerLink="/admin"
                routerLinkActive="nav__link--active" role="menuitem">Admin</a>
           }
         </div>
 
         <div class="nav__user">
+          <button class="nav__signout" type="button" (click)="theme.toggle()"
+                  [attr.aria-label]="'Switch to ' + (theme.theme() === 'dark' ? 'light' : 'dark') + ' theme'">
+            {{ theme.theme() === 'dark' ? 'Light' : 'Dark' }} theme
+          </button>
           <span class="role-chip" [class.role-chip--admin]="isAdmin">
             {{ isAdmin ? 'Admin' : 'User' }}
           </span>
@@ -37,9 +54,10 @@ import { AuthService } from './services/auth.service';
         </div>
       </nav>
     }
-    <main>
+    <main id="main">
       <router-outlet />
     </main>
+    <app-toast-host />
   `,
   styles: [`
     :host { display: block; }
@@ -158,17 +176,32 @@ import { AuthService } from './services/auth.service';
     }
 
     main { min-height: calc(100vh - 52px); }
+
+    /* Phones and narrow windows: brand and account controls on the first row, the links on a second row that
+       scrolls sideways, so the page itself never scrolls horizontally. */
+    @media (max-width: 760px) {
+      .nav { flex-wrap: wrap; height: auto; padding: 0.4rem 1rem; row-gap: 0.3rem; }
+      .nav__brand { margin-right: auto; }
+      .nav__user { margin-left: 0; gap: 0.4rem; }
+      .nav__email, .role-chip { display: none; }
+      .nav__links { order: 3; flex-basis: 100%; }
+      main { min-height: calc(100vh - 88px); }
+    }
   `],
 })
 export class AppComponent implements OnDestroy {
   showNav = true;
   private _sub: Subscription;
 
-  constructor(public auth: AuthService, private router: Router) {
+  private refData = inject(RefDataService);
+
+  constructor(public auth: AuthService, private router: Router, public theme: ThemeService) {
     this._sub = this.router.events.pipe(
       filter((e): e is NavigationEnd => e instanceof NavigationEnd),
     ).subscribe(e => {
       this.showNav = !e.urlAfterRedirects.startsWith('/login');
+      // reference lists and public settings: loaded once per sign-in (they label everything a person reads)
+      if (this.auth.isLoggedIn && !this.refData.loaded()) this.refData.load().subscribe();
     });
   }
 
@@ -180,6 +213,7 @@ export class AppComponent implements OnDestroy {
   get userEmail(): string { return this.auth.currentUser?.email ?? ''; }
 
   logout(): void {
+    this.refData.clear();
     this.auth.logout();
     this.router.navigate(['/login']);
   }

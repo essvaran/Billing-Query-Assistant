@@ -1,4 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { refDescription, refValues } from '../../shared/ref-data';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
@@ -13,6 +16,10 @@ import { SampleService, TracePrompt, TraceRecord } from '../../services/sample.s
   styleUrl: './sample.component.scss',
 })
 export class SampleComponent implements OnInit, OnDestroy {
+  sampleMeta: { seed: number; size: number; n: number } | null = null;
+  private metaHttp = inject(HttpClient);
+  private _meta = this.metaHttp.get<{ seed: number; size: number; n: number }>('/api/traces/sample/meta').subscribe({ next: m => (this.sampleMeta = m), error: () => {} });
+
   traces: TraceRecord[] = [];
   loading = true;
   error = '';
@@ -88,13 +95,5 @@ export class SampleComponent implements OnInit, OnDestroy {
     return this.traces.filter((t) => !t.citations_valid).length;
   }
 
-  queryTypeTitle(qt: string | null): string {
-    const map: Record<string, string> = {
-      'simple':        'Single direct question — one clear answer expected',
-      'multi-part':    'Two or more sub-questions combined in one query',
-      'exact keyword': 'Uses specific codes or technical terms (e.g. HC-BILL-001)',
-      'semantic':      'Meaning-based query — intent must be inferred from natural language',
-    };
-    return qt ? (map[qt] ?? qt) : '';
-  }
+  queryTypeTitle(qt: string | null): string { return refDescription('query_type', qt) || (qt ?? ''); }
 }

@@ -1,0 +1,24 @@
+flowchart TD
+  UI["Angular workspace<br/>queue, review, insights"] --> API["FastAPI router<br/>thin, no logic"]
+  CLI["CLI and eval suite<br/>python -m tier1"] --> SVC
+  API --> SVC
+
+  subgraph SVC["Single entry point: handle_ticket()"]
+    direction LR
+    PRE["Pre-guard<br/>no model call"] --> AGENT["Agent loop<br/>budgeted, 3 tools"] --> POST["Post-guard<br/>citations, windows"]
+  end
+
+  AGENT --> GW["LLM gateway<br/>cache, token limiter"]
+  AGENT --> TOOLS["MCP: tier1-tools<br/>order, plan, handoff"]
+  AGENT --> HELP["MCP: help-centre<br/>hybrid search"]
+
+  GW --> GROQ["Groq model API<br/>free tier"]
+  TOOLS --> DB[("SQLite tier1.db<br/>orders, spans, queue")]
+  HELP --> IDX[("Vector index<br/>Chroma plus BM25")]
+
+  TRACE["Tracing and PII redaction on every hop<br/>one trace_id, a span per step, personal data scrubbed at each sink"]:::cross
+  SVC -.-> TRACE
+  TOOLS -.-> TRACE
+  HELP -.-> TRACE
+
+  classDef cross fill:none,stroke:#888,stroke-dasharray:5 4

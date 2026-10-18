@@ -1,0 +1,125 @@
+{
+  "_about": "First-run seed for the Week 9 ticket-history MCP server, stored in data/app.db table ticket_histories.",
+  "tickets": [
+    {
+      "ticket_id": "T002",
+      "history": {
+        "ticket_id": "T002",
+        "created": "2025-06-10T09:15:00Z",
+        "status_changes": [
+          {
+            "from": "open",
+            "to": "in_progress",
+            "at": "2025-06-10T09:30:00Z",
+            "by": "agent-A"
+          },
+          {
+            "from": "in_progress",
+            "to": "resolved",
+            "at": "2025-06-10T11:00:00Z",
+            "by": "agent-A"
+          }
+        ],
+        "assigned_agents": [
+          "agent-A"
+        ]
+      },
+      "escalations": []
+    },
+    {
+      "ticket_id": "T003",
+      "history": {
+        "ticket_id": "T003",
+        "created": "2025-06-11T14:00:00Z",
+        "status_changes": [
+          {
+            "from": "open",
+            "to": "in_progress",
+            "at": "2025-06-11T14:20:00Z",
+            "by": "agent-B"
+          },
+          {
+            "from": "in_progress",
+            "to": "escalated",
+            "at": "2025-06-11T15:45:00Z",
+            "by": "agent-B"
+          }
+        ],
+        "assigned_agents": [
+          "agent-B",
+          "agent-C"
+        ]
+      },
+      "escalations": [
+        {
+          "ticket_id": "T003",
+          "escalated_at": "2025-06-11T15:45:00Z",
+          "from_agent": "agent-B",
+          "to_agent": "agent-C",
+          "reason": "Customer requested supervisor review of denied refund",
+          "level": 2
+        }
+      ]
+    },
+    {
+      "ticket_id": "T005",
+      "history": {
+        "ticket_id": "T005",
+        "created": "2025-06-12T08:00:00Z",
+        "status_changes": [
+          {
+            "from": "open",
+            "to": "in_progress",
+            "at": "2025-06-12T08:10:00Z",
+            "by": "agent-A"
+          }
+        ],
+        "assigned_agents": [
+          "agent-A"
+        ]
+      },
+      "escalations": []
+    },
+    {
+      "ticket_id": "T008",
+      "history": {
+        "ticket_id": "T008",
+        "created": "2025-06-13T10:30:00Z",
+        "status_changes": [
+          {
+            "from": "open",
+            "to": "in_progress",
+            "at": "2025-06-13T10:45:00Z",
+            "by": "agent-D"
+          },
+          {
+            "from": "in_progress",
+            "to": "escalated",
+            "at": "2025-06-13T12:00:00Z",
+            "by": "agent-D"
+          },
+          {
+            "from": "escalated",
+            "to": "resolved",
+            "at": "2025-06-13T16:30:00Z",
+            "by": "agent-E"
+          }
+        ],
+        "assigned_agents": [
+          "agent-D",
+          "agent-E"
+        ]
+      },
+      "escalations": [
+        {
+          "ticket_id": "T008",
+          "escalated_at": "2025-06-13T12:00:00Z",
+          "from_agent": "agent-D",
+          "to_agent": "agent-E",
+          "reason": "Order O208 not found in system -- possible data integrity issue",
+          "level": 2
+        }
+      ]
+    }
+  ]
+}

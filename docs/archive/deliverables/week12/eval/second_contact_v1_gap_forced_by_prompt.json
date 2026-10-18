@@ -1,0 +1,72 @@
+{
+  "n": 10,
+  "sampled_from_deflected": 19,
+  "answerable_cases": 25,
+  "deflection_rate": 0.76,
+  "simulated_reopen_rate": 1.0,
+  "reopened": 10,
+  "model": "qwen/qwen3.8-27b",
+  "caveat": "Follow-ups are written and scored by a model, not real customers; n is small. Read it as a completeness check.",
+  "rows": [
+    {
+      "case_id": "RAN17",
+      "followup": "I\u2019m not sure if I should wait the full 60 minutes between each of the seven attempts or just wait once and then retry, and also, is there a live status page I can check to see if the issue is on your end before I start that process?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply does not clarify the timing of the seven attempts nor provide a link to a live status page, leaving the customer's specific questions unanswered."
+    },
+    {
+      "case_id": "SHI03",
+      "followup": "Did I select express delivery for order O2007, and if so, what is the specific tracking number so I can monitor the 1-day transit?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply provides general delivery timeframes but does not specify the shipping method selected for order O2007 or provide the requested tracking number."
+    },
+    {
+      "case_id": "BOT03",
+      "followup": "Since I\u2019m outside the 14-day window, is there any other option available, such as store credit or an exchange, given that the item isn't what I expected?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply only states that the refund is ineligible and mentions a future review, but it does not provide information about alternative options like store credit or exchanges."
+    },
+    {
+      "case_id": "RAN08",
+      "followup": "I didn't select express shipping, so I'm assuming standard, but can you please pull up the specific tracking number so I can see where the package is actually stuck?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply explicitly states that a support agent is required to check exact tracking details and does not provide the specific tracking number requested in the follow-up."
+    },
+    {
+      "case_id": "BOT02",
+      "followup": "How long should I expect the review to take, and will the refund be issued to my original payment method?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply states that an agent will review the request but does not specify the expected timeline for the review or confirm that the refund will be issued to the original payment method."
+    },
+    {
+      "case_id": "BOT04",
+      "followup": "Since I only have one day left in the window, can you tell me exactly what I need to do next to initiate the refund, or will the agent contact me directly?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply states that a support agent will confirm the next steps but does not specify whether the customer must take action or if the agent will contact them directly, leaving the specific procedural question unanswered."
+    },
+    {
+      "case_id": "RAN16",
+      "followup": "How long will the review take, and when can I expect the funds to actually hit my account once it's approved?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply states that an agent will review the request but does not provide specific timelines for the review process or the fund transfer."
+    },
+    {
+      "case_id": "SHI01",
+      "followup": "Does that 8-day estimate include customs clearance, and what happens if the package gets held up at the border?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply only provides standard delivery times and does not address customs clearance procedures or the specific handling of packages held at the border."
+    },
+    {
+      "case_id": "RAN05",
+      "followup": "That\u2019s strange, because I haven\u2019t received the package yet and there\u2019s no signature on my door. Can you please check the tracking details to see where it actually went?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply only provided general delivery timeframes and a status claim, but did not include the specific tracking details or investigation into the missing package that the customer is now requesting."
+    },
+    {
+      "case_id": "RAN09",
+      "followup": "I didn't see a specific cutoff time mentioned in your reply, so can you clarify what time my order was placed relative to that deadline? Also, is the express upgrade still an option now that the order has already been processed?",
+      "verdict": "NOT_PRE_EMPTED",
+      "reason": "The original reply mentions a cutoff time exists but does not specify the actual time or confirm whether the express upgrade is still available after processing, leaving the customer's specific questions unanswered."
+    }
+  ]
+}

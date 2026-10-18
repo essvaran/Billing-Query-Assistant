@@ -16,17 +16,17 @@ from src.observability.trace_store import TraceStoreError
 
 logger = logging.getLogger(__name__)
 
-REASONS = {
-    "wrong_answer": "The answer is wrong",
-    "not_helpful": "It did not answer my question",
-    "incomplete": "Important information is missing",
-    "outdated": "The information is outdated",
-    "unclear": "Hard to understand",
-    "other": "Something else",
-}
-MAX_COMMENT = 1000
-SUBMIT_LIMIT = 30
-SUBMIT_WINDOW_SECONDS = 600
+
+
+def reasons() -> dict:
+    """Thumbs-down reasons (catalog list docs_feedback_reason): code -> label, active only."""
+    from src.catalog import ref
+    return {v["code"]: v["label"] for v in ref.values("docs_feedback_reason")}
+
+
+def _limit(key: str):
+    from src.catalog import settings
+    return settings.get(f"feedback.{key}")
 
 _recent = {}
 _recent_lock = threading.Lock()
@@ -46,8 +46,8 @@ def _now():
 def _check_rate(user_email):
     now = time.time()
     with _recent_lock:
-        stamps = [t for t in _recent.get(user_email, []) if now - t < SUBMIT_WINDOW_SECONDS]
-        if len(stamps) >= SUBMIT_LIMIT:
+        stamps = [t for t in _recent.get(user_email, []) if now - t < _limit("window_s")]
+        if len(stamps) >= _limit("submit_limit"):
             raise FeedbackError(429, "Too much feedback in a short time. Please wait a few minutes.")
         stamps.append(now)
         _recent[user_email] = stamps
@@ -62,10 +62,10 @@ def submit_feedback(trace_id, user_email, rating, reason_code=None, comment=None
     if rating not in ("up", "down"):
         raise FeedbackError(422, "rating must be 'up' or 'down'")
     comment = (comment or "").strip()
-    if len(comment) > MAX_COMMENT:
-        raise FeedbackError(422, f"comment must be at most {MAX_COMMENT} characters")
+    if len(comment) > _limit("max_comment"):
+        raise FeedbackError(422, f"comment must be at most {_limit("max_comment")} characters")
     if rating == "down":
-        if reason_code not in REASONS:
+        if reason_code not in reasons():
             raise FeedbackError(422, "Please choose a reason for the thumbs down")
     else:
         reason_code, comment = None, ""
@@ -123,7 +123,7 @@ def _sent_in_last_hour():
 
 def email_admin(user_email, trace_id, reason_code, comment, record=None):
     """Email the admin about a thumbs down. Records the outcome in alert history. Never raises."""
-    reason = REASONS.get(reason_code, reason_code or "no reason given")
+    reason = reasons().get(reason_code, reason_code or "no reason given")
     try:
         if not alerting.is_enabled():
             _history("suppressed", trace_id, reason, "email alerts are disabled")
@@ -132,7 +132,7 @@ def email_admin(user_email, trace_id, reason_code, comment, record=None):
         if missing:
             _history("failed", trace_id, reason, "missing settings: " + ", ".join(missing))
             return False
-        cap = int(os.getenv("FEEDBACK_EMAIL_MAX_PER_HOUR", "20"))
+        cap = _limit("email_max_per_hour")
         if _sent_in_last_hour() >= cap:
             _history("suppressed", trace_id, reason, f"hourly cap of {cap} feedback emails reached")
             return False

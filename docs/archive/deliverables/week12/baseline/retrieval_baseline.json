@@ -1,0 +1,42 @@
+{
+  "corpus": "synthetic variant A (see data/variant_a/synthetic/README.md)",
+  "hit_at_3": {
+    "overall": {
+      "hits": 220,
+      "n": 240,
+      "rate": 0.917
+    },
+    "faq": {
+      "hits": 105,
+      "n": 105,
+      "rate": 1.0
+    },
+    "status": {
+      "hits": 10,
+      "n": 30,
+      "rate": 0.333
+    },
+    "refund": {
+      "hits": 60,
+      "n": 60,
+      "rate": 1.0
+    },
+    "shipping": {
+      "hits": 45,
+      "n": 45,
+      "rate": 1.0
+    }
+  },
+  "wrong_policy_in_top3": {
+    "unfiltered": {
+      "count": 47,
+      "n": 60,
+      "rate": 0.783
+    },
+    "filtered": {
+      "count": 0,
+      "n": 60,
+      "rate": 0.0
+    }
+  }
+}

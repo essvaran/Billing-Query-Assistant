@@ -8,47 +8,12 @@ from datetime import datetime, timezone
 from html import escape
 from urllib.parse import quote
 
-ALERT_INFO = {
-    "ungrounded_answer": {
-        "title": "Answer without valid citations",
-        "color": "#d9480f",
-        "what": "The assistant gave a real answer, but none of the sources it cited were in the context it retrieved. "
-                "This is how a fabricated policy looks in the logs.",
-        "action": "Open the trace, compare the answer with the retrieved context, then add it as an eval case.",
-    },
-    "blocklist_keyword": {
-        "title": "Refund, compensation or guarantee mentioned",
-        "color": "#c92a2a",
-        "what": "The answer makes a financial commitment (refund, compensation or guarantee). "
-                "The help-centre articles do not contain such a policy.",
-        "action": "Check whether the answer is supported by a retrieved chunk. If not, treat it as a customer-facing error.",
-    },
-    "cost_outlier": {
-        "title": "Request cost above the threshold",
-        "color": "#e67700",
-        "what": "One request cost more than the configured cost threshold.",
-        "action": "Open the trace and check the input token count and the retrieved context size.",
-    },
-    "slow_request": {
-        "title": "Slow request",
-        "color": "#e67700",
-        "what": "One request took longer than the configured latency threshold.",
-        "action": "Open the trace and see which span (retrieval or generation) took the time.",
-    },
-    "pipeline_error": {
-        "title": "Pipeline error",
-        "color": "#c92a2a",
-        "what": "The request failed with an error recorded on the trace.",
-        "action": "Open the trace and read the error, then check the API logs around that time.",
-    },
-    "test": {
-        "title": "Test alert",
-        "color": "#1971c2",
-        "what": "This is a test message. If you can read it, alert delivery works.",
-        "action": "No action needed.",
-    },
-}
-DEFAULT_INFO = {"title": "Alert", "color": "#495057", "what": "A critical trace was detected.", "action": "Open the trace."}
+def alert_info(alert_type: str) -> dict:
+    """Title, colour and the two explanatory lines for an alert email (catalog list alert_type)."""
+    from src.catalog import ref
+    v = ref.get("alert_type", alert_type) or ref.get("alert_type", "default") or {"label": "Alert", "meta": {}}
+    m = v["meta"]
+    return {"title": v["label"], "color": m.get("color", "#495057"), "what": m.get("what", ""), "action": m.get("action", "")}
 
 
 def app_url():
@@ -118,7 +83,7 @@ def _button(url, label, color):
 
 def render_alert(alert_type, reason, record, rate_limit_minutes=5):
     """Return (subject, plain_text, html) for one alert."""
-    info = ALERT_INFO.get(alert_type, DEFAULT_INFO)
+    info = alert_info(alert_type)
     trace_id = record.get("trace_id")
     link = trace_link(trace_id)
     answer = (record.get("final_answer") or "")
@@ -179,7 +144,7 @@ def render_alert(alert_type, reason, record, rate_limit_minutes=5):
 
 def render_test(smtp_host):
     """Return (subject, plain_text, html) for the test email."""
-    info = ALERT_INFO["test"]
+    info = alert_info("test")
     link = trace_link(None)
     text = "\n".join([
         "TEST ALERT",

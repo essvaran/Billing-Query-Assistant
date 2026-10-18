@@ -182,3 +182,64 @@ a {
   height: 28px;
   border-width: 3px;
 }
+
+/* ============================================================
+   Light theme (the dark Catppuccin Mocha tokens above stay the default).
+   Status colours are darkened so text passes WCAG AA on white.
+   ============================================================ */
+
+[data-theme="light"] {
+  --surface-base:    #eff1f5;
+  --surface-raised:  #e6e9ef;
+  --surface-overlay: #ffffff;
+  --surface-card:    #ffffff;
+  --border:          #ccd0da;
+  --border-strong:   #9ca0b0;
+  --text-primary:    #1f2233;
+  --text-secondary:  #4c4f69;
+  --text-muted:      #5f6275;
+  --accent:          #1c5fe0;
+  --accent-hover:    #0b86b8;
+  --success:         #26721b;
+  --warning:         #a8480a;
+  --danger:          #bf1f3b;
+  --purple:          #7a2fe0;
+  --yellow:          #7a5c00;
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.12);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.14);
+  --shadow-lg:  0 8px 40px rgba(0,0,0,0.2);
+  color-scheme: light;
+}
+
+/* ============================================================
+   Tier-1 workspace primitives (t1- prefix so they never touch older screens)
+   ============================================================ */
+
+.t1-page { max-width: 1320px; margin: 0 auto; padding: 1.25rem 1.5rem 3rem; }
+.t1-page__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: .75rem; margin-bottom: 1rem; }
+.t1-h1 { font-size: 1.4rem; }
+.t1-sub { color: var(--text-secondary); font-size: .9rem; margin-top: .25rem; }
+
+.t1-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+  padding: .5rem .95rem; border-radius: var(--radius-md); border: 1px solid var(--border-strong);
+  background: var(--surface-card); color: var(--text-primary); font: inherit; font-size: .85rem; font-weight: 600;
+  cursor: pointer; transition: background var(--transition), border-color var(--transition), opacity var(--transition);
+  &:hover:not(:disabled) { border-color: var(--accent); }
+  &:disabled { opacity: .5; cursor: not-allowed; }
+  &--primary { background: var(--accent); border-color: var(--accent); color: #fff; &:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); } }
+  &--danger { color: var(--danger); border-color: var(--danger); &:hover:not(:disabled) { background: rgba(243,139,168,.12); border-color: var(--danger); } }
+  &--ghost { background: transparent; border-color: transparent; color: var(--text-secondary); &:hover:not(:disabled) { color: var(--text-primary); border-color: var(--border); } }
+}
+
+.t1-input, .t1-select, .t1-textarea {
+  background: var(--surface-card); color: var(--text-primary); border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md); padding: .5rem .7rem; font: inherit; font-size: .88rem; min-width: 0;
+}
+.t1-textarea { width: 100%; line-height: 1.55; resize: vertical; }
+.t1-label { display: block; font-size: .75rem; font-weight: 600; color: var(--text-secondary); margin-bottom: .3rem; }
+.t1-kbd { font-family: var(--font-mono); font-size: .72rem; padding: .05rem .35rem; border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: var(--radius-sm); color: var(--text-secondary); background: var(--surface-card); }
+
+.t1-skeleton { background: linear-gradient(90deg, var(--border) 25%, var(--surface-overlay) 37%, var(--border) 63%); background-size: 400% 100%; animation: t1shimmer 1.3s ease infinite; border-radius: var(--radius-sm); }
+@keyframes t1shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+@media (prefers-reduced-motion: reduce) { .t1-skeleton { animation: none; } * { scroll-behavior: auto !important; } }

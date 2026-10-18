@@ -11,10 +11,14 @@ LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama").lower()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
-GROQ_MODEL = os.getenv("LLM_MODEL", "llama-3.1-8b-instant")
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-OLLAMA_MODEL = os.getenv("LLM_MODEL", "llama3.2:latest")
+
+
+def default_model() -> str:
+    """Docs-mode model: the setting models.docs (LLM_MODEL in the environment overrides it)."""
+    from src.catalog import settings
+    return settings.get("models.docs")
 
 
 class LLMRequestError(Exception):
@@ -32,8 +36,8 @@ def ask_llm(
     to ensure the same model that generated the original trace is re-used.
     """
     if LLM_PROVIDER == "groq":
-        return _ask_groq(system_prompt, user_prompt, model or GROQ_MODEL)
-    return _ask_ollama(system_prompt, user_prompt, model or OLLAMA_MODEL)
+        return _ask_groq(system_prompt, user_prompt, model or default_model())
+    return _ask_ollama(system_prompt, user_prompt, model or default_model())
 
 
 def _ask_groq(system_prompt: str, user_prompt: str, model: str) -> tuple[str, int, int]:

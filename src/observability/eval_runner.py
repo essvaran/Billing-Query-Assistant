@@ -14,7 +14,6 @@ from api.database import get_db
 
 logger = logging.getLogger(__name__)
 
-EVAL_SET = Path(__file__).resolve().parents[2] / "evaluation" / "eval_set.jsonl"
 CASE_ID_PREFIX = "PF"
 STALE_AFTER = timedelta(minutes=30)
 
@@ -29,46 +28,30 @@ def _now():
     return datetime.now(timezone.utc).isoformat()
 
 
-# ---------------------------------------------------------------- eval set file
+# ---------------------------------------------------------------- eval set (catalog suite 'docs')
 
 def load_cases():
-    if not EVAL_SET.exists():
-        return []
-    with _file_lock:
-        lines = EVAL_SET.read_text(encoding="utf-8").splitlines()
-    return [json.loads(line) for line in lines if line.strip()]
+    from src.catalog import eval_store
+    return eval_store.cases("docs")
 
 
 def get_case(case_id):
-    for case in load_cases():
-        if case["case_id"] == case_id:
-            return case
-    return None
+    from src.catalog import eval_store
+    case = eval_store.get_case(case_id)
+    return case if case and case["suite"] == "docs" else None
 
 
-def add_case_from_trace(trace_id, question, expected_behavior, mode, notes):
-    """Append a regression case linked to a production trace. Raises ValueError on duplicates."""
+def add_case_from_trace(trace_id, question, expected_behavior, mode, notes, actor="observability"):
+    """Add a regression case linked to a production trace. Raises ValueError on duplicates."""
+    from src.catalog import eval_store
     with _file_lock:
-        text = EVAL_SET.read_text(encoding="utf-8") if EVAL_SET.exists() else ""
-        cases = [json.loads(line) for line in text.splitlines() if line.strip()]
-        for case in cases:
+        for case in eval_store.cases("docs", include_inactive=True):
             if case.get("regression_trace_id") == trace_id:
                 raise ValueError(f"trace already has eval case {case['case_id']}")
-        used = [int(c["case_id"][len(CASE_ID_PREFIX):]) for c in cases
-                if c["case_id"].startswith(CASE_ID_PREFIX) and c["case_id"][len(CASE_ID_PREFIX):].isdigit()]
-        case = {
-            "case_id": f"{CASE_ID_PREFIX}{(max(used) + 1 if used else 1):02d}",
-            "question": question,
-            "mode": mode,
-            "expected_behavior": expected_behavior,
-            "is_regression": True,
-            "regression_trace_id": trace_id,
-            "notes": notes,
-        }
-        prefix = "" if (not text or text.endswith("\n")) else "\n"
-        with EVAL_SET.open("a", encoding="utf-8") as f:
-            f.write(prefix + json.dumps(case, ensure_ascii=False) + "\n")
-    return case
+        case_id = eval_store.next_case_id(CASE_ID_PREFIX)
+        data = {"question": question, "mode": mode, "expected_behavior": expected_behavior, "is_regression": True,
+                "regression_trace_id": trace_id, "notes": notes}
+        return eval_store.save_case(case_id, "docs", data, actor=actor, create=True, source="observability trace")
 
 
 # ------------------------------------------------------------------ running
@@ -112,8 +95,8 @@ def _insert_result(conn, run_id, result):
 
 
 def _current_prompt_version():
-    from src.generation.answer import PROMPT_VERSION
-    return PROMPT_VERSION
+    from src.generation.prompts import prompt_version
+    return prompt_version()
 
 
 def _claim_run(run_id, source, total, user_email):
