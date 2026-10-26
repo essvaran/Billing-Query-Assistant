@@ -27,6 +27,14 @@ def test_customers_see_only_their_sections_and_admins_see_all():
     assert any(t.startswith("Operators") for t in admin_titles)
 
 
+def test_customer_sections_carry_no_operator_or_developer_detail():
+    """The customer's Help page explains the product; setup, tooling and test steps are for the team."""
+    user = _client("user").get("/api/help").json()
+    text = json.dumps(user["sections"]).lower()
+    for internal in (".env", "mcp", "tier1_demo_customer_id", "uses quota", "api key", "trace"):
+        assert internal not in text, internal
+
+
 def test_blocks_are_typed_and_carry_no_html():
     sections = _client("admin").get("/api/help").json()["sections"]
     kinds = {b["type"] for s in sections for b in s["blocks"]}

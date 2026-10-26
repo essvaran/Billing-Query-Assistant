@@ -244,6 +244,12 @@ def test_user_can_ask_as_their_own_customer_and_only_sees_the_customer_facing_re
     assert client.get("/api/tier1/me/customer").json()["customer"]["customer_id"] == cid
 
     def handle(treq, on_step):
+        on_step({"type": "guard", "stage": "pre", "blocked": False, "category": None})
+        on_step({"type": "tool_call", "lap": 1, "tool": "check_entitlement", "args": {"customer_id": "C1000"}})
+        on_step({"type": "tool_result", "lap": 1, "tool": "check_entitlement", "result": {"plan": "secret-plan"}})
+        on_step({"type": "llm_response", "lap": 1, "lap_tokens": 900, "cumulative_tokens": 900})
+        on_step({"type": "done", "reply": "secret draft", "cost_usd": 0.01, "total_tokens": 900})
+        on_step({"type": "guard", "stage": "post", "violations": ["uncited_policy"], "citations": 0})
         return TicketResponse("ESCALATE", "", treq.trace_id, reason="legal", draft="secret draft",
                               violations=[{"code": "x", "detail": "internal"}], handoff_id="H-1",
                               customer_reply="We have passed this to our team.")
@@ -259,7 +265,13 @@ def test_user_can_ask_as_their_own_customer_and_only_sees_the_customer_facing_re
     assert job["status"] == "done" and job["result"]["decision"] == "ESCALATE"
     assert not {"draft", "violations", "handoff_id", "tools_called", "reply"} & set(job["result"])
     assert "secret draft" not in str(job)
-    assert job["owner"] == db.get_customer(cid)["email"]
+    assert "owner" not in job
+    # progress only: which stage ran and whether it passed, nothing the model or a tool produced
+    assert [s["type"] for s in job["steps"]] == ["guard", "tool_call", "tool_result", "guard"]
+    leaked = {"args", "result", "reply", "cost_usd", "lap_tokens", "total_tokens", "violations", "category"}
+    assert not any(leaked & set(s) for s in job["steps"])
+    assert "secret-plan" not in str(job) and "uncited_policy" not in str(job)
+    assert job["steps"][-1] == {"type": "guard", "stage": "post", "blocked": True, "citations": 0}
 
 
 def test_user_cannot_run_a_queued_ticket_or_read_someone_elses_job(client, monkeypatch):
@@ -275,10 +287,18 @@ def test_user_cannot_run_a_queued_ticket_or_read_someone_elses_job(client, monke
     assert client.get(f"/api/tier1/jobs/{job_id}").status_code == 200
 
 
-def test_user_can_report_a_wrong_answer_and_open_sources(client, monkeypatch):
+def test_user_can_report_only_their_own_answer_and_open_sources(client, monkeypatch):
+    client.get("/api/tier1/tickets")
     as_user(client)
-    r = client.post("/api/tier1/feedback", json={"trace_id": "a" * 16, "reason": "wrong_policy"})
+    assert client.post("/api/tier1/feedback", json={"trace_id": "a" * 16, "reason": "wrong_policy"}).status_code == 404
+    monkeypatch.setattr(tier1_router, "tier1_handle", fake_handle())
+    cust = linked_user(client)
+    trace_id = client.post("/api/tier1/answer", json={"text": "hello"}).json()["trace_id"]
+    r = client.post("/api/tier1/feedback", json={"trace_id": trace_id, "reason": "wrong_policy"})
     assert r.status_code == 200
+    as_user(client, email="other@example.com")
+    assert client.post("/api/tier1/feedback", json={"trace_id": trace_id, "reason": "wrong_policy"}).status_code == 404
+    as_user(client, email=cust["email"])
     assert client.get("/api/tier1/articles/refund-policy-30d").status_code == 200
 
 

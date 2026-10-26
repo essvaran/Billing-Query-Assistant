@@ -1,3 +1,4 @@
+import { ConfirmService } from '../../shared/confirm';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CatalogService, GateReport, PromptRow, PromptVersion } from '../../services/catalog.service';
@@ -74,6 +75,7 @@ import { DATA_STYLES, apiMessage } from './data-shared';
   styles: [DATA_STYLES],
 })
 export class PromptsComponent implements OnInit {
+  private readonly confirm = inject(ConfirmService);
   private api = inject(CatalogService);
   private toast = inject(ToastService);
   prompts = signal<PromptRow[]>([]);
@@ -123,16 +125,16 @@ export class PromptsComponent implements OnInit {
     });
   }
 
-  activate(v: PromptVersion): void {
-    if (!window.confirm(`Make v${v.version} the live version of this prompt?`)) return;
+  async activate(v: PromptVersion): Promise<void> {
+    if (!(await this.confirm.ask(`Make v${v.version} the live version of this prompt?`))) return;
     this.api.activatePrompt(this.name(), v.version).subscribe({
       next: () => { this.toast.success(`v${v.version} is live.`); this.load(true); setTimeout(() => this.body.set(this.activeBody()), 300); },
       error: err => this.toast.error(apiMessage(err)),
     });
   }
 
-  remove(v: PromptVersion): void {
-    if (!window.confirm(`Delete v${v.version}?`)) return;
+  async remove(v: PromptVersion): Promise<void> {
+    if (!(await this.confirm.ask(`Delete v${v.version}?`, { danger: true, confirmLabel: 'Delete' }))) return;
     this.api.deletePromptVersion(this.name(), v.version).subscribe({
       next: () => { this.toast.success('Deleted.'); this.load(true); },
       error: err => this.toast.error(apiMessage(err)),

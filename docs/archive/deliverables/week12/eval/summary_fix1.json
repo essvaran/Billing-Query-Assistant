@@ -187,6 +187,19 @@
   },
   "judge": {
     "model": "qwen/qwen3.8-27b",
+    "version": "week6-v1r",
+    "n": 24,
+    "good": 18,
+    "not_good": 6,
+    "error": 0,
+    "agreement": {
+      "status": "no labelled cases matched judged cases",
+      "labeler": "",
+      "n": 0
+    }
+  },
+  "judge_week6_alt": {
+    "model": "qwen/qwen3.8-27b",
     "version": "week6-v2r",
     "n": 24,
     "good": 18,
@@ -224,5 +237,6 @@
     "limit": null,
     "case_id": null,
     "judge": true
-  }
+  },
+  "rescored": true
 }

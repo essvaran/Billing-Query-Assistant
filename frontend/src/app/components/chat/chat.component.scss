@@ -1265,6 +1265,34 @@
 .chat-report__label { font-size: 12px; opacity: .8; }
 .chat-report__select, .chat-report__input { font: inherit; font-size: 13px; padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(127, 127, 127, .45); background: transparent; color: inherit; }
 .chat-report__row { display: flex; gap: 8px; justify-content: flex-end; }
-.customer-pick { max-width: 220px; }
-.chat-account { font-size: 12px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border-strong); white-space: nowrap; }
-.chat-account--none { color: var(--danger); border-color: var(--danger); white-space: normal; }
+.customer-pick { max-width: 260px; }
+.chat-account {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  box-sizing: border-box;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-overlay);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.routed-from {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--text-muted);
+}
+.routed-note {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+.chat-account--none { color: var(--danger); border-color: var(--danger); white-space: normal; line-height: 1.2; }

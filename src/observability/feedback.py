@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 
 from api.database import get_db, insert_alert
 from src.observability import alerting, email_template, trace_store
+from src.observability.redact import redact_text
 from src.observability.trace_store import TraceStoreError
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,7 @@ def score_key(trace_id, user_email):
     return f"{trace_id}-{hashlib.sha1(user_email.lower().encode('utf-8')).hexdigest()[:10]}"
 
 
-def submit_feedback(trace_id, user_email, rating, reason_code=None, comment=None):
+def submit_feedback(trace_id, user_email, rating, reason_code=None, comment=None, is_admin=False):
     """Validate and store one vote. Returns {"id", "rating", "notify"}; notify is True for a new thumbs down."""
     if rating not in ("up", "down"):
         raise FeedbackError(422, "rating must be 'up' or 'down'")
@@ -78,7 +79,12 @@ def submit_feedback(trace_id, user_email, rating, reason_code=None, comment=None
         raise FeedbackError(503 if exc.status in (502, 503) else exc.status, exc.message)
     if item is None:
         raise FeedbackError(404, "Answer not found")
-    snapshot = (item["question"], (item["final_answer"] or "")[:700], item.get("prompt_version"), item.get("timestamp"))
+    owner = (item.get("user_email") or "").lower()
+    if not is_admin and owner and owner != user_email.lower():
+        raise FeedbackError(404, "Answer not found")              # same reply as a missing trace: no probing
+    # Redacted like every other place customer text is stored (traces, logs, job steps).
+    snapshot = (redact_text(item["question"] or ""), redact_text((item["final_answer"] or "")[:700]),
+                item.get("prompt_version"), item.get("timestamp"))
 
     now = _now()
     with get_db() as conn:
@@ -159,9 +165,9 @@ def run_side_effects(user_email, trace_id, rating, reason_code, comment, notify,
         email_admin(user_email, trace_id, reason_code, comment, record)
 
 
-def submit_and_notify(trace_id, user_email, rating, reason_code=None, comment=None):
+def submit_and_notify(trace_id, user_email, rating, reason_code=None, comment=None, is_admin=False):
     """Store the vote, then score Langfuse and email the admin without blocking the caller."""
-    result = submit_feedback(trace_id, user_email, rating, reason_code, comment)
+    result = submit_feedback(trace_id, user_email, rating, reason_code, comment, is_admin=is_admin)
     threading.Thread(
         target=run_side_effects,
         args=(user_email, trace_id, result["rating"], reason_code, comment, result["notify"], result["trace"]),

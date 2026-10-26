@@ -7,17 +7,19 @@ import { filter } from 'rxjs/operators';
 import { AuthService } from './services/auth.service';
 import { ThemeService } from './services/theme.service';
 import { ToastHostComponent } from './shared/toast';
+import { ConfirmHostComponent } from './shared/confirm';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, ToastHostComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, ToastHostComponent, ConfirmHostComponent],
   template: `
+    <a class="skip-link" href="#main">Skip to content</a>
     @if (showNav) {
       <nav class="nav" role="navigation" aria-label="Main navigation">
         <a class="nav__brand" routerLink="/" aria-label="Chat home">
           <span class="nav__brand-icon">⚡</span>
-          <span class="nav__brand-text">Tier-1 Workspace</span>
+          <span class="nav__brand-text">Billing Support</span>
         </a>
 
         <div class="nav__links" role="menubar">
@@ -54,10 +56,11 @@ import { ToastHostComponent } from './shared/toast';
         </div>
       </nav>
     }
-    <main id="main">
+    <main id="main" tabindex="-1">
       <router-outlet />
     </main>
     <app-toast-host />
+    <app-confirm-host />
   `,
   styles: [`
     :host { display: block; }
@@ -75,6 +78,9 @@ import { ToastHostComponent } from './shared/toast';
       z-index: 100;
     }
 
+    .skip-link { position: absolute; left: -9999px; top: .5rem; z-index: 2000; padding: .5rem .75rem;
+      background: var(--surface-overlay); color: var(--text-primary); border-radius: var(--radius-md); }
+    .skip-link:focus { left: .5rem; }
     .nav__brand {
       display: flex;
       align-items: center;
@@ -196,6 +202,7 @@ export class AppComponent implements OnDestroy {
   private refData = inject(RefDataService);
 
   constructor(public auth: AuthService, private router: Router, public theme: ThemeService) {
+    if (this.auth.isLoggedIn) this.auth.refreshUser().subscribe({ error: () => undefined });
     this._sub = this.router.events.pipe(
       filter((e): e is NavigationEnd => e instanceof NavigationEnd),
     ).subscribe(e => {

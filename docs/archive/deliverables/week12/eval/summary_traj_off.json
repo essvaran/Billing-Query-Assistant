@@ -1,0 +1,195 @@
+{
+  "tag": "traj_off",
+  "ablate": "prefetch",
+  "n": 20,
+  "passed": 16,
+  "pass_rate": 0.8,
+  "by_slice": {
+    "random": {
+      "passed": 16,
+      "n": 20,
+      "rate": 0.8
+    }
+  },
+  "by_check": {
+    "cites_gold_source": {
+      "passed": 14,
+      "n": 16
+    },
+    "decision_matches": {
+      "passed": 18,
+      "n": 20
+    },
+    "eligibility_consistent": {
+      "passed": 4,
+      "n": 4
+    },
+    "escalation_reason_ok": {
+      "passed": 4,
+      "n": 4
+    },
+    "expected_tools_called": {
+      "passed": 16,
+      "n": 16
+    },
+    "handoff_created": {
+      "passed": 4,
+      "n": 4
+    },
+    "has_valid_citation": {
+      "passed": 15,
+      "n": 16
+    },
+    "names_policy_version": {
+      "passed": 4,
+      "n": 4
+    },
+    "no_money_claim": {
+      "passed": 14,
+      "n": 14
+    },
+    "no_pii_in_reply": {
+      "passed": 14,
+      "n": 14
+    },
+    "no_superseded_citation": {
+      "passed": 16,
+      "n": 16
+    },
+    "nothing_customer_facing": {
+      "passed": 4,
+      "n": 4
+    },
+    "order_status_grounded": {
+      "passed": 2,
+      "n": 3
+    },
+    "shipping_days_correct": {
+      "passed": 3,
+      "n": 3
+    },
+    "states_correct_window": {
+      "passed": 4,
+      "n": 4
+    }
+  },
+  "both_versions": {
+    "n": 0,
+    "passed": 0,
+    "legacy_14d": {
+      "n": 0,
+      "passed": 0
+    },
+    "current_30d": {
+      "n": 0,
+      "passed": 0
+    },
+    "pairs_both_correct": 0,
+    "pairs": 0
+  },
+  "superseded_policy": {
+    "refund_cases": 4,
+    "answered": 4,
+    "final_answers_citing_wrong_version": 0,
+    "final_rate": 0.0,
+    "drafts_blocked_by_guard": 0,
+    "attempted_rate": 0.0
+  },
+  "failure_modes": {
+    "over_escalation": {
+      "count": 2,
+      "severity": "medium",
+      "cases": [
+        "RAN10",
+        "RAN14"
+      ],
+      "trace_ids": [
+        "d9d40a9c3f8c44018c23c553d856f685",
+        "f7041a19f4b842b08db1910db5cb25cf"
+      ]
+    },
+    "wrong_source_cited": {
+      "count": 1,
+      "severity": "medium",
+      "cases": [
+        "RAN02"
+      ],
+      "trace_ids": [
+        "3c6b3e1aeefe4b3ba2c10727e65cc3dc"
+      ]
+    },
+    "other": {
+      "count": 1,
+      "severity": "low",
+      "cases": [
+        "RAN05"
+      ],
+      "trace_ids": [
+        "788ac100640040e3b7b1a1e57212a436"
+      ]
+    }
+  },
+  "trajectory": {
+    "n": 16,
+    "tool_choice_accuracy": 1.0,
+    "outcome_accuracy": 0.75,
+    "gap_points": -25.0,
+    "right_answer_wrong_path": 0,
+    "right_path_wrong_answer": 4,
+    "both_right": 12,
+    "both_wrong": 0,
+    "wasted_search_calls": 0,
+    "model_choice": {
+      "n": 16,
+      "prefetched_cases": 0,
+      "accuracy": 0.938,
+      "outcome_accuracy": 0.75,
+      "gap_points": -18.8,
+      "right_answer_wrong_path": 0,
+      "right_path_wrong_answer": 3,
+      "mean_model_calls": 2.19
+    }
+  },
+  "cost_latency": {
+    "total_cost_usd": 0.018707,
+    "mean_cost_per_ticket_usd": 0.000935,
+    "deflected_assertions_only": 12,
+    "cost_per_deflected_usd": 0.001559,
+    "deflected_assertions_and_judge": 0,
+    "cost_per_deflected_judge_usd": null,
+    "llm_tickets": 16,
+    "tickets_with_no_model_call": 4,
+    "mean_tokens_per_llm_ticket": 6115,
+    "p50_latency_s": 60.5,
+    "p95_latency_s": 62.8,
+    "first_ticket_latency_s": 18.6,
+    "tpm_ceiling_tickets_per_min": 1.31
+  },
+  "judge": {
+    "model": null,
+    "version": "v3b-integrated",
+    "n": 0,
+    "good": 0,
+    "not_good": 0,
+    "error": 0,
+    "agreement": {
+      "status": "no labelled cases matched judged cases",
+      "labeler": "",
+      "n": 0
+    }
+  },
+  "llm_cache": {
+    "hits": 0,
+    "misses": 51
+  },
+  "wall_seconds": 928,
+  "resumed_from_partial": 0,
+  "settings": {
+    "ablate": "prefetch",
+    "cases": "main",
+    "only": null,
+    "limit": 20,
+    "case_id": null,
+    "judge": false
+  }
+}

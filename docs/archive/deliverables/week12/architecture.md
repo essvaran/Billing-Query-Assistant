@@ -2,7 +2,7 @@
 
 Picture versions and the database entity diagram: [`diagrams/`](diagrams/README.md) (`architecture.svg`, `architecture.mmd`, `entity_diagram.mmd`).
 
-All data is SYNTHETIC. Numbers in brackets are measured on the last eval run (see `eval/report_after.md`).
+All data is SYNTHETIC. Numbers in brackets are measured on the current eval run `fix1` (see `eval/report_fix1.md`).
 
 ```
   Agent (browser)            CLI / eval suite
@@ -16,16 +16,17 @@ All data is SYNTHETIC. Numbers in brackets are measured on the last eval run (se
         tier1/service.py :: handle_ticket()        <-- THE single entry point
           1 mint trace_id, open root span
           2 PRE-GUARD (no model): legal, safety, fraud, injection text, oversized  --> ESCALATE, $0   [9 of 39 cases]
-          3 AGENT LOOP  agent/agent_loop.py  (budgets: 6 laps, 14k tokens, 120 s; search capped at 2 in code)
+          3 PREFETCH (code, over MCP): check_entitlement and the first search_help_centre run before lap 1
+          4 AGENT LOOP  agent/agent_loop.py  (budgets: 6 laps, 14k tokens, 120 s; search capped at 2 in code)
                each lap = ONE MODEL CALL  ----------------------> LLM gateway  src/generation/gateway.py
                                                                    cache | tokens-per-minute limiter | retries
                tool calls go over MCP (stdio), discovered at runtime, filtered by an allow-list:
                  +-- tier1-tools   lookup_order, check_entitlement, escalate   (the only write tool)
                  +-- help-centre   search_help_centre(query, policy_version)   <-- EXPOSED to outside clients
                                     hybrid BM25 + dense (RRF), metadata filter: only the customer's refund-policy version
-          4 POST-GUARD (no model): entitlement checked? citation valid and from a retrieved chunk?
+          5 POST-GUARD (no model): entitlement checked? citation valid and from a retrieved chunk?
                                    cited policy version == the customer's? stated window correct? no refund promise?
-          5 ANSWER only if all pass; otherwise ESCALATE with a handoff row and the blocked draft kept for a human
+          6 ANSWER only if all pass; otherwise ESCALATE with a handoff row and the blocked draft kept for a human
                              |
                              v
         TicketResponse { decision, reply, customer_reply, citations[slug @ version], entitlement,
@@ -40,7 +41,7 @@ All data is SYNTHETIC. Numbers in brackets are measured on the last eval run (se
 
 | Where | Calls per ticket | Purpose |
 |---|---|---|
-| Agent loop laps | about 3 [3.0 mean on tickets that reach a model] | choose a tool, then write the reply |
+| Agent loop laps | 1 to 3 [1.5 mean on tickets that reach a model; entitlement and first search are prefetched in code] | choose a tool, then write the reply |
 | Judge (eval only) | 1 per answered case | grade the reply with a different model family |
 | Second-contact eval (bonus, eval only) | 2 per sampled ticket | write a follow-up, score whether the reply pre-empted it |
 
@@ -49,9 +50,9 @@ The pre-guard, post-guard, refund eligibility, policy-version choice and escalat
 ## Where the money goes
 
 - Retrieval, tools, embeddings: local, no API cost.
-- Model tokens are the whole bill: about 5,500 to 6,300 tokens per ticket that reaches a model [5,511 mean over the suite, 6,302 on the random sample], about $0.0009 each at the table price in `src/generation/cost.py` (that table is unverified).
+- Model tokens are the whole bill: about 3,700 to 4,200 tokens per ticket that reaches a model [3,664 mean over the suite, 4,161 on the random sample], about $0.0008 each at the table price in `src/generation/cost.py` (prices checked against the provider's model page on 2026-10-18). Cost per deflected ticket [$0.000915].
 - 23% of cases never reach a model because the pre-guard escalates them for free [9 of 39].
-- The binding constraint is not money but the provider limits on the free tier: **200,000 tokens a day** (about 40 tickets a day, below today's 67), 1,000 requests a day and 8,000 tokens a minute (see `cost_and_10x.md`). The daily token limit is in no response header; it showed up as a 429.
+- The binding constraint is not money but the provider limits on the free tier: **200,000 tokens a day** (about 60 tickets a day, below today's 67), 1,000 requests a day and 8,000 tokens a minute (see `cost_and_10x.md`). The daily token limit is in no response header; it showed up as a 429.
 
 ## Boundaries worth knowing
 

@@ -35,8 +35,7 @@ debug_langfuse.py
 
 # Tier-1 runtime database (seeded from synthetic data)
 data/tier1.db*
-data/app.db-shm
-data/app.db-wal
+data/app.db*
 data/catalog.db*
 
 # Local LLM response cache (Week 12 gateway)

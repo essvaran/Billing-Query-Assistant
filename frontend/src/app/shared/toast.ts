@@ -13,11 +13,21 @@ export class ToastService {
     setTimeout(() => this.dismiss(id), ms);
   }
   success(message: string): void { this.show(message, 'success'); }
-  error(message: string): void { this.show(message, 'error', 8000); }
+  /** An error toast; pass the failed HttpErrorResponse to add its request id, which support can find in the logs. */
+  error(message: string, err?: unknown): void {
+    const id = requestIdOf(err);
+    this.show(id ? `${message} (Ref: ${id.slice(0, 12)})` : message, 'error', 8000);
+  }
   dismiss(id: number): void { this.toasts.update(list => list.filter(t => t.id !== id)); }
 }
 
-/** One live region for the whole app: screen readers hear each toast politely. */
+/** The X-Request-ID of a failed call (header, or the body of an unhandled server error). */
+export function requestIdOf(err: unknown): string | null {
+  const e = err as { headers?: { get?: (k: string) => string | null }; error?: { request_id?: string } } | null;
+  return e?.error?.request_id ?? e?.headers?.get?.('X-Request-ID') ?? null;
+}
+
+/** Success and info toasts are announced politely; errors interrupt (role=alert), since something needs attention. */
 @Component({
   selector: 'app-toast-host',
   standalone: true,
@@ -25,7 +35,7 @@ export class ToastService {
   template: `
     <div class="host" aria-live="polite" aria-atomic="false">
       @for (t of svc.toasts(); track t.id) {
-        <div class="toast" [attr.data-tone]="t.tone" role="status">
+        <div class="toast" [attr.data-tone]="t.tone" [attr.role]="t.tone === 'error' ? 'alert' : 'status'">
           <span>{{ t.message }}</span>
           <button type="button" class="toast__x" (click)="svc.dismiss(t.id)" aria-label="Dismiss notification">Close</button>
         </div>

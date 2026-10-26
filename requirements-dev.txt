@@ -1,0 +1,6 @@
+# Development and CI only; the API image installs requirements.txt alone.
+-r requirements.txt
+pytest==9.1.1
+pytest-cov==6.0.0
+ruff==0.8.4
+pip-audit==2.7.3

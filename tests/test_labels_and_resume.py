@@ -85,6 +85,34 @@ def test_rescore_recomputes_from_saved_rows_without_model_calls(tmp_path, monkey
     assert "Agreement with human labels: **1/1" in (tmp_path / "report_x.md").read_text(encoding="utf-8")
 
 
+def test_rejudge_runs_both_week6_rubrics_and_keeps_replies_and_labels(tmp_path, monkeypatch):
+    from evaluation.integrated import judge
+    monkeypatch.setattr(run, "OUT_DIR", tmp_path)
+    case = eval_store.cases("main")[0]
+    row = {**_saved_row(case), "judge_alt": {"verdict": "GOOD", "model": "m", "version": "v3b-integrated"}}
+    eval_store.save_run("j", "main", "complete", {"ablate": None}, {}, [row])
+    labels.set_label(case["case_id"], "hello", "NOT_GOOD", tag="j")
+
+    seen = []
+
+    def fake_week6(c, resp, prompt_name=None):
+        seen.append(prompt_name)
+        return {"verdict": "NOT_GOOD" if prompt_name == "judge.week6_v1" else "GOOD", "model": "m",
+                "version": judge.WEEK6_VERSIONS[prompt_name]}
+    monkeypatch.setattr(judge, "judge_reply_week6", fake_week6)
+    monkeypatch.setattr(run, "run_cases", lambda *a, **k: (_ for _ in ()).throw(AssertionError("rejudge must not run the agent")))
+
+    assert run.main(["--rejudge", "j"]) == 0
+    assert seen == ["judge.week6_v1", "judge.week6_v2"]                  # v1 is the primary by default
+    saved = eval_store.results("j")[0]
+    assert saved["reply"] == "hello" and saved["judge_alt"]["version"] == "v3b-integrated"   # reply and integrated judge untouched
+    assert saved["judge"]["version"] == "week6-v1r" and saved["judge_week6_alt"]["version"] == "week6-v2r"
+    s = eval_store.run("j")["summary"]
+    assert s["judge"]["agreement"]["agree"] == 1 and s["judge_week6_alt"]["agreement"]["agree"] == 0
+    report = (tmp_path / "report_j.md").read_text(encoding="utf-8")
+    assert "judge.week6_v1" in report and "other Week 6 rubric" in report
+
+
 def test_resume_skips_finished_cases_and_refuses_different_settings(tmp_path, monkeypatch):
     monkeypatch.setattr(run, "OUT_DIR", tmp_path)
     cases = run.load_cases(None, 2)

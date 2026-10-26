@@ -23,6 +23,7 @@ def gw(tmp_path, monkeypatch):
     sleeps = []
     monkeypatch.setattr(gateway, "_sleep", sleeps.append)
     monkeypatch.setattr(gateway, "_window", gateway.deque())
+    monkeypatch.setattr(gateway, "_circuit", {"failures": 0, "open_until": 0.0})
     for k in gateway.stats:
         gateway.stats[k] = 0
     gateway.sleeps = sleeps
@@ -137,3 +138,47 @@ def test_a_short_429_is_still_retried(gw, monkeypatch):
 
 def test_rate_limited_is_a_gateway_error_so_old_callers_still_catch_it(gw):
     assert issubclass(gw.RateLimited, gw.GatewayError)
+
+
+class NotJson(FakeResp):
+    def json(self):
+        raise ValueError("not json")
+
+
+def test_a_200_that_is_not_json_is_retried_not_crashed(gw, monkeypatch):
+    calls = _post(monkeypatch, [NotJson(200), FakeResp()])
+    out = gw.chat(MSG, model="m")
+    assert len(calls) == 2 and out["choices"][0]["message"]["content"] == "hi"
+
+
+def test_circuit_opens_after_repeated_failures_and_then_fails_fast(gw, monkeypatch):
+    clock = {"t": 1000.0}
+    monkeypatch.setattr(gw, "_now", lambda: clock["t"])
+    calls = _post(monkeypatch, [FakeResp(503, {})])
+    for i in range(gw.CIRCUIT_FAILURES):
+        with pytest.raises(gw.GatewayError):
+            gw.chat(MSG + [{"role": "user", "content": str(i)}], model="m")
+    before = len(calls)
+    with pytest.raises(gw.CircuitOpen):
+        gw.chat(MSG, model="m")
+    assert len(calls) == before                      # no network call while open
+    clock["t"] += gw.CIRCUIT_OPEN_S + 1
+    _post(monkeypatch, [FakeResp()])
+    assert gw.chat(MSG, model="other")["choices"]
+
+
+def test_cache_false_always_reaches_the_model(gw, monkeypatch):
+    calls = _post(monkeypatch, [FakeResp()])
+    gw.chat(MSG, model="m", cache=False)
+    gw.chat(MSG, model="m", cache=False)
+    assert len(calls) == 2
+
+
+def test_docs_mode_groq_calls_use_the_gateway(gw, monkeypatch):
+    from src.generation import llm_client
+    calls = _post(monkeypatch, [FakeResp()])
+    text, tin, tout = llm_client._ask_groq("sys", "user", "m")
+    assert text == "hi" and (tin, tout) == (90, 10) and len(calls) == 1
+    _post(monkeypatch, [FakeResp(503, {})])
+    with pytest.raises(llm_client.LLMRequestError):
+        llm_client._ask_groq("sys", "user2", "m")

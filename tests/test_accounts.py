@@ -77,6 +77,22 @@ def test_register_rejects_duplicates_weak_passwords_and_admin_email(client):
     assert admin.status_code == 409  # admin is claimed through Google only, never by password sign-up
 
 
+def test_register_rejects_blank_name_bad_email_and_overlong_password(client):
+    blank = client.post("/api/auth/register", json={"email": "c@example.com", "password": PW, "full_name": "   "})
+    assert blank.status_code == 422 and blank.json()["detail"] == "Enter your full name"
+    bad = client.post("/api/auth/register", json={"email": "not-an-email", "password": PW, "full_name": "Cy"})
+    assert bad.status_code == 422 and bad.json()["detail"] == "Enter a valid email address"
+    # 40 characters but 80 bytes: bcrypt 5 raises past 72 bytes, which used to surface as a 500
+    long_pw = client.post("/api/auth/register", json={"email": "d@example.com", "password": "é" * 40, "full_name": "Di"})
+    assert long_pw.status_code == 422 and "72 bytes" in long_pw.json()["detail"]
+
+
+def test_login_with_overlong_password_is_a_normal_failure(client):
+    _signup(client)
+    r = client.post("/api/auth/login", json={"email": "ann@example.com", "password": "é" * 40})
+    assert r.status_code == 401 and r.json()["detail"] == "Invalid email or password"
+
+
 def test_login_wrong_password_and_unknown_email_look_the_same(client):
     _signup(client)
     a = client.post("/api/auth/login", json={"email": "ann@example.com", "password": "wrong-password"})

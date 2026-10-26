@@ -1,10 +1,10 @@
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AskRequest(BaseModel):
-    question: str
+    question: str = Field(..., max_length=2000)
     use_hybrid: bool = True
 
 

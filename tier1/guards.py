@@ -56,6 +56,24 @@ def _post(name: str):
     return rule_store.compiled()["post"][name]
 
 
+_HISTORY = re.compile(r"\b(older|previous(ly)?|former(ly)?|old|replac\w+|supersed\w+|retired|no longer)\b", re.I)
+
+
+_WINDOW_WORD = re.compile(r"\b(window|policy|eligib\w+|returns?|returned)\b", re.I)
+
+
+def _is_clarifying_question(reply: str) -> bool:
+    """A short question that states no fact (asking for an order number, say) has nothing to cite."""
+    text = reply.strip()
+    return "?" in text and not re.search(r"\d", text.replace("order", "")) and not _post("claim_topics").search(text)
+
+
+def _is_refund_source(citation: dict) -> bool:
+    """A refund answer may rest on the policy itself, a refund macro or the start-a-return article."""
+    slug = str(citation.get("slug") or "")
+    return citation.get("doc_type") in ("policy", "macro") or slug.startswith("start-return")
+
+
 def _windows() -> dict:
     """Each refund policy's window as it would be written in a reply ('14-day', '14 days'), from the policy list."""
     out = {}
@@ -91,10 +109,12 @@ def post_guard(reply: str, events: list[ToolEvent], resolved: list[dict],
                                    "reply discusses refunds or shipping without check_entitlement"))
 
     lowered = {i.lower() for i in retrieved_ids}
-    if not cited_ids or not cited_ids.issubset(lowered):
+    if cited_ids and not cited_ids.issubset(lowered):
+        found.append(Violation("no_citation", "reply cites a chunk that was not retrieved"))
+    elif not cited_ids and not _is_clarifying_question(reply):
         found.append(Violation("no_citation", "reply has no valid citation to a retrieved chunk"))
 
-    if _post("refund_topic").search(reply) and not any(c.get("doc_type") == "policy" for c in resolved):
+    if _post("refund_topic").search(reply) and not any(_is_refund_source(c) for c in resolved):
         found.append(Violation("refund_without_policy_citation", "refund reply does not cite a refund policy"))
 
     entitled_version = (entitlement or {}).get("policy_version")
@@ -102,8 +122,13 @@ def post_guard(reply: str, events: list[ToolEvent], resolved: list[dict],
     for problem in (check_policy_citations(resolved, entitled_version) if check_versions else []):
         found.append(Violation("superseded_policy", problem))
 
+    # A sentence that names the other window only to say it was replaced ("replaces the older 14-day policy")
+    # does not tell the customer that window applies to them.
+    # Only refund or policy sentences can state a window, so "pause for up to 14 days" is not a claim.
+    claims = " ".join(s for s in re.split(r"(?<=[.!?])\s+|\n+", reply)
+                      if not _HISTORY.search(s) and (_post("refund_topic").search(s) or _WINDOW_WORD.search(s)))
     for version, rx in _windows().items():
-        if check_versions and entitled_version and version != entitled_version and rx.search(reply):
+        if check_versions and entitled_version and version != entitled_version and rx.search(claims):
             found.append(Violation("wrong_window", f"reply states the {version} window to a {entitled_version} customer"))
 
     if _post("money_claim").search(reply):

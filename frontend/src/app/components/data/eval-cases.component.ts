@@ -1,3 +1,4 @@
+import { ConfirmService } from '../../shared/confirm';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CatalogService, EvalCaseRow } from '../../services/catalog.service';
@@ -73,6 +74,7 @@ const SUITES = [
   styles: [DATA_STYLES],
 })
 export class EvalCasesComponent implements OnInit {
+  private readonly confirm = inject(ConfirmService);
   private api = inject(CatalogService);
   private toast = inject(ToastService);
   readonly suites = SUITES;
@@ -126,8 +128,8 @@ export class EvalCasesComponent implements OnInit {
     this.api.setCaseActive(c.case_id, !c.active).subscribe({ next: () => this.load(), error: err => this.toast.error(apiMessage(err)) });
   }
 
-  remove(c: EvalCaseRow): void {
-    if (!window.confirm(`Delete ${c.case_id}? Switching it off keeps it for later; deleting removes it.`)) return;
+  async remove(c: EvalCaseRow): Promise<void> {
+    if (!(await this.confirm.ask(`Delete ${c.case_id}? Switching it off keeps it for later; deleting removes it.`, { danger: true, confirmLabel: 'Delete' }))) return;
     this.api.deleteCase(c.case_id).subscribe({ next: () => { this.toast.success('Deleted.'); this.load(); }, error: err => this.toast.error(apiMessage(err)) });
   }
 }

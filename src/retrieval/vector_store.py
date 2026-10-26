@@ -56,7 +56,9 @@ def get_collection(collection_name: str):
 def add_chunks_to_collection(collection_name: str, chunks: list[Chunk]) -> int:
     """Embed and upsert chunks into an existing collection. Returns chunk count."""
     client = get_client()
-    collection = client.get_collection(collection_name)
+    collection = client.get_or_create_collection(
+        collection_name, metadata={"hnsw:space": "cosine"}
+    )
     embeddings = get_embeddings()
 
     texts = [chunk.page_content for chunk in chunks]

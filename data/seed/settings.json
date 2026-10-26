@@ -260,6 +260,14 @@
       "max": 1000
     },
     {
+      "key": "eval.judge_primary_prompt",
+      "group": "Evaluation",
+      "label": "Primary judge rubric (catalog prompt)",
+      "type": "str",
+      "value": "judge.week6_v1",
+      "description": "The Week 6 rubric the integrated eval reports as its primary judge: judge.week6_v1 (24/25 with Week 6 labels) or judge.week6_v2 (20/25). The other one runs as a second opinion."
+    },
+    {
       "key": "docs.top_k",
       "group": "Docs mode retrieval",
       "label": "Chunks retrieved per question",
@@ -635,6 +643,43 @@
       "value": 20,
       "min": 1,
       "max": 1000
+    },
+    {
+      "key": "routing.use_llm",
+      "group": "Chat routing",
+      "label": "Ask the model when the rules are unsure",
+      "type": "bool",
+      "value": true,
+      "description": "When a question matches both rule lists or neither, one short classifier call (prompt router.classify) picks the route. Off: such questions go to the assistant if the user has an account, otherwise to Docs."
+    },
+    {
+      "key": "routing.agent_patterns",
+      "group": "Chat routing",
+      "label": "Send to the assistant when the question matches",
+      "type": "json",
+      "value": [
+        "\\bO\\d{4}\\b",
+        "\\bmy (order|orders|parcel|package|delivery|refund|item|items|purchase|account|card)\\b",
+        "\\b(refund|money back|returns?|deliver(y|ed)|shipping|ship(ped)? to|arriv(e|ed|al)|track(ing)?|damaged|broken|wrong item)\\b",
+        "\\b(i was|been|got) (charged|billed)\\b|\\b(charged|billed) twice\\b|\\bdouble[- ]charged\\b",
+        "\\b(hacked|fraud|chargeback|charge back|lawyer|attorney|sue|suing|lawsuit|unauthori[sz]ed|caught fire|burn(ed|t)|injur(y|ed)|safety)\\b"
+      ],
+      "description": "Regular expressions (case-insensitive) for questions about the customer's own orders, refunds, deliveries or account, and for anything the assistant must escalate (legal, safety, fraud)."
+    },
+    {
+      "key": "routing.docs_patterns",
+      "group": "Chat routing",
+      "label": "Send to Docs when the question matches",
+      "type": "json",
+      "value": [
+        "\\bmigrat(e|ed|es|ing|ion)\\b",
+        "\\broll ?back\\b|\\brolled back\\b",
+        "\\bauto-?pay\\b",
+        "\\b(legacy|new) (billing )?platform\\b",
+        "\\b(invoice account|processing fee|international (credit )?card|tax (id|identifier|exemption))\\b",
+        "\\bwhich (account )?roles?\\b"
+      ],
+      "description": "Regular expressions (case-insensitive) for general questions the billing help articles answer: billing migration, rollbacks, auto-pay, plan mapping, fees."
     }
   ]
 }

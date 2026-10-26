@@ -1,6 +1,13 @@
-# Seam list (written as hit, not edited afterwards)
+# Seam list (written as hit; some descriptions edited later)
 
 Status values: fixed / accepted / ran-out-of-time (set at the end of the week).
+
+What was added later, stated plainly: each row is dated by the day the seam was hit. Rows 1 to 53 were hit on
+2026-10-16, the integration day; rows 54 to 72 were hit on 2026-10-18, while re-running and hardening the system; rows 73 and 74 on 2026-10-19, while closing the gaps a requirements check found. The
+Status column, and the "fixed" or "accepted" status for each row, was filled in at the end, on 2026-10-18. The seam
+descriptions were first written when each seam was hit; some were edited later, for example to add how a seam was
+fixed or to correct a figure, so a row's text can be newer than its date. The earliest copy saved in git is in commit
+`825a236` (2026-10-18, after the statuses were set): `git show 825a236:docs/archive/deliverables/week12/seams.md`. Nothing older than that exists.
 
 | # | Date | Seam | Status |
 |---|---|---|---|
@@ -76,3 +83,5 @@ Status values: fixed / accepted / ran-out-of-time (set at the end of the week).
 | 70 | 2026-10-18 | The ticket-history MCP server read a hard-coded dict that disagreed with the ticket database; it now reads database rows. | fixed |
 | 71 | 2026-10-18 | `/api/feedback/reasons` recursed until the stack overflowed (HTTP 500): the endpoint function had the same name as the imported helper it called. No test called it; found in the browser check of the Data page. Renamed and covered by a test. | fixed |
 | 72 | 2026-10-18 | Three chunker tests (`tests/test_structure_chunker.py`) fail on the committed code as well: they expect Markdown articles under `data/billing_articles/`, which now holds PDFs. Not changed here. | accepted (found) |
+| 73 | 2026-10-19 | The primary judge was the Week 6 v2 rubric, which agreed with people on only 20 of 25 Week 6 replies (80%), below the 85% the brief asks for, while v1 agreed on 24 of 25. v1 is now primary (setting `eval.judge_primary_prompt`) and v2 is kept as a second opinion; `--rejudge` re-graded `fix1` without calling the agent. The switch was made before any integrated reply was labelled, so it was not chosen to fit a label. On the 24 `fix1` replies the two rubrics gave the same verdict every time. | fixed |
+| 74 | 2026-10-19 | Spans other than model calls stored `cost_usd` as null, so an exported trace showed cost on 3 of 16 spans and "cost per span" was not literally true. Non-model spans now record 0.0 (old spans are read the same way), a failed model call stays null (unknown), and the exported tree carries `cost_usd_total` per span. | fixed |

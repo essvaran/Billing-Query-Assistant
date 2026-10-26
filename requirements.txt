@@ -10,7 +10,7 @@ langchain-huggingface==0.1.2
 chromadb==1.5.9
 sentence-transformers==3.3.1
 transformers==4.47.1
-torch==2.5.1
+torch==2.6.0
 
 # Data / document ingestion
 python-dotenv==1.0.1
@@ -26,10 +26,11 @@ langfuse==2.60.10
 
 # Auth
 google-auth==2.38.0
-python-jose[cryptography]==3.3.0
+PyJWT==2.10.1
+bcrypt==5.0.0
 
 # HTTP / server
-python-multipart==0.0.12
+python-multipart==0.0.31
 httpx==0.28.1
 
 # Rate limiting
@@ -37,7 +38,3 @@ slowapi==0.1.9
 
 # MCP (Model Context Protocol)
 mcp[cli]==1.12.4
-
-# Tests
-pytest==9.1.1
-bcrypt==5.0.0

@@ -12,9 +12,10 @@ DB_PATH = Path(os.getenv("APP_DB_PATH", Path(__file__).resolve().parent.parent /
 @contextmanager
 def get_db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
+    # timeout = busy_timeout: a writer waits up to 10 s for another writer instead of failing at once.
+    # WAL is stored in the database file, so init_db sets it once instead of every connection.
+    conn = sqlite3.connect(str(DB_PATH), check_same_thread=False, timeout=10)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")  # allows concurrent reads
     conn.execute("PRAGMA foreign_keys=ON")
     try:
         yield conn
@@ -28,6 +29,7 @@ def get_db():
 
 def init_db() -> None:
     with get_db() as conn:
+        conn.execute("PRAGMA journal_mode=WAL")  # allows reads while a write is in progress
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS users (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -229,6 +231,8 @@ def init_db() -> None:
         ):
             if column not in user_columns:
                 conn.execute(f"ALTER TABLE users ADD COLUMN {column} {ddl}")
+        # Every request looks the user up by lower(email); without this index that is a full table scan.
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_users_email_lower ON users(lower(email))")
         _seed_billing(conn)
         _seed_if_empty(conn)
         if conn.execute("SELECT COUNT(*) FROM ticket_histories").fetchone()[0] == 0:
@@ -322,7 +326,7 @@ def _seed_if_empty(conn: sqlite3.Connection) -> None:
                      (o["order_id"], (base - timedelta(days=o["purchase_days_ago"])).isoformat(), o["amount_usd"], o["status"]))
     for c in seed["customers"]:
         conn.execute("INSERT OR IGNORE INTO customers VALUES (?,?,?)", (c["customer_id"], c["tier"], c["refund_days"]))
-    conn.execute("INSERT OR IGNORE INTO users (email, role) VALUES (?,?)", (ADMIN_EMAIL, "admin"))
+    conn.execute("INSERT OR IGNORE INTO users (email, role) VALUES (?,?)", (ADMIN_EMAIL.lower(), "admin"))
     if as_of in ("", "today"):
         settings.set("week7.as_of", base.isoformat(), "seed")
 

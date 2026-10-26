@@ -209,6 +209,23 @@ def fail_job(job_id: str, error: str) -> None:
         conn.execute("UPDATE jobs SET status='error', error=? WHERE job_id=?", (error, job_id))
 
 
+def owns_trace(trace_id: str, user_email: str) -> bool:
+    """True when this user started the job that produced the trace (the only answers they may report)."""
+    with db.get_conn() as conn:
+        row = conn.execute("SELECT 1 FROM jobs WHERE trace_id=? AND lower(user_email)=lower(?)",
+                           (trace_id, user_email)).fetchone()
+    return row is not None
+
+
+def fail_interrupted_jobs() -> int:
+    """At startup: a job still 'running' lost its worker thread when the process stopped, so end it
+    instead of letting the UI poll forever."""
+    with db.get_conn() as conn:
+        cur = conn.execute("UPDATE jobs SET status='error', error=? WHERE status='running'",
+                           ("Interrupted by a restart. Run the ticket again.",))
+    return cur.rowcount
+
+
 def get_job(job_id: str) -> dict | None:
     with db.get_conn() as conn:
         row = conn.execute("SELECT * FROM jobs WHERE job_id=?", (job_id,)).fetchone()

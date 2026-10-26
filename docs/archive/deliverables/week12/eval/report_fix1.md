@@ -2,7 +2,7 @@
 
 - Cases: **n = 39**  |  passed all assertions: **36 (92%)**
 - Configuration: full system (version filter and policy guard on)
-- Corpus and tickets are SYNTHETIC (see data/variant_a/synthetic/README.md).
+- Corpus and tickets are SYNTHETIC (see data/variant_a/synthetic/SYNTHETIC.txt).
 
 ## Pass rate by slice
 
@@ -39,18 +39,21 @@
 
 ## Trajectory (tool choice) and the outcome-vs-trajectory gap
 
+### Headline: choices the model made itself (prefetched calls excluded)
+
+- Cases that reached the model: n = 30; of them, prefetched by code: 30
+- Model tool-choice accuracy: **90%**; outcome accuracy on the same cases: **90%**; gap **0.0 points**
+- Right answer by the wrong path: 1; right path, wrong answer: 1; mean tool calls the model made: 0.53
+
+### Combined, including calls prefetched by code (right by construction when prefetch is on)
+
 - Cases with an expected tool path: n = 27
 - Tool-choice accuracy: **100%**; outcome accuracy: **89%**
 - Gap (outcome minus trajectory): **-11.1 points**
 - Right answer by the wrong path (lucky): 0; right path, wrong answer: 3; both right: 24; both wrong: 0
 - Search calls beyond the cap of 2 that the agent tried anyway: 2
 
-### Choices the model made itself (prefetched calls excluded)
-
-- Cases that reached the model: n = 30; of them, prefetched by code: 30
-- Model tool-choice accuracy: **90%**; outcome accuracy on the same cases: **90%**; gap **0.0 points**
-- Right answer by the wrong path: 1; right path, wrong answer: 1; mean tool calls the model made: 0.53
-- When code prefetches the entitlement check and first search, the combined tool-choice figure above is right by construction; this one is the honest measure of the model.
+With prefetch OFF the model makes every call itself (run `traj_off`, `report_traj_off.md`): n = 16, model tool-choice accuracy **94%**, outcome accuracy **75%**, gap **-18.8 points**, 2.19 tool calls per ticket.
 
 ## Cost and latency
 
@@ -60,15 +63,18 @@
 - With the judge also GOOD: 18 tickets; $0.001169 each
 - Model tickets: 30; mean 3664 tokens each; latency p50 6.2 s, p95 56.7 s (first ticket, which pays the cold start: 16.9 s)
 - Free-tier ceiling: 8,000 tokens per minute / 3664 = **2.18 tickets per minute**
-- **Latency caveat:** 23 of 94 model calls in this run were served from the response cache, so the latency figures above are NOT representative (cost uses the original token counts and is unaffected). Use an uncached run for latency.
+- **Latency caveat:** 23 of 94 model calls in this run were served from the response cache, so the latency figures above are NOT representative (cost uses the original token counts and is unaffected). Use an uncached run for latency: `report_latency10.md` (cache off) gives p50 57.1 s, p95 120.1 s.
+- **Run-to-run variance:** the uncached rerun `latency10` of the same 10 cases (RAN01 to RAN10) passed **4 of 10**, against 7 of 10 in this run (flipped: RAN05, RAN07, RAN09). Variance is not measured, so read every pass rate in this report as one draw.
 
 ## Judge
 
-- **Primary:** rubric `week6-v2r` on qwen/qwen3.8-27b (agent is a different family). Judged answers: 24 (GOOD 18, NOT_GOOD 6, error 0)
+- **Primary:** rubric `week6-v1r` on qwen/qwen3.8-27b (agent is a different family). Judged answers: 24 (GOOD 18, NOT_GOOD 6, error 0)
   - **Agreement with human labels: NOT MEASURED** (no labelled cases matched judged cases). A person labels the replies on the admin page /label; then `python -m tier1 eval --rescore <tag>`. Until then no agreement number may be quoted.
-- **Second opinion:** rubric `v3b-integrated` on qwen/qwen3.8-27b (agent is a different family). Judged answers: 24 (GOOD 21, NOT_GOOD 3, error 0)
+- **Second opinion, the other Week 6 rubric:** rubric `week6-v2r` on qwen/qwen3.8-27b (agent is a different family). Judged answers: 24 (GOOD 18, NOT_GOOD 6, error 0)
   - **Agreement with human labels: NOT MEASURED** (no labelled cases matched judged cases). A person labels the replies on the admin page /label; then `python -m tier1 eval --rescore <tag>`. Until then no agreement number may be quoted.
-- The primary rubric is the Week 6 validated judge (`evaluation/judge_v2.txt`, agreement 24/25 = 96% (evaluation/labels_25.json, Week 6) on Week 6 replies). That number does not carry over: the Week 6 model is no longer available on this key, and integrated replies also rest on account facts, which are added as one context block.
+- **Second opinion, the integrated rubric:** rubric `v3b-integrated` on qwen/qwen3.8-27b (agent is a different family). Judged answers: 24 (GOOD 21, NOT_GOOD 3, error 0)
+  - **Agreement with human labels: NOT MEASURED** (no labelled cases matched judged cases). A person labels the replies on the admin page /label; then `python -m tier1 eval --rescore <tag>`. Until then no agreement number may be quoted.
+- The primary rubric is catalog prompt judge.week6_v1, chosen because it is the Week 6 rubric that cleared the target against people (Week 6 agreement: v2 20/25 = 80%; v1 24/25 = 96% (Week 6 labels) on Week 6 replies). That number does not carry over: the Week 6 model is no longer available on this key, and integrated replies also rest on account facts, which are added as one context block. Only the agreement measured above, on integrated replies, may be quoted.
 
 
 ## Assertion pass rates

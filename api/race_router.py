@@ -7,10 +7,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from api.auth import UserOut, require_admin  # research tools: admin only (they spend model quota)
+from api.limiter import limiter, user_or_ip
 
 log = logging.getLogger("api.race")
 router = APIRouter(prefix="/api/race", tags=["race"])
@@ -57,7 +58,8 @@ def get_status(_user: UserOut = Depends(require_admin)):
 
 
 @router.post("/run")
-def run_race(_user: UserOut = Depends(require_admin)):
+@limiter.limit("5/minute", key_func=user_or_ip)
+def run_race(request: Request, _user: UserOut = Depends(require_admin)):
     with _status_lock:
         if _status["status"] == "running":
             return {"status": "already_running"}

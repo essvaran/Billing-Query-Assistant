@@ -9,7 +9,7 @@ $py = if ($env:PY) { $env:PY } else { "python" }
 
 switch ($Task) {
     "up"     { & $py -m tier1 up }
-    "setup"  { & $py -m pip install -r requirements.txt }
+    "setup"  { & $py -m pip install -r requirements-dev.txt }
     "corpus" { & $py scripts/generate_synthetic_corpus.py }
     "ingest" { & $py scripts/generate_synthetic_corpus.py; & $py scripts/ingest_variant_a.py }
     "seed"   { & $py -m tier1 seed }

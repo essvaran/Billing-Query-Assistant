@@ -25,44 +25,62 @@ the browser on `/try`, a terminal open at the repo root. Have the seed for part 
 
 Open `/insights` (team lead), "Where it fails". Do not skip this; it is the biggest scoring part.
 
-1. **Frequencies and traces** [`taxonomy.md`, `eval/report_after.md`]. Open the example trace for "wrong source cited"
+1. **Frequencies and traces** [`taxonomy.md`, run `fix1`, `eval/report_fix1.md`]. Open the example trace for "wrong source cited"
    (RAN02). Say what happened: the answer cited a near-identical sibling article.
-2. **The mode integration created** [`taxonomy.md` mode 5]: the model writes invisible and lookalike characters, 24 of 39
+2. **The mode integration created** [`taxonomy.md` mode 4]: the model writes invisible and lookalike characters, 24 of 39
    replies; a correct answer was blocked as "no citation" because a regex written for ASCII met text that looks the same
    and differs in bytes. Found in a live run, not a unit test.
-3. **Two weaknesses I wrote down before anyone asked** [`weaknesses.md`]: the judge is unvalidated against a human; retrieval
+3. **The trajectory number, the honest one first** [`eval/report_fix1.md`, "Trajectory"]: the model's own tool choice is 90%
+   with an outcome gap of 0.0 points (n = 30). The combined figure says 100% only because code prefetches the entitlement check
+   and first search, so those calls are right by construction; say that before anyone asks. With prefetch OFF, so the model
+   makes every call itself, it chose right on 15 of 16 tickets but got the outcome right on only 12: gap -18.8 points
+   [`eval/report_traj_off.md`, 20 cases, cache off]. That is the embarrassing number; show it.
+4. **Two weaknesses I wrote down before anyone asked** [`weaknesses.md`]: the judge is unvalidated against a human; retrieval
    picks the wrong article about one time in five (and status questions are worse).
-4. **A finding that cuts against me.** With the version filter and policy guard OFF, 0 of 10 refund answers cited the wrong
+5. **A finding that cuts against me.** With the version filter and policy guard OFF, 0 of 10 refund answers cited the wrong
    policy, the same as ON, although in 11 of 39 cases the unfiltered search showed the model the wrong version [`eval/report_before.md`
    against `report_after.md`, `seams.md` 34]. The failure that caused the client's escalation did not occur in this sample.
 
-## Part 3: a number that moved (2 minutes)
+## Part 3: the loop live, and a number that moved (3 minutes)
 
 State the metric, n, the before, the after, the judge, and what the suite cannot see.
+
+- **The loop, live, on RAN02** (ticket TK3147, customer C1058, "Where is my order"). It cited the sibling article
+  `track-order-troubleshooting` instead of `track-order-web` in every run so far (`after`, `before`, `fix1`, `traj_off`,
+  `latency10`), so it will be red. Before you start, say: "this one is still broken; I am showing the loop, not a fix."
+  1. Tickets, open TK3147, run the assistant, then **Report wrong answer**, reason "Wrong facts", note "cites the troubleshooting
+     article; the web tracking article answers this".
+  2. Insights, **Review inbox**: open the report and its trace, then **Create evaluation case** (a new REGnn).
+  3. Data, Eval cases, open REGnn and set `"gold_slug": "track-order-web"`. Say why: a report only says the answer was wrong;
+     the lead writes down which article was right, and that line is what turns the report into a check.
+  4. **Run this test** (it can take up to a minute behind the rate limiter; keep talking): the Evaluation tab shows `cites_gold_source` Fail with the new trace. It now runs in every evaluation.
+  5. Then say what did NOT reproduce [`closed_loop.md` section 7]: RAN14 went red to green between `after` and `fix1`, but in two
+     cache-off rehearsals it passed with the two fixes off as well, so I do not show it as a live red-to-green.
+- **One draw, not a rate** [`eval/report_fix1.md`, "Run-to-run variance"]: an uncached rerun of the first 10 cases passed 4,
+  where `fix1` passed 7 (RAN05, RAN07, RAN09 flipped). Say it before quoting any pass rate below.
 
 - **Wrong-source citation, found in the full run:** 6 of 25 answerable cases failed `cites_gold_source` [`closed_loop.md` section 1]. Two fixes (internal macros out of customer search; the error code into the search query), then a token cut (entitlement and first search in code) so a full production-model run fits the free tier's daily cap.
 - **Same 39 cases, production model, after the fixes** [`closed_loop.md` section 5, `eval/report_fix1.md`]: 33 to 36 of 39 pass; wrong source 6 to 3 of 25 (RAN14, RAN19, RAN20 now pass; RAN06 went from a wrong-sibling answer to an escalation). Say the limit in the same breath: these are the cases the fixes came from, three changes landed together, one run.
 - **On 15 held-out tickets, on a second model (`gpt-oss-20b`):** 6 of 15 without the fixes, 8 of 15 with them; 4 improved and 2 got worse. **Inconclusive.** That is the honest check, and it did not confirm the improvement.
 - **Tokens per ticket** [`eval/report_pf10_on.md` against `report_pf10_off.md`]: 6,590 to 4,912 on the same 10 tickets (25% fewer), 7 against 8 passing: cheaper, quality not shown to be equal.
 - **Retrieval exposure to the wrong refund version:** 78% to 0% of top-3 results, n = 60 refund tickets, offline [`baseline/README.md`].
-- **Judge agreement with a human:** read it from the report on the day [`eval/report_fix1.md`, "Judge"]. If a person has labelled 20 replies on `/label` and you ran `--rescore fix1`, quote both judges' numbers and n; if it still says NOT MEASURED, say that.
+- **Judge agreement with a human:** read it from the report on the day [`eval/report_fix1.md`, "Judge"]. The primary judge is the
+  Week 6 v1 rubric (24/25 in Week 6; v2 was 80% and is now a second opinion; on `fix1` both gave the same verdict on all 24 replies).
+  If a person has labelled 20 replies on `/label` and you ran `--rescore`, quote the primary judge's number and n; if it still
+  says NOT MEASURED, say that.
   Never quote a figure that is not in the report.
 - **Not measured at all** (one sentence): real re-open behaviour, multi-turn conversations, real help-centre language, load, and
   run-to-run variance.
 
-## Part 4: what is next (2 minutes)
+## Part 4: what is next (1 minute)
 
-1. **The closed loop, live.** In the chat, ask a question as a customer and use **Report wrong answer**. In Insights, Review
-   inbox: **Create evaluation case**, then **Run this test**: the Evaluation tab shows each check Pass or Fail with the trace.
-   It now runs in every evaluation [`closed_loop.md`, `tier1/eval_cases.py`]. If no live failure turns up, say so and show
-   RAN14 in `closed_loop.md` section 5 (red before, green after on the production model); do not stage a failure and call it live.
-2. **Cost per deflected ticket:** $0.000915 [`cost_and_10x.md`, run `fix1`]. All spend, escalations included, divided by tickets that were
+1. **Cost per deflected ticket:** $0.000915 [`cost_and_10x.md`, run `fix1`]. All spend, escalations included, divided by tickets that were
    answered and passed every check, at the provider's published paid rates (checked 2026-10-18).
-3. **What breaks first at Black Friday volume:** the free tier's daily TOKEN limit (200,000 a day). At 4,161 tokens per model ticket it caps
+2. **What breaks first at Black Friday volume:** the free tier's daily TOKEN limit (200,000 a day). At 4,161 tokens per model ticket it caps
    the system at about 60 tickets a day, still below today's 67; Black Friday week is about 2,857 a day [`cost_and_10x.md`]. I learned the
    limit when my own evaluation run was cut off: it is in no response header. Money is not the problem (single dollars). Already done:
    entitlement and first search in code (25% fewer tokens). Next: a paid tier.
-4. **Bonus pair:** deflection 76% (19 of 25 answerable) and simulated re-open 60% (6 of 10; 4 customers said it was solved) [`eval/second_contact.json`], from a simulated customer.
+3. **Bonus pair:** deflection 76% (19 of 25 answerable) and simulated re-open 60% (6 of 10; 4 customers said it was solved) [`eval/second_contact.json`], from a simulated customer.
 
 ---
 
@@ -77,11 +95,11 @@ My first version told the simulated customer to look for a gap and scored 10 of 
 
 **2. "It quoted the 14-day window to a 30-day customer. How many cases have both versions live, and what is the pass rate on those, not the average?"**
 Six cases, three question pairs, each asked by a legacy customer and a current customer: 6 of 6 pass, 3 of 3 pairs right for
-both [`eval/report_after.md`, "Both refund-policy versions live"]. Honest caveat: with the defences off it was also 6 of 6, so
+both [`eval/report_fix1.md`, "Both refund-policy versions live"]. Honest caveat: with the defences off it was also 6 of 6, so
 this slice did not separate the two systems; the exposure showed up in retrieval (11 of 39 cases) and not in the answers.
 
 **3. "Your judge says helpful; my Tier-1 lead says wrong. What is the agreement, against how many hand labels, who wrote them?"**
-Read it from `eval/report_fix1.md` on the day: it states agreement for both judges, n and who labelled, or NOT MEASURED until someone who
+Read it from `eval/report_fix1.md` on the day: it states agreement for all three judges (Week 6 v1 is the primary), n and who labelled, or NOT MEASURED until someone who
 has worked this queue labels 20 replies on `/label`. Never round it up or quote it from memory. I can also say how fragile a judge is: the
 Week 6 judge's one-word answer format called every integrated reply NOT_GOOD on the new model, and allowing one sentence of reasoning
 changed that (`seams.md` 55); earlier, giving the judge the order record moved its NOT_GOOD verdicts from 5 to 2 (`seams.md` 31).

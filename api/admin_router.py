@@ -371,9 +371,11 @@ def update_user_role(user_id: int, body: UserRoleUpdate, caller: UserOut = Depen
         row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
         if not row:
             raise HTTPException(404, f"User {user_id} not found")
-        if dict(row)["email"] == ADMIN_EMAIL and body.role != Role.admin:
+        if dict(row)["email"].lower() == ADMIN_EMAIL.lower() and body.role != Role.admin:
             raise HTTPException(400, "Cannot demote the primary admin account")
         conn.execute("UPDATE users SET role = ? WHERE id = ?", (body.role.value, user_id))
         updated = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
     log.info("Admin %s changed user %d role to %s", caller.email, user_id, body.role.value)
+    from api.billing import repo
+    repo.audit(caller.email, "role_change", dict(updated)["email"], {"from": dict(row)["role"], "to": body.role.value})
     return dict(updated)

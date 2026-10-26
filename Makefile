@@ -7,7 +7,7 @@ up:               ## ONE command from a fresh clone: checks .env, installs, buil
 	$(PY) -m tier1 up
 
 setup:            ## install dependencies
-	$(PY) -m pip install -r requirements.txt
+	$(PY) -m pip install -r requirements-dev.txt
 
 corpus:           ## generate the SYNTHETIC corpus (deterministic)
 	$(PY) scripts/generate_synthetic_corpus.py

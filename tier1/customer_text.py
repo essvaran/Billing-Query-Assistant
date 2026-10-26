@@ -14,7 +14,7 @@ def _version_label(code: str) -> str | None:
     return ref.meta("policy_version", code, "customer_label")
 
 
-_ID_GREETING = re.compile(r"^(Hi|Hello|Dear)\s+C\d{3,6}\b", re.IGNORECASE)
+_ID_GREETING = re.compile(r"^(Hi|Hello|Dear)\s+(C\d{3,6}|cust_[0-9a-f]+)\b", re.IGNORECASE)
 
 
 def customer_view(reply: str, citations: list[dict], first_name: str = "") -> str:

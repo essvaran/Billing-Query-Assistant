@@ -8,7 +8,7 @@ import {
 } from '../../services/account.service';
 import { AuthService } from '../../services/auth.service';
 import { cycleMonths, money } from '../../shared/labels';
-import { refMeta, refValues } from '../../shared/ref-data';
+import { refLabel, refMeta, refValues } from '../../shared/ref-data';
 
 @Component({
   selector: 'app-onboarding',
@@ -106,7 +106,7 @@ import { refMeta, refValues } from '../../shared/ref-data';
         </div>
         <div class="card review">
           <h2>Review</h2>
-          <p>{{ plan.name }} ({{ cycle }}), {{ seats }} seat{{ seats === 1 ? '' : 's' }}</p>
+          <p>{{ plan.name }} ({{ cycleLabel(cycle) }}), {{ seats }} seat{{ seats === 1 ? '' : 's' }}</p>
           @for (a of chosen(); track a.addon.id) { <p>{{ a.addon.name }} x {{ a.quantity }}</p> }
           <p class="total">Total today: <strong>{{ money(total(), plan.currency) }}</strong></p>
           <p class="text-muted">Payments are simulated. No card is charged; an invoice is recorded on your account.</p>
@@ -163,6 +163,7 @@ export class OnboardingComponent implements OnInit {
   regions() { return refValues('region'); }
   cycles() { return refValues('billing_cycle'); }
   months(c: string) { return cycleMonths(c); }
+  cycleLabel(c: string) { return refLabel('billing_cycle', c, c); }
   period(c: string) { return refMeta<string>('billing_cycle', c, 'period') ?? c; }
   unitPrice = unitPrice;
   readonly money = money;
@@ -221,7 +222,13 @@ export class OnboardingComponent implements OnInit {
     if (!this.plan || this.busy) return;
     this.busy = true;
     this.error = '';
-    const profile = { ...this.profile, billing_cycle: this.cycle };
+    const defaults = blankProfile();
+    const profile = {
+      ...this.profile,
+      currency: this.profile.currency || defaults.currency,
+      region: this.profile.region || defaults.region,
+      billing_cycle: this.cycle,
+    };
     const body = {
       plan_id: this.plan.id, billing_cycle: this.cycle, seats: this.seats,
       addons: this.chosen().map(a => ({ addon_id: a.addon.id, quantity: a.quantity })),

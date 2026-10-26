@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { refLabel, refValues } from '../../shared/ref-data';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -13,12 +13,17 @@ import { TrajectoryComponent } from '../trajectory/trajectory.component';
 import { MultiAgentComponent } from '../multiagent/multiagent.component';
 import { ObservabilityComponent } from '../observability/observability.component';
 import { BillingAdminComponent } from './billing-admin.component';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ToastService } from '../../shared/toast';
+import { ConfirmService } from '../../shared/confirm';
 
 type Tab = 'tickets' | 'orders' | 'customers' | 'users' | 'billing' | 'documents'
          | 'observability' | 'traces' | 'sample' | 'taxonomy' | 'eval' | 'race' | 'trajectory' | 'multiagent';
 
-interface Toast { message: string; kind: 'success' | 'error'; id: number }
+/** Day-to-day admin work first; the Week 7 to 11 experiments sit behind one collapsed Labs group. */
+const MAIN_TABS: Tab[] = ['users', 'billing', 'documents'];
+const LAB_TABS: Tab[] = ['observability', 'traces', 'sample', 'taxonomy', 'eval', 'race', 'trajectory', 'multiagent',
+                         'tickets', 'orders', 'customers'];
 
 @Component({
   selector: 'app-admin',
@@ -31,7 +36,9 @@ interface Toast { message: string; kind: 'success' | 'error'; id: number }
   styleUrl: './admin.component.scss',
 })
 export class AdminComponent implements OnInit {
-  activeTab: Tab = 'tickets';
+  activeTab: Tab = 'users';
+  labsOpen = false;
+  readonly labTabs = LAB_TABS;
 
   tickets: Ticket[] = [];
   orders: Order[] = [];
@@ -53,11 +60,9 @@ export class AdminComponent implements OnInit {
   showNewOrderForm = false;
   showNewCustomerForm = false;
 
-  // Inline modal
-  confirmModal: { message: string; onConfirm: () => void } | null = null;
-
-  toasts: Toast[] = [];
-  private _toastId = 0;
+  private readonly toast = inject(ToastService);
+  private readonly confirm = inject(ConfirmService);
+  private readonly router = inject(Router);
 
   get verdictOptions(): string[] { return refValues('verdict').map(v => v.code); }
   get tierOptions(): string[] { return refValues('plan_tier').map(v => v.code); }
@@ -71,19 +76,25 @@ export class AdminComponent implements OnInit {
   constructor(private svc: AdminService, private uploadSvc: UploadService, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
-    // Deep links such as /admin?tab=observability&trace=ID (used by alert emails) open that tab directly.
-    const requested = this.route.snapshot.queryParamMap.get('tab');
-    if (requested === 'observability') {
-      this.activeTab = 'observability';
-    } else if (requested === 'billing') {
-      this.activeTab = 'billing';
-    }
+    // The open tab lives in the URL (?tab=...), so a reload, the back button or a shared link (alert emails link
+    // /admin?tab=observability&trace=ID) lands on the same tab.
+    const requested = this.route.snapshot.queryParamMap.get('tab') as Tab | null;
+    if (requested && (MAIN_TABS.includes(requested) || LAB_TABS.includes(requested))) this.activeTab = requested;
+    this.labsOpen = LAB_TABS.includes(this.activeTab);
     this.loadAll();
   }
+
+  isLab(tab: Tab): boolean { return LAB_TABS.includes(tab); }
 
   setTab(tab: Tab): void {
     this.activeTab = tab;
     this._clearForms();
+    this.router.navigate([], { relativeTo: this.route, queryParams: { tab }, queryParamsHandling: 'merge', replaceUrl: true });
+  }
+
+  toggleLabs(): void {
+    this.labsOpen = !this.labsOpen;
+    if (!this.labsOpen && this.isLab(this.activeTab)) this.setTab('users');
   }
 
   loadAll(): void {
@@ -123,10 +134,7 @@ export class AdminComponent implements OnInit {
   }
 
   confirmDeleteTicket(id: string): void {
-    this.confirmModal = {
-      message: `Delete ticket ${id}? This cannot be undone.`,
-      onConfirm: () => this._deleteTicket(id),
-    };
+    void this.confirm.ask(`Delete ticket ${id}? This cannot be undone.`, { danger: true, confirmLabel: 'Delete' }).then(ok => { if (ok) this._deleteTicket(id); });
   }
 
   private _deleteTicket(id: string): void {
@@ -188,10 +196,7 @@ export class AdminComponent implements OnInit {
   }
 
   confirmDeleteOrder(id: string): void {
-    this.confirmModal = {
-      message: `Delete order ${id}? This cannot be undone.`,
-      onConfirm: () => this._deleteOrder(id),
-    };
+    void this.confirm.ask(`Delete order ${id}? This cannot be undone.`, { danger: true, confirmLabel: 'Delete' }).then(ok => { if (ok) this._deleteOrder(id); });
   }
 
   private _deleteOrder(id: string): void {
@@ -253,10 +258,7 @@ export class AdminComponent implements OnInit {
   }
 
   confirmDeleteCustomer(id: string): void {
-    this.confirmModal = {
-      message: `Delete customer ${id}? This cannot be undone.`,
-      onConfirm: () => this._deleteCustomer(id),
-    };
+    void this.confirm.ask(`Delete customer ${id}? This cannot be undone.`, { danger: true, confirmLabel: 'Delete' }).then(ok => { if (ok) this._deleteCustomer(id); });
   }
 
   private _deleteCustomer(id: string): void {
@@ -298,8 +300,13 @@ export class AdminComponent implements OnInit {
     });
   }
 
-  setUserRole(user: AppUser, role: 'admin' | 'user'): void {
+  async setUserRole(user: AppUser, role: 'admin' | 'user'): Promise<void> {
     if (user.role === role) return;
+    const ok = await this.confirm.ask(role === 'admin'
+      ? `Make ${user.email} an admin? They will see every customer, ticket and setting.`
+      : `Demote ${user.email} to a customer account? They lose admin access on their next request.`,
+      { confirmLabel: role === 'admin' ? 'Make admin' : 'Demote', danger: role !== 'admin' });
+    if (!ok) return;
     this.saving = true;
     this.svc.updateUserRole(user.id, role).subscribe({
       next: updated => {
@@ -312,7 +319,9 @@ export class AdminComponent implements OnInit {
     });
   }
 
-  setUserActive(user: AppUser, isActive: boolean): void {
+  async setUserActive(user: AppUser, isActive: boolean): Promise<void> {
+    if (!isActive && !(await this.confirm.ask(`Disable ${user.email}? They are signed out on their next request and cannot sign in again until enabled.`,
+                                             { danger: true, confirmLabel: 'Disable' }))) return;
     this.saving = true;
     this.svc.setUserStatus(user.id, isActive).subscribe({
       next: res => {
@@ -354,25 +363,12 @@ export class AdminComponent implements OnInit {
     this.uploadedFileName = '';
   }
 
-  // --------------- Modal ---------------
-
-  dismissModal(): void { this.confirmModal = null; }
-
-  executeModal(): void {
-    if (!this.confirmModal) return;
-    this.confirmModal.onConfirm();
-    this.confirmModal = null;
-  }
-
   // --------------- Toast ---------------
 
   private _toast(message: string, kind: 'success' | 'error'): void {
-    const id = ++this._toastId;
-    this.toasts.push({ message, kind, id });
-    setTimeout(() => { this.toasts = this.toasts.filter(t => t.id !== id); }, 3500);
+    if (kind === 'success') this.toast.success(message);
+    else this.toast.error(message);
   }
-
-  dismissToast(id: number): void { this.toasts = this.toasts.filter(t => t.id !== id); }
 
   // --------------- Helpers ---------------
 

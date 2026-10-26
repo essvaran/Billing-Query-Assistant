@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 HF_HOME=/app/.hf
 
 # CPU-only torch keeps the image a fraction of the size of the default CUDA build
 COPY requirements.txt .
-RUN pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu \
+RUN pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu \
  && pip install -r requirements.txt
 
 COPY . .
@@ -22,5 +22,9 @@ RUN useradd --create-home --uid 10001 app && mkdir -p /data && chown -R app:app 
 USER app
 
 EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=4)"
 # Secrets (GROQ_API_KEY, JWT_SECRET, ADMIN_EMAIL, PII_HASH_SALT) come from the environment, never the image.
-CMD ["python", "-m", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# --proxy-headers: trust X-Forwarded-For from nginx (FORWARDED_ALLOW_IPS, default the compose network) so rate
+# limits see each client's address, not nginx's. Graceful shutdown lets in-flight requests finish on a redeploy.
+ENV FORWARDED_ALLOW_IPS=*
+CMD ["sh", "-c", "exec python -m uvicorn api.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips \"$FORWARDED_ALLOW_IPS\" --timeout-graceful-shutdown 30"]

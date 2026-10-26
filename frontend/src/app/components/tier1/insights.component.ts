@@ -1,3 +1,4 @@
+import { ConfirmService } from '../../shared/confirm';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -167,7 +168,10 @@ type Tab = 'overview' | 'inbox' | 'eval';
                 </div>
               }
             }
-            <pre class="log">{{ r.log_tail.join('\\n') || 'Waiting for the first case' }}</pre>
+            <details class="log-wrap" [open]="r.status === 'running'">
+              <summary>Run log</summary>
+              <pre class="log">{{ r.log_tail.join('\\n') || 'Waiting for the first case' }}</pre>
+            </details>
           </section>
         }
       }
@@ -208,6 +212,7 @@ type Tab = 'overview' | 'inbox' | 'eval';
   `],
 })
 export class InsightsComponent implements OnInit {
+  private readonly confirm = inject(ConfirmService);
   private api = inject(Tier1Service);
   private toast = inject(ToastService);
   private destroyRef = inject(DestroyRef);
@@ -251,8 +256,8 @@ export class InsightsComponent implements OnInit {
     });
   }
 
-  startRun(only: string | null): void {
-    if (!only && !window.confirm('The full suite takes 20 to 30 minutes and uses model quota. Start it?')) return;
+  async startRun(only: string | null): Promise<void> {
+    if (!only && !(await this.confirm.ask('The full suite takes 20 to 30 minutes and uses model quota. Start it?'))) return;
     this.running.set(true);
     this.api.evalRun(only).subscribe({
       next: ({ run_id }) => this.poll(run_id),

@@ -1,3 +1,4 @@
+import { ConfirmService } from '../../shared/confirm';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CatalogService, GateReport, GuardExample, GuardRules, GuardVersion } from '../../services/catalog.service';
@@ -125,6 +126,7 @@ interface EditableRules { pre: { category: string; reason: string; detail: strin
   `],
 })
 export class GuardsComponent implements OnInit {
+  private readonly confirm = inject(ConfirmService);
   private api = inject(CatalogService);
   private toast = inject(ToastService);
   versions = signal<GuardVersion[]>([]);
@@ -190,16 +192,16 @@ export class GuardsComponent implements OnInit {
     });
   }
 
-  activate(v: GuardVersion): void {
-    if (!window.confirm(`Make v${v.version} the live guard rules? Every ticket from now on is checked with it.`)) return;
+  async activate(v: GuardVersion): Promise<void> {
+    if (!(await this.confirm.ask(`Make v${v.version} the live guard rules? Every ticket from now on is checked with it.`))) return;
     this.api.activateGuards(v.version).subscribe({
       next: () => { this.toast.success(`v${v.version} is live.`); this.rules.set(null); this.load(); },
       error: err => this.toast.error(apiMessage(err)),
     });
   }
 
-  removeVersion(v: GuardVersion): void {
-    if (!window.confirm(`Delete v${v.version}?`)) return;
+  async removeVersion(v: GuardVersion): Promise<void> {
+    if (!(await this.confirm.ask(`Delete v${v.version}?`, { danger: true, confirmLabel: 'Delete' }))) return;
     this.api.deleteGuards(v.version).subscribe({ next: () => { this.toast.success('Deleted.'); this.load(); }, error: err => this.toast.error(apiMessage(err)) });
   }
 
@@ -229,8 +231,8 @@ export class GuardsComponent implements OnInit {
     });
   }
 
-  removeExample(e: GuardExample): void {
-    if (!window.confirm('Delete this example?')) return;
+  async removeExample(e: GuardExample): Promise<void> {
+    if (!(await this.confirm.ask('Delete this example?', { danger: true, confirmLabel: 'Delete' }))) return;
     this.api.deleteExample(e.id).subscribe({ next: () => { this.toast.success('Deleted.'); this.load(); }, error: err => this.toast.error(apiMessage(err)) });
   }
 }

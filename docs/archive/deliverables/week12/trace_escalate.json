@@ -1,0 +1,524 @@
+{
+  "summary": {
+    "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+    "spans": 12,
+    "total_ms": 8337.01,
+    "cost_usd": 0.0007716,
+    "input_tokens": 4196,
+    "output_tokens": 237,
+    "llm_calls": 2,
+    "llm_ms": 6372.2,
+    "queue_wait_s": 4.39,
+    "tool_calls": 3,
+    "tool_ms": 570.1,
+    "mcp_server_spans": 3,
+    "mcp_servers_seen": [
+      "help-centre",
+      "tier1-tools"
+    ],
+    "errors": []
+  },
+  "spans": [
+    {
+      "span_id": "ae749b93cef94425",
+      "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+      "parent_id": "232e8ea017e6467b",
+      "name": "pre_guard",
+      "kind": "guard",
+      "started_at": "2026-10-18T05:28:44.137367+00:00",
+      "duration_ms": 0.04,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": 0.0,
+      "status": "ok",
+      "attrs": {
+        "blocked": false,
+        "category": null
+      }
+    },
+    {
+      "span_id": "232e8ea017e6467b",
+      "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+      "parent_id": null,
+      "name": "ticket",
+      "kind": "request",
+      "started_at": "2026-10-18T05:28:44.137367+00:00",
+      "duration_ms": 8337.01,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": 0.0,
+      "status": "ok",
+      "attrs": {
+        "ticket_id": "MIS01",
+        "customer_id": "cust_a4a1c7af59",
+        "body_chars": 47,
+        "decision": "ESCALATE",
+        "reason": "entitlement_unavailable",
+        "laps": 2,
+        "tools": [
+          "check_entitlement",
+          "search_help_centre",
+          "escalate"
+        ],
+        "violations": []
+      }
+    },
+    {
+      "span_id": "225f056efbdc4c2e",
+      "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+      "parent_id": "232e8ea017e6467b",
+      "name": "mcp_connect",
+      "kind": "setup",
+      "started_at": "2026-10-18T05:28:44.257406+00:00",
+      "duration_ms": 0.07,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": 0.0,
+      "status": "ok",
+      "attrs": {
+        "tools": 4,
+        "blocked": 0
+      }
+    },
+    {
+      "span_id": "0a70d5bf57e744c1",
+      "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+      "parent_id": "232e8ea017e6467b",
+      "name": "tool:check_entitlement",
+      "kind": "tool",
+      "started_at": "2026-10-18T05:28:44.361899+00:00",
+      "duration_ms": 109.83,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": 0.0,
+      "status": "ok",
+      "attrs": {
+        "server": "tier1-tools",
+        "lap": 0,
+        "origin": "code",
+        "ok": true
+      }
+    },
+    {
+      "span_id": "a6a4d422a3b246ae",
+      "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+      "parent_id": "0a70d5bf57e744c1",
+      "name": "server:check_entitlement",
+      "kind": "mcp_server",
+      "started_at": "2026-10-18T05:28:44.371032+00:00",
+      "duration_ms": 11.18,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": 0.0,
+      "status": "ok",
+      "attrs": {
+        "server": "tier1-tools",
+        "tool": "check_entitlement",
+        "ok": true
+      }
+    },
+    {
+      "span_id": "4ce7103d65a14ef5",
+      "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+      "parent_id": "232e8ea017e6467b",
+      "name": "tool:search_help_centre",
+      "kind": "tool",
+      "started_at": "2026-10-18T05:28:44.583529+00:00",
+      "duration_ms": 252.41,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": 0.0,
+      "status": "ok",
+      "attrs": {
+        "server": "help-centre",
+        "lap": 0,
+        "origin": "code",
+        "ok": true
+      }
+    },
+    {
+      "span_id": "15e410469a794ecf",
+      "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+      "parent_id": "7e2bb0b08a074f0a",
+      "name": "retrieval",
+      "kind": "retrieval",
+      "started_at": "2026-10-18T05:28:44.590149+00:00",
+      "duration_ms": 54.81,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": 0.0,
+      "status": "ok",
+      "attrs": {
+        "embedding_model": "BAAI/bge-base-en-v1.5",
+        "cost_note": "local, no API cost",
+        "results": 3
+      }
+    },
+    {
+      "span_id": "7e2bb0b08a074f0a",
+      "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+      "parent_id": "4ce7103d65a14ef5",
+      "name": "server:search_help_centre",
+      "kind": "mcp_server",
+      "started_at": "2026-10-18T05:28:44.590149+00:00",
+      "duration_ms": 151.99,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": 0.0,
+      "status": "ok",
+      "attrs": {
+        "server": "help-centre",
+        "tool": "search_help_centre",
+        "query_chars": 54,
+        "policy_filter": "refund-30d",
+        "ok": true,
+        "results": 3
+      }
+    },
+    {
+      "span_id": "5bd83ca93c0a4d63",
+      "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+      "parent_id": "232e8ea017e6467b",
+      "name": "llm_call",
+      "kind": "llm",
+      "started_at": "2026-10-18T05:28:44.977108+00:00",
+      "duration_ms": 2512.06,
+      "input_tokens": 2054,
+      "output_tokens": 201,
+      "cost_usd": 0.0004287,
+      "status": "ok",
+      "attrs": {
+        "model": "openai/gpt-oss-120b",
+        "lap": 1,
+        "cache": "miss",
+        "waited_s": 1.39,
+        "attempts": 1,
+        "finish_reason": "tool_calls"
+      }
+    },
+    {
+      "span_id": "734383b54e6848f4",
+      "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+      "parent_id": "232e8ea017e6467b",
+      "name": "tool:escalate",
+      "kind": "tool",
+      "started_at": "2026-10-18T05:28:47.630125+00:00",
+      "duration_ms": 207.89,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": 0.0,
+      "status": "ok",
+      "attrs": {
+        "server": "tier1-tools",
+        "lap": 1,
+        "origin": "model",
+        "ok": true
+      }
+    },
+    {
+      "span_id": "290e4af54de942a2",
+      "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+      "parent_id": "734383b54e6848f4",
+      "name": "server:escalate",
+      "kind": "mcp_server",
+      "started_at": "2026-10-18T05:28:47.634092+00:00",
+      "duration_ms": 71.21,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": 0.0,
+      "status": "ok",
+      "attrs": {
+        "server": "tier1-tools",
+        "tool": "escalate",
+        "ok": true
+      }
+    },
+    {
+      "span_id": "7ea48dae0338484a",
+      "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+      "parent_id": "232e8ea017e6467b",
+      "name": "llm_call",
+      "kind": "llm",
+      "started_at": "2026-10-18T05:28:47.925926+00:00",
+      "duration_ms": 3860.11,
+      "input_tokens": 2142,
+      "output_tokens": 36,
+      "cost_usd": 0.0003429,
+      "status": "ok",
+      "attrs": {
+        "model": "openai/gpt-oss-120b",
+        "lap": 2,
+        "cache": "miss",
+        "waited_s": 3.0,
+        "attempts": 1,
+        "finish_reason": "stop"
+      }
+    }
+  ],
+  "tree": [
+    {
+      "span_id": "232e8ea017e6467b",
+      "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+      "parent_id": null,
+      "name": "ticket",
+      "kind": "request",
+      "started_at": "2026-10-18T05:28:44.137367+00:00",
+      "duration_ms": 8337.01,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": 0.0,
+      "status": "ok",
+      "attrs": {
+        "ticket_id": "MIS01",
+        "customer_id": "cust_a4a1c7af59",
+        "body_chars": 47,
+        "decision": "ESCALATE",
+        "reason": "entitlement_unavailable",
+        "laps": 2,
+        "tools": [
+          "check_entitlement",
+          "search_help_centre",
+          "escalate"
+        ],
+        "violations": []
+      },
+      "children": [
+        {
+          "span_id": "ae749b93cef94425",
+          "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+          "parent_id": "232e8ea017e6467b",
+          "name": "pre_guard",
+          "kind": "guard",
+          "started_at": "2026-10-18T05:28:44.137367+00:00",
+          "duration_ms": 0.04,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": 0.0,
+          "status": "ok",
+          "attrs": {
+            "blocked": false,
+            "category": null
+          },
+          "children": [],
+          "cost_usd_total": 0
+        },
+        {
+          "span_id": "225f056efbdc4c2e",
+          "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+          "parent_id": "232e8ea017e6467b",
+          "name": "mcp_connect",
+          "kind": "setup",
+          "started_at": "2026-10-18T05:28:44.257406+00:00",
+          "duration_ms": 0.07,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": 0.0,
+          "status": "ok",
+          "attrs": {
+            "tools": 4,
+            "blocked": 0
+          },
+          "children": [],
+          "cost_usd_total": 0
+        },
+        {
+          "span_id": "0a70d5bf57e744c1",
+          "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+          "parent_id": "232e8ea017e6467b",
+          "name": "tool:check_entitlement",
+          "kind": "tool",
+          "started_at": "2026-10-18T05:28:44.361899+00:00",
+          "duration_ms": 109.83,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": 0.0,
+          "status": "ok",
+          "attrs": {
+            "server": "tier1-tools",
+            "lap": 0,
+            "origin": "code",
+            "ok": true
+          },
+          "children": [
+            {
+              "span_id": "a6a4d422a3b246ae",
+              "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+              "parent_id": "0a70d5bf57e744c1",
+              "name": "server:check_entitlement",
+              "kind": "mcp_server",
+              "started_at": "2026-10-18T05:28:44.371032+00:00",
+              "duration_ms": 11.18,
+              "input_tokens": null,
+              "output_tokens": null,
+              "cost_usd": 0.0,
+              "status": "ok",
+              "attrs": {
+                "server": "tier1-tools",
+                "tool": "check_entitlement",
+                "ok": true
+              },
+              "children": [],
+              "cost_usd_total": 0
+            }
+          ],
+          "cost_usd_total": 0
+        },
+        {
+          "span_id": "4ce7103d65a14ef5",
+          "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+          "parent_id": "232e8ea017e6467b",
+          "name": "tool:search_help_centre",
+          "kind": "tool",
+          "started_at": "2026-10-18T05:28:44.583529+00:00",
+          "duration_ms": 252.41,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": 0.0,
+          "status": "ok",
+          "attrs": {
+            "server": "help-centre",
+            "lap": 0,
+            "origin": "code",
+            "ok": true
+          },
+          "children": [
+            {
+              "span_id": "7e2bb0b08a074f0a",
+              "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+              "parent_id": "4ce7103d65a14ef5",
+              "name": "server:search_help_centre",
+              "kind": "mcp_server",
+              "started_at": "2026-10-18T05:28:44.590149+00:00",
+              "duration_ms": 151.99,
+              "input_tokens": null,
+              "output_tokens": null,
+              "cost_usd": 0.0,
+              "status": "ok",
+              "attrs": {
+                "server": "help-centre",
+                "tool": "search_help_centre",
+                "query_chars": 54,
+                "policy_filter": "refund-30d",
+                "ok": true,
+                "results": 3
+              },
+              "children": [
+                {
+                  "span_id": "15e410469a794ecf",
+                  "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+                  "parent_id": "7e2bb0b08a074f0a",
+                  "name": "retrieval",
+                  "kind": "retrieval",
+                  "started_at": "2026-10-18T05:28:44.590149+00:00",
+                  "duration_ms": 54.81,
+                  "input_tokens": null,
+                  "output_tokens": null,
+                  "cost_usd": 0.0,
+                  "status": "ok",
+                  "attrs": {
+                    "embedding_model": "BAAI/bge-base-en-v1.5",
+                    "cost_note": "local, no API cost",
+                    "results": 3
+                  },
+                  "children": [],
+                  "cost_usd_total": 0
+                }
+              ],
+              "cost_usd_total": 0
+            }
+          ],
+          "cost_usd_total": 0
+        },
+        {
+          "span_id": "5bd83ca93c0a4d63",
+          "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+          "parent_id": "232e8ea017e6467b",
+          "name": "llm_call",
+          "kind": "llm",
+          "started_at": "2026-10-18T05:28:44.977108+00:00",
+          "duration_ms": 2512.06,
+          "input_tokens": 2054,
+          "output_tokens": 201,
+          "cost_usd": 0.0004287,
+          "status": "ok",
+          "attrs": {
+            "model": "openai/gpt-oss-120b",
+            "lap": 1,
+            "cache": "miss",
+            "waited_s": 1.39,
+            "attempts": 1,
+            "finish_reason": "tool_calls"
+          },
+          "children": [],
+          "cost_usd_total": 0.0004287
+        },
+        {
+          "span_id": "734383b54e6848f4",
+          "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+          "parent_id": "232e8ea017e6467b",
+          "name": "tool:escalate",
+          "kind": "tool",
+          "started_at": "2026-10-18T05:28:47.630125+00:00",
+          "duration_ms": 207.89,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": 0.0,
+          "status": "ok",
+          "attrs": {
+            "server": "tier1-tools",
+            "lap": 1,
+            "origin": "model",
+            "ok": true
+          },
+          "children": [
+            {
+              "span_id": "290e4af54de942a2",
+              "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+              "parent_id": "734383b54e6848f4",
+              "name": "server:escalate",
+              "kind": "mcp_server",
+              "started_at": "2026-10-18T05:28:47.634092+00:00",
+              "duration_ms": 71.21,
+              "input_tokens": null,
+              "output_tokens": null,
+              "cost_usd": 0.0,
+              "status": "ok",
+              "attrs": {
+                "server": "tier1-tools",
+                "tool": "escalate",
+                "ok": true
+              },
+              "children": [],
+              "cost_usd_total": 0
+            }
+          ],
+          "cost_usd_total": 0
+        },
+        {
+          "span_id": "7ea48dae0338484a",
+          "trace_id": "a699c1a9adda4fa38e9dd50b4f2b5cdd",
+          "parent_id": "232e8ea017e6467b",
+          "name": "llm_call",
+          "kind": "llm",
+          "started_at": "2026-10-18T05:28:47.925926+00:00",
+          "duration_ms": 3860.11,
+          "input_tokens": 2142,
+          "output_tokens": 36,
+          "cost_usd": 0.0003429,
+          "status": "ok",
+          "attrs": {
+            "model": "openai/gpt-oss-120b",
+            "lap": 2,
+            "cache": "miss",
+            "waited_s": 3.0,
+            "attempts": 1,
+            "finish_reason": "stop"
+          },
+          "children": [],
+          "cost_usd_total": 0.0003429
+        }
+      ],
+      "cost_usd_total": 0.0007716
+    }
+  ]
+}

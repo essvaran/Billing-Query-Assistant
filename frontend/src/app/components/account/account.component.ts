@@ -9,12 +9,13 @@ import { AuthService } from '../../services/auth.service';
 import { ModalComponent } from '../../shared/modal.component';
 import { ToastService } from '../../shared/toast';
 import { cycleMonths, money } from '../../shared/labels';
-import { refValues } from '../../shared/ref-data';
+import { refLabel, refValues } from '../../shared/ref-data';
+import { ErrorStateComponent } from '../../shared/primitives';
 
 @Component({
   selector: 'app-account',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ModalComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ModalComponent, ErrorStateComponent],
   template: `
     <div class="t1-page acct">
       <div class="t1-page__head">
@@ -30,14 +31,18 @@ import { refValues } from '../../shared/ref-data';
         <section class="card" aria-labelledby="h-sub">
           <h2 id="h-sub">Subscription</h2>
           @if (sub && sub.status !== 'cancelled') {
-            <p><strong>{{ sub.plan_name }}</strong> ({{ sub.billing_cycle }}), {{ sub.seats }} seat{{ sub.seats === 1 ? '' : 's' }}
-              <span class="pill">{{ sub.status }}</span></p>
+            <p><strong>{{ sub.plan_name }}</strong> ({{ label('billing_cycle', sub.billing_cycle) }}), {{ sub.seats }} seat{{ sub.seats === 1 ? '' : 's' }}
+              <span class="pill">{{ label('subscription_status', sub.status) }}</span></p>
             <p class="text-muted">Renews {{ sub.current_period_end | date:'mediumDate' }}. Refund window: {{ sub.refund_days }} days.</p>
             @if (sub.addons.length) {
               <p class="text-muted">Add-ons: @for (a of sub.addons; track a.addon_id; let last = $last) { {{ a.name }} x {{ a.quantity }}{{ last ? '' : ', ' }} }</p>
             }
             <div class="actions">
-              <button class="t1-btn t1-btn--primary" (click)="startChange()">Change plan</button>
+              @if (plansFailed) {
+                <button class="t1-btn" (click)="loadPlans()">Plans did not load. Retry</button>
+              } @else {
+                <button class="t1-btn t1-btn--primary" [disabled]="!plans.length" (click)="startChange()">Change plan</button>
+              }
               <button class="t1-btn" (click)="confirmCancel = true">Cancel subscription</button>
             </div>
           } @else {
@@ -97,7 +102,12 @@ import { refValues } from '../../shared/ref-data';
 
         <section class="card" aria-labelledby="h-inv">
           <h2 id="h-inv">Invoices</h2>
-          @if (!invoices.length) { <p class="text-muted">No invoices yet.</p> } @else {
+          @if (invoicesState === 'loading') { <p class="text-muted" role="status">Loading invoices</p> }
+          @else if (invoicesState === 'error') {
+            <app-error-state title="Invoices did not load" message="Your invoices are safe; we could not fetch them just now."
+                             retryLabel="Try again" (retry)="loadInvoices()" />
+          }
+          @else if (!invoices.length) { <p class="text-muted">No invoices yet.</p> } @else {
             <div class="table-wrap">
               <table class="tbl">
                 <thead><tr><th>Number</th><th>Issued</th><th>Period</th><th class="num">Amount</th><th>Status</th></tr></thead>
@@ -108,7 +118,7 @@ import { refValues } from '../../shared/ref-data';
                       <td>{{ i.issued_at | date:'mediumDate' }}</td>
                       <td>{{ i.period_start | date:'MMM d' }} to {{ i.period_end | date:'MMM d, y' }}</td>
                       <td class="num">{{ money(i.amount_cents, i.currency) }}</td>
-                      <td><span class="pill pill--{{ i.status }}">{{ i.status }}</span></td>
+                      <td><span class="pill pill--{{ i.status }}">{{ label('invoice_status', i.status) }}</span></td>
                     </tr>
                   }
                 </tbody>
@@ -172,10 +182,32 @@ export class AccountComponent implements OnInit {
 
   constructor(private account: AccountService, public auth: AuthService, private toast: ToastService) {}
 
+  // Load failures are shown as failures, never as an empty list ("No invoices yet" when the call failed).
+  invoicesState: 'loading' | 'ok' | 'error' = 'loading';
+  plansFailed = false;
+
+  label(category: string, code: string | null | undefined): string { return refLabel(category, code, code ?? ''); }
+
   ngOnInit(): void {
     this.reload();
     this.account.profile().subscribe({ next: p => { if (p) this.profile = p; }, error: () => undefined });
-    this.account.plans().subscribe({ next: r => { this.plans = r.plans; this.addons = r.addons; }, error: () => undefined });
+    this.loadPlans();
+  }
+
+  loadPlans(): void {
+    this.plansFailed = false;
+    this.account.plans().subscribe({
+      next: r => { this.plans = r.plans; this.addons = r.addons; },
+      error: () => { this.plansFailed = true; },
+    });
+  }
+
+  loadInvoices(): void {
+    this.invoicesState = 'loading';
+    this.account.invoices().subscribe({
+      next: i => { this.invoices = i; this.invoicesState = 'ok'; },
+      error: () => { this.invoicesState = 'error'; },
+    });
   }
 
   reload(): void {
@@ -183,7 +215,7 @@ export class AccountComponent implements OnInit {
       next: s => { this.sub = s; this.loading = false; },
       error: () => { this.loading = false; this.toast.error('Could not load your subscription.'); },
     });
-    this.account.invoices().subscribe({ next: i => (this.invoices = i), error: () => undefined });
+    this.loadInvoices();
   }
 
   startChange(): void {

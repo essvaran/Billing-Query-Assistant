@@ -1,3 +1,4 @@
+import { ConfirmService } from '../../shared/confirm';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CatalogService, EvalRunRow } from '../../services/catalog.service';
@@ -45,6 +46,7 @@ import { DATA_STYLES, apiMessage } from './data-shared';
   styles: [DATA_STYLES],
 })
 export class EvalRunsComponent implements OnInit {
+  private readonly confirm = inject(ConfirmService);
   private api = inject(CatalogService);
   private toast = inject(ToastService);
   rows = signal<EvalRunRow[]>([]);
@@ -63,8 +65,8 @@ export class EvalRunsComponent implements OnInit {
     this.api.saveRunNotes(e.tag, e.notes).subscribe({ next: () => { this.editing.set(null); this.toast.success('Notes saved.'); this.load(); },
                                                      error: err => this.toast.error(apiMessage(err)) });
   }
-  remove(r: EvalRunRow): void {
-    if (!window.confirm(`Delete run ${r.tag} and its results? The report files under docs/archive/deliverables/ stay.`)) return;
+  async remove(r: EvalRunRow): Promise<void> {
+    if (!(await this.confirm.ask(`Delete run ${r.tag} and its results? The report files under docs/archive/deliverables/ stay.`, { danger: true, confirmLabel: 'Delete' }))) return;
     this.api.deleteRun(r.tag).subscribe({ next: () => { this.toast.success('Deleted.'); this.load(); }, error: err => this.toast.error(apiMessage(err)) });
   }
 }

@@ -1,5 +1,7 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 
+let nextModalId = 0;
+
 /**
  * Accessible dialog: role=dialog, labelled, Escape closes, Tab stays inside, and focus returns to
  * whatever opened it. Used for escalate and report-wrong-answer; the source drawer reuses the same rules.
@@ -10,9 +12,9 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, EventEmi
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="backdrop" (mousedown)="onBackdrop($event)">
-      <div class="dialog" #dialog role="dialog" aria-modal="true" [attr.aria-labelledby]="'modal-title'" tabindex="-1">
+      <div class="dialog" #dialog role="dialog" aria-modal="true" [attr.aria-labelledby]="titleId" tabindex="-1">
         <header class="dialog__head">
-          <h2 id="modal-title" class="dialog__title">{{ title }}</h2>
+          <h2 [id]="titleId" class="dialog__title">{{ title }}</h2>
           <button type="button" class="dialog__close" (click)="closed.emit()" aria-label="Close dialog">Close</button>
         </header>
         <div class="dialog__body"><ng-content /></div>
@@ -33,6 +35,8 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, EventEmi
   `],
 })
 export class ModalComponent implements AfterViewInit, OnDestroy {
+  /** Unique per dialog, so two dialogs (a confirm over a form) never share a title id. */
+  readonly titleId = `modal-title-${++nextModalId}`;
   @Input({ required: true }) title!: string;
   @Output() closed = new EventEmitter<void>();
   @ViewChild('dialog', { static: true }) dialog!: ElementRef<HTMLElement>;

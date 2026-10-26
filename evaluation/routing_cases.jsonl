@@ -1,0 +1,20 @@
+{"text": "Where is my parcel? It has been two weeks.", "expect": "agent"}
+{"text": "Why was I charged twice on my card this month?", "expect": "agent"}
+{"text": "Can you cancel the order I placed yesterday?", "expect": "agent"}
+{"text": "The item I received is broken.", "expect": "agent"}
+{"text": "How do I change the delivery address on an order?", "expect": "agent"}
+{"text": "My subscription renewed and I did not want it to.", "expect": "agent"}
+{"text": "How do I rotate my API keys?", "expect": "agent"}
+{"text": "What is your return policy?", "expect": "agent"}
+{"text": "How long does shipping to Canada take?", "expect": "agent"}
+{"text": "Someone placed an order on my account that I did not make.", "expect": "agent"}
+{"text": "What do I need to do before my billing profile is migrated?", "expect": "docs"}
+{"text": "Will my saved card details move to the new platform?", "expect": "docs"}
+{"text": "Can I undo the migration after it finishes?", "expect": "docs"}
+{"text": "Which roles are allowed to approve the billing migration?", "expect": "docs"}
+{"text": "Do my legacy invoices keep their numbers after migration?", "expect": "docs"}
+{"text": "What happens to my tax exemption certificate when billing moves over?", "expect": "docs"}
+{"text": "Does auto-pay keep running while the migration is in progress?", "expect": "docs"}
+{"text": "What does PLAN-PRO-V2 map to?", "expect": "docs"}
+{"text": "What is the fee for paying with an international credit card?", "expect": "docs"}
+{"text": "How do webhook events change after the billing migration?", "expect": "docs"}

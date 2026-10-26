@@ -1,3 +1,4 @@
+import { ConfirmService } from '../../shared/confirm';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CatalogService, PriceRow } from '../../services/catalog.service';
@@ -53,6 +54,7 @@ import { DATA_STYLES, apiMessage } from './data-shared';
   styles: [DATA_STYLES],
 })
 export class PricesComponent implements OnInit {
+  private readonly confirm = inject(ConfirmService);
   private api = inject(CatalogService);
   private toast = inject(ToastService);
   rows = signal<PriceRow[]>([]);
@@ -80,8 +82,8 @@ export class PricesComponent implements OnInit {
       error: err => this.formError.set(apiMessage(err)),
     });
   }
-  remove(p: PriceRow): void {
-    if (!window.confirm(`Delete the price for ${p.model}? Costs for it will use the default price.`)) return;
+  async remove(p: PriceRow): Promise<void> {
+    if (!(await this.confirm.ask(`Delete the price for ${p.model}? Costs for it will use the default price.`, { danger: true, confirmLabel: 'Delete' }))) return;
     this.api.deletePrice(p.model).subscribe({ next: () => { this.toast.success('Deleted.'); this.load(); }, error: err => this.toast.error(apiMessage(err)) });
   }
 }

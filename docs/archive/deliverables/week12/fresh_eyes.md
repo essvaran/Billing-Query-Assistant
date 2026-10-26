@@ -4,7 +4,7 @@
 system from the README and call the MCP server from a client the author does not own. That has not happened, and nothing
 below may be filled in by the author on the reviewer's behalf.
 
-Give the reviewer only `README.md` and `docs/MCP_CLIENT_GUIDE.md` (for way A, also the URL and the token, sent separately). Do not help them. Write down what they say.
+Give the reviewer only `README.md` (section 8, "MCP servers and outside clients"; for way A, also the URL and the token, sent separately). Do not help them. Write down what they say.
 
 | | |
 |---|---|

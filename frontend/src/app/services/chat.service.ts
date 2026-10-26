@@ -40,6 +40,14 @@ export interface FeedbackPayload {
   comment?: string;
 }
 
+/** Where the chat front desk sends a question (POST /api/chat/route). */
+export interface RouteDecision {
+  route: 'agent' | 'docs';
+  source: 'code' | 'rule' | 'llm' | 'fallback';
+  reason: string;
+  needs_account: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ChatService {
   private readonly apiUrl = '/api/ask';
@@ -48,6 +56,10 @@ export class ChatService {
 
   ask(question: string, useHybrid: boolean = true): Observable<AskResponse> {
     return this.http.post<AskResponse>(this.apiUrl, { question, use_hybrid: useHybrid });
+  }
+
+  route(text: string, customerId?: string): Observable<RouteDecision> {
+    return this.http.post<RouteDecision>('/api/chat/route', { text, customer_id: customerId });
   }
 
   feedbackReasons(): Observable<FeedbackReason[]> {

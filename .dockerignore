@@ -4,10 +4,11 @@ node_modules
 frontend/node_modules
 frontend/dist
 chroma_db
-data/app.db
+data/app.db*
 data/tier1.db*
 .cache
 __pycache__
 *.pyc
 .env
 deliverables
+data/catalog.db*

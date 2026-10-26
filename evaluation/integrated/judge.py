@@ -51,8 +51,12 @@ def parse_verdict(text: str) -> tuple[str, str]:
     return m.group(1).upper(), (reason.group(1).strip() if reason else "")[:300]
 
 
-WEEK6_VERSION = "week6-v2r"   # v2 criteria verbatim; answer format "verdict + one reason" (see WEEK6_FORMAT)
-# The Week 6 rubric is the catalog prompt judge.week6_v2.
+# The Week 6 rubrics are the catalog prompts judge.week6_v1 and judge.week6_v2. v1 is the primary judge (setting
+# eval.judge_primary_prompt) because it is the one that cleared 85% against the Week 6 labels (24/25; v2 20/25).
+# Version ids: criteria verbatim, answer format "verdict + one reason" (see WEEK6_FORMAT), hence the "r".
+WEEK6_PROMPTS = ("judge.week6_v1", "judge.week6_v2")
+WEEK6_VERSIONS = {"judge.week6_v1": "week6-v1r", "judge.week6_v2": "week6-v2r"}
+WEEK6_VERSION = WEEK6_VERSIONS["judge.week6_v2"]   # kept for rows written before v1 became primary
 # Week 6 asked for exactly one word. On qwen that format said NOT_GOOD to every reply in the first 9 integrated cases,
 # including a reply it called GOOD, with the right reason, as soon as it was allowed one sentence (seam 55). The
 # criteria are unchanged; only the last line, the answer format, is replaced.
@@ -94,30 +98,45 @@ def build_week6_prompt(case: dict, resp: dict) -> str:
             f"Assistant response:\n{resp['reply']}")
 
 
-def week6_system_prompt() -> str:
+def primary_week6_prompt() -> str:
+    """The Week 6 rubric reported as the primary judge (Admin, Settings, Evaluation)."""
+    from src.catalog import settings
+    name = settings.get("eval.judge_primary_prompt")
+    if name not in WEEK6_PROMPTS:
+        raise ValueError(f"eval.judge_primary_prompt must be one of {WEEK6_PROMPTS}, not {name!r}")
+    return name
+
+
+def secondary_week6_prompt() -> str:
+    return next(p for p in WEEK6_PROMPTS if p != primary_week6_prompt())
+
+
+def week6_system_prompt(prompt_name: str = "judge.week6_v2") -> str:
     from src.catalog import prompts
-    text = prompts.body("judge.week6_v2").strip()
-    assert WEEK6_ONE_WORD_LINE in text, "prompt judge.week6_v2 must keep its answer-format line (a required phrase)"
+    text = prompts.body(prompt_name).strip()
+    assert WEEK6_ONE_WORD_LINE in text, f"prompt {prompt_name} must keep its answer-format line (a required phrase)"
     return text.replace(WEEK6_ONE_WORD_LINE, WEEK6_FORMAT)
 
 
-def judge_reply_week6(case: dict, resp: dict) -> dict:
-    """The Week 6 validated rubric (judge_v2.txt), re-checked on integrated outputs.
+def judge_reply_week6(case: dict, resp: dict, prompt_name: str | None = None) -> dict:
+    """A Week 6 rubric (v1 or v2), re-checked on integrated outputs. Defaults to the primary rubric.
 
     The Week 6 judge model is no longer available on this key, so the rubric runs on the judge model setting (a different family
     from the agent). Its Week 6 agreement does not carry over: it is re-measured against labels of integrated replies.
     """
+    prompt_name = prompt_name or primary_week6_prompt()
+    version = WEEK6_VERSIONS[prompt_name]
     try:
         data = gateway.chat(
-            [{"role": "system", "content": week6_system_prompt()},
+            [{"role": "system", "content": week6_system_prompt(prompt_name)},
              {"role": "user", "content": build_week6_prompt(case, resp)}],
             model=judge_model(), temperature=0.0)
     except gateway.GatewayError as exc:
-        return {"verdict": "ERROR", "reason": str(exc)[:200], "model": judge_model(), "version": WEEK6_VERSION,
+        return {"verdict": "ERROR", "reason": str(exc)[:200], "model": judge_model(), "version": version,
                 "cache": None, "tokens": 0}
     verdict, reason = parse_verdict(data["choices"][0]["message"].get("content") or "")
     return {"verdict": verdict, "reason": reason, "model": judge_model(),
-            "version": WEEK6_VERSION, "cache": (data.get("gateway") or {}).get("cache"),
+            "version": version, "cache": (data.get("gateway") or {}).get("cache"),
             "tokens": (data.get("usage") or {}).get("total_tokens", 0)}
 
 

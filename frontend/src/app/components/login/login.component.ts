@@ -2,6 +2,7 @@ import { Component, OnInit, NgZone } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { safeReturnUrl } from '../../interceptors/auth.interceptor';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 
@@ -15,6 +16,45 @@ declare const google: {
 };
 
 const GSI_LOAD_TIMEOUT_MS = 10_000;
+// The same rules the API applies (api/auth.py), so a form that passes here is not rejected there.
+const EMAIL_PATTERN = /^[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}$/;
+const PASSWORD_MIN = 8;
+const PASSWORD_MAX_BYTES = 72;   // bcrypt's limit; an accented or non-Latin character takes 2 to 4 bytes
+const NAME_MAX = 120;
+const EMAIL_MAX = 254;
+
+type Field = 'fullName' | 'email' | 'password';
+export type FieldErrors = Partial<Record<Field, string>>;
+
+/** Field-level checks for the sign-in and sign-up form; an empty object means the form can be sent. */
+export function validateLogin(mode: 'signin' | 'signup', fullName: string, email: string, password: string): FieldErrors {
+  const errors: FieldErrors = {};
+  if (mode === 'signup') {
+    const name = fullName.trim();
+    if (!name) errors.fullName = 'Enter your full name.';
+    else if (name.length > NAME_MAX) errors.fullName = `Use at most ${NAME_MAX} characters.`;
+  }
+  const mail = email.trim();
+  if (!mail) errors.email = 'Enter your email address.';
+  else if (mail.length > EMAIL_MAX || !EMAIL_PATTERN.test(mail)) errors.email = 'Enter a valid email address, like name@example.com.';
+  if (!password) errors.password = 'Enter your password.';
+  else if (mode === 'signup' && password.length < PASSWORD_MIN) errors.password = `Use at least ${PASSWORD_MIN} characters.`;
+  else if (mode === 'signup' && new TextEncoder().encode(password).length > PASSWORD_MAX_BYTES) {
+    errors.password = 'This password is too long. Use a shorter one (accented and non-Latin characters count double or more).';
+  }
+  return errors;
+}
+
+/** Google's sign-in script is needed only on this page, so it loads here instead of on every page. */
+function loadGoogleScript(): void {
+  if (document.querySelector('script[data-gsi]')) return;
+  const script = document.createElement('script');
+  script.src = 'https://accounts.google.com/gsi/client';
+  script.async = true;
+  script.defer = true;
+  script.dataset['gsi'] = 'true';
+  document.head.appendChild(script);
+}
 
 @Component({
   selector: 'app-login',
@@ -30,7 +70,10 @@ const GSI_LOAD_TIMEOUT_MS = 10_000;
         </div>
 
         @if (sessionExpired) {
-          <div class="login-notice">Your session expired — please sign in again.</div>
+          <div class="login-notice" role="status">Your session expired. Please sign in again.</div>
+        }
+        @if (accountDisabled) {
+          <div class="login-notice" role="alert">This account has been disabled. Contact support if you think this is a mistake.</div>
         }
 
         @if (passwordAuth) {
@@ -41,20 +84,32 @@ const GSI_LOAD_TIMEOUT_MS = 10_000;
                     (click)="setMode('signup')">Create account</button>
           </div>
 
-          <form class="login-form" (ngSubmit)="submit()" #f="ngForm" novalidate>
+          <form class="login-form" (ngSubmit)="submit()" novalidate>
             @if (mode === 'signup') {
               <label class="t1-label" for="full_name">Full name</label>
-              <input id="full_name" class="t1-input" name="full_name" [(ngModel)]="fullName" required
-                     autocomplete="name" maxlength="120" />
+              <input id="full_name" class="t1-input" name="full_name" [(ngModel)]="fullName" (ngModelChange)="edited()"
+                     (blur)="touch('fullName')" autocomplete="name" required
+                     [class.invalid]="show('fullName')" [attr.aria-invalid]="show('fullName')"
+                     [attr.aria-describedby]="show('fullName') ? 'full_name-error' : null" />
+              @if (show('fullName')) { <span id="full_name-error" class="field-error">{{ errors().fullName }}</span> }
             }
             <label class="t1-label" for="email">Email</label>
-            <input id="email" class="t1-input" type="email" name="email" [(ngModel)]="email" required
-                   autocomplete="email" maxlength="254" />
+            <input id="email" class="t1-input" type="email" name="email" [(ngModel)]="email" (ngModelChange)="edited()"
+                   (blur)="touch('email')" autocomplete="email" required
+                   [class.invalid]="show('email')" [attr.aria-invalid]="show('email')"
+                   [attr.aria-describedby]="show('email') ? 'email-error' : null" />
+            @if (show('email')) { <span id="email-error" class="field-error">{{ errors().email }}</span> }
             <label class="t1-label" for="password">Password</label>
-            <input id="password" class="t1-input" type="password" name="password" [(ngModel)]="password" required
+            <input id="password" class="t1-input" type="password" name="password" [(ngModel)]="password" (ngModelChange)="edited()"
+                   (blur)="touch('password')" required
                    [attr.autocomplete]="mode === 'signin' ? 'current-password' : 'new-password'"
-                   [minlength]="mode === 'signup' ? 8 : 1" maxlength="72" />
-            @if (mode === 'signup') { <span class="hint">At least 8 characters.</span> }
+                   [class.invalid]="show('password')" [attr.aria-invalid]="show('password')"
+                   [attr.aria-describedby]="show('password') ? 'password-error' : (mode === 'signup' ? 'password-hint' : null)" />
+            @if (show('password')) {
+              <span id="password-error" class="field-error">{{ errors().password }}</span>
+            } @else if (mode === 'signup') {
+              <span id="password-hint" class="hint">At least 8 characters.</span>
+            }
             <button class="t1-btn t1-btn--primary submit" type="submit" [disabled]="busy">
               @if (busy) { <span class="spinner"></span> }
               {{ mode === 'signin' ? 'Sign in' : 'Create account' }}
@@ -98,6 +153,8 @@ const GSI_LOAD_TIMEOUT_MS = 10_000;
     .mode-tabs button.active { background: var(--accent); color: var(--surface-card); font-weight: 600; }
     .login-form { display: flex; flex-direction: column; gap: .35rem; }
     .login-form .t1-input { width: 100%; box-sizing: border-box; margin-bottom: .45rem; }
+    .login-form .t1-input.invalid { border-color: var(--danger); }
+    .field-error { font-size: .75rem; color: var(--danger); margin-top: -.2rem; margin-bottom: .3rem; }
     .hint { font-size: .75rem; color: var(--text-muted); margin-top: -.2rem; margin-bottom: .3rem; }
     .submit { margin-top: .4rem; justify-content: center; display: inline-flex; gap: .5rem; align-items: center; }
     .or { display: flex; align-items: center; gap: .75rem; color: var(--text-muted); font-size: .75rem; }
@@ -122,6 +179,8 @@ export class LoginComponent implements OnInit {
   password = '';
   fullName = '';
   busy = false;
+  submitted = false;
+  touched: Partial<Record<Field, boolean>> = {};
 
   passwordAuth = true;
   googleClientId = '';
@@ -129,6 +188,13 @@ export class LoginComponent implements OnInit {
   gsiError: string | null = null;
   loginError: string | null = null;
   sessionExpired = false;
+  accountDisabled = false;
+
+  /** After signing in, go back to the page the person was on (same-app paths only). */
+  private _afterSignIn(): void {
+    const target = safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
+    this.router.navigateByUrl(target ?? '/');
+  }
 
   constructor(
     private auth: AuthService,
@@ -142,7 +208,9 @@ export class LoginComponent implements OnInit {
       this.router.navigate(['/']);
       return;
     }
-    this.sessionExpired = this.route.snapshot.queryParamMap.get('reason') === 'session_expired';
+    const reason = this.route.snapshot.queryParamMap.get('reason');
+    this.sessionExpired = reason === 'session_expired';
+    this.accountDisabled = reason === 'disabled';
     // The server says which sign-in methods are on; if it cannot be reached, fall back to the build-time client id.
     this.auth.authConfig().subscribe({
       next: cfg => {
@@ -156,25 +224,43 @@ export class LoginComponent implements OnInit {
   setMode(mode: 'signin' | 'signup'): void {
     this.mode = mode;
     this.loginError = null;
+    this.submitted = false;
+    this.touched = {};
+  }
+
+  errors(): FieldErrors {
+    return validateLogin(this.mode, this.fullName, this.email, this.password);
+  }
+
+  /** A field shows its error once the user has left it or tried to submit, not while they are still typing it. */
+  show(field: Field): boolean {
+    return (this.submitted || !!this.touched[field]) && !!this.errors()[field];
+  }
+
+  touch(field: Field): void {
+    this.touched[field] = true;
+  }
+
+  edited(): void {
+    this.loginError = null;   // a server error refers to what was sent, not to what is being typed now
   }
 
   submit(): void {
     this.loginError = null;
+    this.submitted = true;
+    const invalid = (['fullName', 'email', 'password'] as Field[]).find(f => this.errors()[f]);
+    if (invalid) {
+      const id = { fullName: 'full_name', email: 'email', password: 'password' }[invalid];
+      document.getElementById(id)?.focus();
+      return;
+    }
     const email = this.email.trim();
-    if (!email || !this.password || (this.mode === 'signup' && !this.fullName.trim())) {
-      this.loginError = 'Fill in every field.';
-      return;
-    }
-    if (this.mode === 'signup' && this.password.length < 8) {
-      this.loginError = 'Use a password of at least 8 characters.';
-      return;
-    }
     this.busy = true;
     const request = this.mode === 'signin'
       ? this.auth.loginWithPassword(email, this.password)
       : this.auth.register(email, this.password, this.fullName.trim());
     request.subscribe({
-      next: () => { this.busy = false; this.router.navigate(['/']); },
+      next: () => { this.busy = false; this._afterSignIn(); },
       error: err => {
         this.busy = false;
         this.loginError = this._message(err);
@@ -193,6 +279,7 @@ export class LoginComponent implements OnInit {
   private _enableGoogle(clientId: string): void {
     this.googleClientId = clientId;
     if (!clientId) return;
+    loadGoogleScript();
     const deadline = Date.now() + GSI_LOAD_TIMEOUT_MS;
     const tryInit = () => {
       if (typeof google !== 'undefined') {
@@ -235,7 +322,7 @@ export class LoginComponent implements OnInit {
   private _handleCredential(credential: string): void {
     this.loginError = null;
     this.auth.loginWithGoogle(credential).subscribe({
-      next: () => this.router.navigate(['/']),
+      next: () => this._afterSignIn(),
       error: err => { this.loginError = this._message(err); },
     });
   }

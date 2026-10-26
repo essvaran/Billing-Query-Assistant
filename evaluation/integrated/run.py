@@ -19,6 +19,7 @@ integrated_failure_mode; which failed check maps to which mode is fixed in MODE_
 Long runs and the free tier's daily token cap:
     python -m tier1 eval --tag fix1 --resume     continue a run the cap stopped (finished cases are kept)
     python -m tier1 eval --rescore fix1          recompute summary, judge agreement and report, no model calls
+    python -m tier1 eval --rejudge fix1          re-run the Week 6 judges on the saved replies, then rescore (no agent calls)
     python -m tier1 eval --cases regression      only the cases created from reported failures (REG..)
 """
 import argparse
@@ -139,11 +140,11 @@ def run_cases(cases: list[dict], judge: bool, done: list[dict] | None = None) ->
             "entitlement": resp["entitlement"], "order_facts": resp.get("order_facts"),
             "subject": case["subject"], "body": case["body"],
             "sources": [{**s, "text": (s.get("text") or "")[:400]} for s in resp["sources"]],
-            "judge": None, "judge_alt": None,
+            "judge": None, "judge_week6_alt": None, "judge_alt": None,
         }
         if judge and resp["decision"] == "ANSWER" and resp["reply"]:
-            from evaluation.integrated.judge import judge_reply, judge_reply_week6
-            row["judge"] = judge_reply_week6(case, resp)     # primary: the Week 6 validated rubric
+            from evaluation.integrated.judge import judge_reply
+            row.update(week6_judges(case, resp))
             row["judge_alt"] = judge_reply(case, resp)       # second opinion: the integrated rubric
         status = "PASS" if row["passed"] else "FAIL"
         print(f"[{i:2}/{len(cases)}] {status} {case['case_id']:<6} {case['slice']:<14} {resp['decision']:<8} "
@@ -152,6 +153,41 @@ def run_cases(cases: list[dict], judge: bool, done: list[dict] | None = None) ->
               + ("" if row["passed"] else "  <- " + ", ".join(c.name for c in bad)), flush=True)
         rows.append(row)
     return sorted(rows, key=lambda r: order.get(r["case_id"], 0))
+
+
+def week6_judges(case: dict, resp: dict) -> dict:
+    """Both Week 6 rubrics: 'judge' is the primary (setting eval.judge_primary_prompt, v1 by default), 'judge_week6_alt' the other.
+
+    """
+    from evaluation.integrated.judge import judge_reply_week6, primary_week6_prompt, secondary_week6_prompt
+    return {"judge": judge_reply_week6(case, resp, primary_week6_prompt()),
+            "judge_week6_alt": judge_reply_week6(case, resp, secondary_week6_prompt())}
+
+
+def rejudge(tag: str) -> int:
+    """Re-run the Week 6 judges on a saved run's answered replies, then rescore. The agent is not called.
+
+    Stored rows keep everything the Week 6 prompt reads (ticket, reply, sources cut to 400 characters, which is the
+    Week 6 prompt's own cut, entitlement and order facts), so the judges see the same input as in the original run.
+    The integrated rubric ('judge_alt') reads 900 characters of each source, more than a row keeps, so it is not re-run.
+    Replies are unchanged, so human labels (stored with a hash of the reply) still match.
+    """
+    saved = eval_store.run(tag)
+    rows = eval_store.results(tag) if saved else []
+    if not rows:
+        print(f"no results for tag {tag}", file=sys.stderr)
+        return 2
+    every = {c["case_id"]: c for suite in eval_store.TIER1_SUITES for c in eval_store.cases(suite, include_inactive=True)}
+    answered = [r for r in rows if r["decision"] == "ANSWER" and r["reply"]]
+    print(f"rejudging {tag}: {len(answered)} answered replies, Week 6 rubrics only", flush=True)
+    for i, r in enumerate(answered, 1):
+        case = every.get(r["case_id"]) or {"subject": r["subject"], "body": r["body"]}
+        r.update(week6_judges(case, r))
+        print(f"[{i:2}/{len(answered)}] {r['case_id']:<6} judge={r['judge']['verdict']} ({r['judge']['version']})"
+              f"  week6_alt={r['judge_week6_alt']['verdict']} ({r['judge_week6_alt']['version']})", flush=True)
+    eval_store.save_run(tag, saved["suite"], "complete", saved["summary"] or {}, saved["settings"], rows)
+    (OUT_DIR / f"results_{tag}.jsonl").write_text("\n".join(json.dumps(r) for r in rows) + "\n", encoding="utf-8")
+    return rescore(tag)
 
 
 # --- metrics ------------------------------------------------------------------------------------
@@ -299,8 +335,9 @@ def summarise(cases: list[dict], rows: list[dict], tag: str, ablate: str) -> dic
     }
 
     s["judge"] = judge_summary(rows, "judge")
-    if any(r.get("judge_alt") for r in rows):
-        s["judge_alt"] = judge_summary(rows, "judge_alt")
+    for key in ("judge_week6_alt", "judge_alt"):
+        if any(r.get(key) for r in rows):
+            s[key] = judge_summary(rows, key)
     return s
 
 
@@ -345,23 +382,30 @@ def render_report(s: dict, rows: list[dict]) -> str:
     if not s["failure_modes"]:
         L.append("| (none) | 0 | 0% | | | |")
 
-    L += ["", "## Trajectory (tool choice) and the outcome-vs-trajectory gap", "",
-          f"- Cases with an expected tool path: n = {tj['n']}",
+    L += ["", "## Trajectory (tool choice) and the outcome-vs-trajectory gap", ""]
+    mc = tj.get("model_choice")
+    # Headline the model's own choices: prefetched calls are right by construction and would flatter the figure.
+    if mc:
+        L += ["### Headline: choices the model made itself (prefetched calls excluded)", "",
+              f"- Cases that reached the model: n = {mc['n']}; of them, prefetched by code: {mc['prefetched_cases']}",
+              f"- Model tool-choice accuracy: **{pct(round(mc['accuracy'] * mc['n']), mc['n'])}**; outcome accuracy on the same cases: "
+              f"**{pct(round(mc['outcome_accuracy'] * mc['n']), mc['n'])}**; gap **{mc['gap_points']} points**",
+              f"- Right answer by the wrong path: {mc['right_answer_wrong_path']}; right path, wrong answer: {mc['right_path_wrong_answer']};"
+              f" mean tool calls the model made: {mc['mean_model_calls']}", "",
+              "### Combined, including calls prefetched by code (right by construction when prefetch is on)", ""]
+    L += [f"- Cases with an expected tool path: n = {tj['n']}",
           f"- Tool-choice accuracy: **{pct(round(tj['tool_choice_accuracy'] * tj['n']), tj['n'])}**; outcome accuracy: **{pct(round(tj['outcome_accuracy'] * tj['n']), tj['n'])}**",
           f"- Gap (outcome minus trajectory): **{tj['gap_points']} points**",
           f"- Right answer by the wrong path (lucky): {tj['right_answer_wrong_path']}; right path, wrong answer: {tj['right_path_wrong_answer']};"
           f" both right: {tj['both_right']}; both wrong: {tj['both_wrong']}",
           f"- Search calls beyond the cap of 2 that the agent tried anyway: {tj['wasted_search_calls']}"]
-    mc = tj.get("model_choice")
-    if mc:
-        L += ["", "### Choices the model made itself (prefetched calls excluded)", "",
-              f"- Cases that reached the model: n = {mc['n']}; of them, prefetched by code: {mc['prefetched_cases']}",
-              f"- Model tool-choice accuracy: **{pct(round(mc['accuracy'] * mc['n']), mc['n'])}**; outcome accuracy on the same cases: "
-              f"**{pct(round(mc['outcome_accuracy'] * mc['n']), mc['n'])}**; gap **{mc['gap_points']} points**",
-              f"- Right answer by the wrong path: {mc['right_answer_wrong_path']}; right path, wrong answer: {mc['right_path_wrong_answer']};"
-              f" mean tool calls the model made: {mc['mean_model_calls']}",
-              "- When code prefetches the entitlement check and first search, the combined tool-choice figure above is right by"
-              " construction; this one is the honest measure of the model."]
+    off = (eval_store.run("traj_off") or {}).get("summary") or {}
+    if off and s["tag"] != "traj_off" and "prefetch" not in (s.get("ablate") or ""):
+        om = off["trajectory"]["model_choice"]
+        L += ["", f"With prefetch OFF the model makes every call itself (run `traj_off`, `report_traj_off.md`): n = {om['n']},"
+                  f" model tool-choice accuracy **{pct(round(om['accuracy'] * om['n']), om['n'])}**, outcome accuracy"
+                  f" **{pct(round(om['outcome_accuracy'] * om['n']), om['n'])}**, gap **{om['gap_points']} points**,"
+                  f" {om['mean_model_calls']} tool calls per ticket."]
     L += ["",
           "## Cost and latency", "",
           f"- Total cost for the run: ${cl['total_cost_usd']}  |  mean per ticket: ${cl['mean_cost_per_ticket_usd']}",
@@ -377,11 +421,18 @@ def render_report(s: dict, rows: list[dict]) -> str:
     if cache.get("hits"):
         L.append(f"- **Latency caveat:** {cache['hits']} of {calls} model calls in this run were served from the response cache, "
                  "so the latency figures above are NOT representative (cost uses the original token counts and is unaffected). "
-                 "Use an uncached run for latency.")
+                 "Use an uncached run for latency"
+                 + (f": `report_latency10.md` (cache off) gives p50 {_uncached_latency()}." if _uncached_latency() else "."))
+    rerun = _uncached_rerun(s["tag"], rows)
+    if rerun:
+        L.append(f"- **Run-to-run variance:** the uncached rerun `latency10` of the same {rerun['n']} cases ({rerun['ids']}) passed "
+                 f"**{rerun['rerun']} of {rerun['n']}**, against {rerun['here']} of {rerun['n']} in this run (flipped: {rerun['flipped'] or 'none'})."
+                 " Variance is not measured, so read every pass rate in this report as one draw.")
     L.append("")
 
     L += ["## Judge", ""]
-    for title, j in (("Primary", jg), ("Second opinion", s.get("judge_alt"))):
+    for title, j in (("Primary", jg), ("Second opinion, the other Week 6 rubric", s.get("judge_week6_alt")),
+                     ("Second opinion, the integrated rubric", s.get("judge_alt"))):
         if not j:
             continue
         ag = j["agreement"]
@@ -396,9 +447,11 @@ def render_report(s: dict, rows: list[dict]) -> str:
                   " admin page /label; then `python -m tier1 eval --rescore <tag>`. Until then no agreement number may be quoted."]
     if str(jg.get("version", "")).startswith("week6"):
         from evaluation.integrated.judge import week6_human_agreement
-        L += [f"- The primary rubric is the Week 6 v2 judge (catalog prompt judge.week6_v2; Week 6 agreement with people: {week6_human_agreement()}"
-              " on Week 6 replies). That number does not carry over: the Week 6 model is no longer available on this key, and"
-              " integrated replies also rest on account facts, which are added as one context block."]
+        prompt = "judge.week6_v1" if jg["version"] == "week6-v1r" else "judge.week6_v2"
+        L += [f"- The primary rubric is catalog prompt {prompt}, chosen because it is the Week 6 rubric that cleared the target"
+              f" against people (Week 6 agreement: {week6_human_agreement()} on Week 6 replies). That number does not carry over:"
+              " the Week 6 model is no longer available on this key, and integrated replies also rest on account facts, which are"
+              " added as one context block. Only the agreement measured above, on integrated replies, may be quoted."]
     L.append("")
     L += ["", "## Assertion pass rates", "", "| Check | Passed | n |", "|---|---|---|"]
     for name, v in s["by_check"].items():
@@ -414,6 +467,27 @@ def render_report(s: dict, rows: list[dict]) -> str:
 
     L += ["", "## What this suite does NOT cover", ""] + [f"- {t}" for t in not_covered()]
     return "\n".join(L) + "\n"
+
+
+def _uncached_latency() -> str | None:
+    """p50/p95 from the run made with the response cache off (tag latency10), if it exists and really was uncached."""
+    saved = eval_store.run("latency10")
+    s = (saved or {}).get("summary") or {}
+    if not s or (s.get("llm_cache") or {}).get("hits"):
+        return None
+    return f"{s['cost_latency']['p50_latency_s']} s, p95 {s['cost_latency']['p95_latency_s']} s"
+
+
+def _uncached_rerun(tag: str, rows: list[dict]) -> dict | None:
+    """The same cases in the uncached run latency10 against this run: one look at run-to-run variance."""
+    if tag == "latency10" or not eval_store.run("latency10"):
+        return None
+    again = {r["case_id"]: r["passed"] for r in eval_store.results("latency10")}
+    here = {r["case_id"]: r["passed"] for r in rows if r["case_id"] in again}
+    if len(here) < len(again) or not here:
+        return None
+    return {"n": len(here), "ids": f"{min(here)} to {max(here)}", "rerun": sum(again.values()), "here": sum(here.values()),
+            "flipped": ", ".join(c for c in sorted(here) if here[c] != again[c])}
 
 
 def write_label_sheet(rows: list[dict]) -> None:
@@ -439,6 +513,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--case-id", action="append", help="run only this case id (repeatable)")
     ap.add_argument("--resume", action="store_true", help="continue the run with this tag that a usage cap stopped")
     ap.add_argument("--rescore", metavar="TAG", help="recompute summary, agreement and report from saved results; no model calls")
+    ap.add_argument("--rejudge", metavar="TAG", help="re-run the Week 6 judges on a saved run's replies, then rescore; no agent calls")
     ap.add_argument("--limit", type=int)
     ap.add_argument("--no-judge", action="store_true")
     ap.add_argument("--ablate", default="", help="comma list: version_filter,policy_guard (before/after runs)")
@@ -447,6 +522,8 @@ def main(argv: list[str] | None = None) -> int:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     if args.rescore:
         return rescore(args.rescore)
+    if args.rejudge:
+        return rejudge(args.rejudge)
     if args.ablate:
         os.environ["TIER1_ABLATE"] = args.ablate          # inherited by the MCP server processes
     cases = load_cases(args.only, args.limit, args.cases, args.case_id)

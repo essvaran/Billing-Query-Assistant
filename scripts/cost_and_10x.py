@@ -39,7 +39,10 @@ def fmt(n: float, digits: int = 0) -> str:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tag", default="fix1" if eval_store.run("fix1") else "after")
-    tag = ap.parse_args(argv).tag
+    ap.add_argument("--latency-tag", default="latency10" if eval_store.run("latency10") else None,
+                    help="take p50/p95 latency from this run instead (one made with LLM_CACHE=off)")
+    args = ap.parse_args(argv)
+    tag = args.tag
     rows = eval_store.results(tag)
     summary = eval_store.run(tag)["summary"]
     cl = summary["cost_latency"]
@@ -50,7 +53,14 @@ def main(argv: list[str] | None = None) -> int:
     if calls and cache.get("hits"):
         latency_note += (f"; {cache['hits']} of {calls} model calls were served from the response cache, which flatters the median. "
                          "Uncached tickets that arrive back to back wait about a minute for the per-minute limit")
-    if calls and cache.get("hits", 0) / calls > 0.25:
+    lat_run = eval_store.run(args.latency_tag) if args.latency_tag else None
+    lat_cache = ((lat_run or {}).get("summary") or {}).get("llm_cache") or {}
+    if lat_run and not lat_cache.get("hits"):
+        lc = lat_run["summary"]["cost_latency"]
+        cl = {**cl, "p50_latency_s": lc["p50_latency_s"], "p95_latency_s": lc["p95_latency_s"]}
+        latency_note = (f"the `{args.latency_tag}` run: {lc['llm_tickets']} model tickets back to back with the response cache off"
+                        f" ({lat_cache.get('misses', 0)} model calls, none cached), first ticket excluded")
+    elif calls and cache.get("hits", 0) / calls > 0.25:
         uncached = eval_store.run("after_run1_judge_without_order_facts")["summary"]["cost_latency"]
         cl = {**cl, "p50_latency_s": uncached["p50_latency_s"], "p95_latency_s": uncached["p95_latency_s"]}
         latency_note = "the uncached first run (the chosen run was mostly served from the response cache)"

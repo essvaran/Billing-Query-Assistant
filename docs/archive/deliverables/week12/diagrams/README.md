@@ -17,24 +17,37 @@ Notes: `tickets` carries the eval ground truth (`kind`, `expected_*`, `gold_slug
 
 ```mermaid
 flowchart TD
-  UI["Angular workspace<br/>queue, review, insights"] --> API["FastAPI router<br/>thin, no logic"]
+  UI["Angular workspace<br/>queue, review, label, data"] --> API["FastAPI routers<br/>auth, rate limit, job polling"]
   CLI["CLI and eval suite<br/>python -m tier1"] --> SVC
   API --> SVC
+  PRE_FLIGHT["Preflight<br/>tier1 up and /api/ready"]
 
   subgraph SVC["Single entry point: handle_ticket()"]
     direction LR
-    PRE["Pre-guard<br/>no model call"] --> AGENT["Agent loop<br/>budgeted, 3 tools"] --> POST["Post-guard<br/>citations, windows"]
+    PRE["Pre-guard<br/>no model call, $0"] --> FETCH["Prefetch<br/>entitlement, search"] --> AGENT["Agent loop<br/>6 laps, 14k tokens"] --> POST["Post-guard<br/>citations, windows"]
+    POST --> OUT["ANSWER only if every check passes,<br/>else ESCALATE with a handoff row"]
   end
 
-  AGENT --> GW["LLM gateway<br/>cache, token limiter"]
-  AGENT --> TOOLS["MCP: tier1-tools<br/>order, plan, handoff"]
-  AGENT --> HELP["MCP: help-centre<br/>hybrid search"]
+  CAT[("Catalog data/catalog.db<br/>versioned prompts, guard rules,<br/>settings, prices, eval cases, labels")] --> SVC
 
-  GW --> GROQ["Groq model API<br/>free tier"]
-  TOOLS --> DB[("SQLite tier1.db<br/>orders, spans, queue")]
-  HELP --> IDX[("Vector index<br/>Chroma plus BM25")]
+  AGENT --> GW["LLM gateway<br/>cache, token limiter, retries"]
+  AGENT -- "MCP over stdio, allow-listed" --> TOOLS["MCP: tier1-tools<br/>order, entitlement, escalate"]
+  AGENT -- "MCP over stdio, allow-listed" --> HELP["MCP: help-centre<br/>hybrid search, version filter"]
+  EXT["Outside MCP clients<br/>search only"] --> HELP
 
-  TRACE["Tracing and PII redaction on every hop"]:::cross
+  GW --> GROQ["Groq model API<br/>agent gpt-oss, judge qwen"]
+  TOOLS --> DB[("SQLite tier1.db<br/>tickets, handoffs, jobs, spans")]
+  HELP --> IDX[("Vector index<br/>Chroma plus BM25, RRF")]
+  ING["Corpus ingest<br/>synthetic, chunked"] --> IDX
+
+  subgraph LOOP["People in the loop and the closed failure-to-test loop"]
+    direction LR
+    REV["Review drafts<br/>approve, edit, reject"]
+    ESC["Escalation queue<br/>work handoff rows"]
+    FB["Feedback report<br/>answer marked wrong"] --> CASE["Regression case<br/>saved to the catalog"] --> EVAL["Next eval run<br/>judge, human labels"]
+  end
+
+  TRACE["Tracing and PII redaction on every hop<br/>one trace_id across API, agent and both MCP servers; spans in tier1.db; Langfuse; alert emails<br/>redact() at every sink; names and emails masked on lists"]:::cross
   SVC -.-> TRACE
   TOOLS -.-> TRACE
   HELP -.-> TRACE

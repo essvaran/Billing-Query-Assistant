@@ -78,6 +78,11 @@ class RateLimited(GatewayError):
         self.detail = detail
 
 
+class CircuitOpen(GatewayError):
+    """Several calls in a row failed after all their retries, so calls fail fast for a short while instead of
+    each one tying up a request thread through a full round of retries against a provider that is down."""
+
+
 class ToolUseFailed(GatewayError):
     """The provider rejected the model's tool call (it named a tool that does not exist)."""
 
@@ -87,7 +92,10 @@ class ToolUseFailed(GatewayError):
 
 
 _lock = threading.Lock()
-_window: deque[tuple[float, int]] = deque()  # (monotonic time, tokens) in the last 60 s
+_window: deque[list] = deque()  # [monotonic time, tokens] in the last 60 s; lists so a request can settle its own entry
+CIRCUIT_FAILURES = 5     # consecutive calls that failed after every retry
+CIRCUIT_OPEN_S = 60.0    # how long calls then fail fast
+_circuit = {"failures": 0, "open_until": 0.0}
 stats = {"hits": 0, "misses": 0, "calls": 0, "waited_s": 0.0, "retries": 0}
 
 
@@ -125,8 +133,8 @@ def estimate_tokens(payload: dict) -> int:
     return len(json.dumps(payload.get("messages", []))) // 4 + len(json.dumps(payload.get("tools", []))) // 4 + 400
 
 
-def _acquire(estimated: int) -> float:
-    """Block until the tokens-per-minute window has room. Returns seconds waited."""
+def _acquire_entry(estimated: int) -> tuple[float, list]:
+    """Block until the tokens-per-minute window has room. Returns (seconds waited, this request's window entry)."""
     estimated = min(estimated, tpm_limit())  # one oversized request must not wait forever
     waited = 0.0
     while True:
@@ -136,21 +144,41 @@ def _acquire(estimated: int) -> float:
                 _window.popleft()
             used = sum(t for _, t in _window)
             if used + estimated <= tpm_limit() or not _window:
-                _window.append((now, estimated))
-                return waited
+                entry = [now, estimated]
+                _window.append(entry)
+                return waited, entry
             wait = _window[0][0] + 60 - now + 0.25
         _sleep(wait)
         waited += wait
 
 
-def _settle(estimated: int, actual: int) -> None:
-    """Replace this request's estimate with the real token count."""
+def _acquire(estimated: int) -> float:
+    """Block until the tokens-per-minute window has room. Returns seconds waited."""
+    return _acquire_entry(estimated)[0]
+
+
+def _settle(entry: list, actual: int) -> None:
+    """Replace this request's estimate with the real token count (its own entry, not one that merely has the
+    same estimate)."""
     with _lock:
-        for i in range(len(_window) - 1, -1, -1):
-            ts, tokens = _window[i]
-            if tokens == min(estimated, tpm_limit()):
-                _window[i] = (ts, actual)
-                return
+        entry[1] = actual
+
+
+def _circuit_check() -> None:
+    with _lock:
+        if _now() < _circuit["open_until"]:
+            raise CircuitOpen(f"model provider failing; calls paused for {_circuit['open_until'] - _now():.0f}s")
+
+
+def _circuit_result(ok: bool) -> None:
+    with _lock:
+        if ok:
+            _circuit["failures"] = 0
+            return
+        _circuit["failures"] += 1
+        if _circuit["failures"] >= CIRCUIT_FAILURES:
+            _circuit["open_until"] = _now() + CIRCUIT_OPEN_S
+            _circuit["failures"] = 0
 
 
 def _backoff(attempt: int, retry_after: str | None) -> float:
@@ -163,18 +191,19 @@ def _backoff(attempt: int, retry_after: str | None) -> float:
 
 
 def chat(messages: list[dict], tools: list[dict] | None = None, model: str | None = None,
-         temperature: float = 0.0, timeout: float = 60.0) -> dict:
+         temperature: float = 0.0, timeout: float = 60.0, cache: bool = True) -> dict:
     """Chat completion. Returns the provider's response dict plus a `gateway` entry
     ({"cache": "hit"|"miss"|"off", "waited_s": float, "attempts": int}).
 
-    Raises CacheMiss (replay mode), ToolUseFailed, or GatewayError.
+    cache=False skips the response cache for this call (a replay that must reach the model).
+    Raises CacheMiss (replay mode), ToolUseFailed, CircuitOpen, or GatewayError.
     """
     payload: dict = {"model": model or _setting("models.agent"), "messages": messages, "temperature": temperature}
     if tools:
         payload["tools"] = tools
         payload["tool_choice"] = "auto"
 
-    mode = cache_mode()
+    mode = cache_mode() if cache else "off"
     key = cache_key(payload)
     if mode != "off":
         cached = _cache_get(key)
@@ -188,8 +217,9 @@ def chat(messages: list[dict], tools: list[dict] | None = None, model: str | Non
     if not api_key:
         raise GatewayError("GROQ_API_KEY is not set")
 
+    _circuit_check()
     estimated = estimate_tokens(payload)
-    waited = _acquire(estimated)
+    waited, entry = _acquire_entry(estimated)
     stats["calls"] += 1
     last_error = "unknown"
     for attempt in range(1, max_attempts() + 1):
@@ -204,8 +234,21 @@ def chat(messages: list[dict], tools: list[dict] | None = None, model: str | Non
 
         if resp is not None:
             if resp.status_code == 200:
-                data = resp.json()
-                _settle(estimated, int((data.get("usage") or {}).get("total_tokens", estimated)))
+                try:
+                    data = resp.json()
+                except ValueError:
+                    data = None
+                if not isinstance(data, dict) or not data.get("choices"):
+                    last_error = "invalid_response"          # a proxy page or a truncated body: retry it
+                    if attempt == max_attempts():
+                        break
+                    stats["retries"] += 1
+                    delay = _backoff(attempt, None)
+                    _sleep(delay)
+                    waited += delay
+                    continue
+                _circuit_result(True)
+                _settle(entry, int((data.get("usage") or {}).get("total_tokens", estimated)))
                 if mode != "off":
                     _cache_put(key, data)
                 stats["misses"] += 1
@@ -244,4 +287,5 @@ def chat(messages: list[dict], tools: list[dict] | None = None, model: str | Non
         delay = _backoff(attempt, resp.headers.get("Retry-After") if resp is not None else None)
         _sleep(delay)
         waited += delay
+    _circuit_result(False)
     raise GatewayError(f"LLM call failed after {max_attempts()} attempts ({last_error})")

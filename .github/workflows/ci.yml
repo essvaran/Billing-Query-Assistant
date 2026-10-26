@@ -21,8 +21,15 @@ jobs:
           python-version: "3.12"
           cache: pip
       - name: Install CPU-only torch first so the large CUDA wheels are not pulled
-        run: pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu
-      - run: pip install -r requirements.txt pytest
+        run: pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+      - run: pip install -r requirements-dev.txt
+      - name: Lint (errors only)
+        run: ruff check --select E9,F63,F7,F82 api src tier1 agent mcp_servers
+      - name: Dependency audit (known vulnerabilities)
+        # Reports without failing the build until the pending upgrade of fastapi/starlette, mcp and langchain
+        # lands (each needs a major-version migration); then remove continue-on-error.
+        continue-on-error: true
+        run: pip-audit -r requirements.txt --progress-spinner off
       - name: Generate the synthetic corpus (deterministic)
         run: python scripts/generate_synthetic_corpus.py
       - name: Unit tests (no network, no model)
@@ -31,7 +38,7 @@ jobs:
           JWT_SECRET: ci-placeholder-secret
           ADMIN_EMAIL: ci@example.com
           LLM_CACHE: replay          # any accidental model call fails loudly instead of spending quota
-        run: python -m pytest tests -q --deselect tests/test_structure_chunker.py
+        run: python -m pytest tests -q --deselect tests/test_structure_chunker.py --cov=api --cov=src --cov=tier1 --cov-report=term-missing:skip-covered
       - name: Integration tests (embedding model, real MCP servers)
         if: github.event_name == 'workflow_dispatch' && inputs.integration
         env:
@@ -56,4 +63,8 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
+      - name: Dependency audit (runtime packages)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Unit tests
+        run: npx ng test --watch=false --browsers=ChromeHeadless
       - run: npx ng build --configuration production

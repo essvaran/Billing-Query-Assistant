@@ -12,10 +12,11 @@ import threading
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from api.auth import UserOut, require_admin  # research tools: admin only (they spend model quota)
+from api.limiter import limiter, user_or_ip
 from api.database import get_db
 
 log = logging.getLogger("api.agent")
@@ -104,7 +105,8 @@ def list_tickets(_user: UserOut = Depends(require_admin)):
 
 
 @router.post("/run")
-def run_agent_job(req: RunRequest, user: UserOut = Depends(require_admin)):
+@limiter.limit("5/minute", key_func=user_or_ip)
+def run_agent_job(request: Request, req: RunRequest, user: UserOut = Depends(require_admin)):
     if not req.ticket_id and not req.message:
         raise HTTPException(400, "Provide ticket_id or message")
 

@@ -15,8 +15,6 @@ All customer data, orders and tickets in this installation are **synthetic**. No
 |---|---|---|
 | A customer | Your own account (email and password, or Google) | Chat, Account, Help |
 | A support agent or team lead | An account with the admin role | Everything a customer has, plus Tickets, Escalations, Try a ticket, Insights, Label replies, Data and Admin |
-| An operator or developer | Not an app role: you have the code and the `.env` file | Setup, command line, evaluation, Docker, health checks |
-| A reviewer from another squad | Not an app role: you connect an MCP client | The help-centre search tool |
 
 ### Signing in
 
@@ -28,12 +26,19 @@ All customer data, orders and tickets in this installation are **synthetic**. No
 Use the **Light/Dark** button in the header to switch themes. **Help** in the header opens this guide, showing the
 sections for your role.
 
-## Customers: what you can do
+## Team view: what customers can do
+
+<!-- roles: admin -->
+
+Two more groups work with the app without an app role: **operators and developers** (they have the code and the
+`.env` file: setup, command line, evaluation, Docker, health checks) and **reviewers from another squad** (they
+connect an MCP client to the help-centre search tool). Their sections are at the end of this guide.
 
 | Feature | Summary |
 |---|---|
-| Chat, Agent mode | answers questions about the customer's own account: it checks entitlement and order data through MCP tools discovered at runtime, cites help-centre articles with the policy version, and hands off to a person when unsure |
-| Chat, Docs mode | searches the help centre and answers with citations; refuses when the corpus has no answer |
+| Chat, automatic routing | the customer just asks; each question goes to the assistant or to the help articles, and the answer says which |
+| Chat, assistant | answers questions about the customer's own account: it checks entitlement and order data through MCP tools discovered at runtime, cites help-centre articles with the policy version, and hands off to a person when unsure |
+| Chat, help articles (Docs) | searches the billing help articles and answers with citations; refuses when the corpus has no answer |
 | Hand-off to a person | a plain-language message explains that a person will follow up |
 | Answer feedback | thumbs up or down with a reason, plus a "report wrong answer" option |
 | Onboarding and plan choice | on first sign-in |
@@ -47,8 +52,8 @@ Sign in with a non-admin email. For a demo, set `TIER1_DEMO_CUSTOMER_ID` first.
 | Feature | Steps | What you should see |
 |---|---|---|
 | Onboarding | sign in with a new account | the plan picker; after choosing, the Chat page |
-| Agent mode (**uses quota**) | Chat, keep **Agent**, ask "Can I get a refund for my last order?" | the steps as they run, then a reply with numbered sources naming the policy version, or a hand-off message |
-| Docs mode (**uses quota**) | switch to **Docs**, ask "How do I update my card?" | an answer with citations; a question the help centre does not cover gets the refusal message |
+| Assistant (**uses quota**) | Chat, ask "Can I get a refund for my last order?" | "Answered using your account", the steps as they run, then a reply with numbered sources naming the policy version, or a hand-off message |
+| Help articles (**uses quota**) | Chat, ask "What does ERR-4032 mean?" | "Answered from the help articles" and an answer with citations; a question the articles do not cover gets the refusal message |
 | Feedback | thumbs down on an answer and pick a reason | a confirmation; as admin, the report appears in Insights, Review inbox |
 | Account | open **Account** | plan, add-ons and invoices |
 | Role filtering | open **Help** | only the customer sections; team-lead pages show a 403 page if typed into the address bar |
@@ -57,9 +62,15 @@ Sign in with a non-admin email. For a demo, set `TIER1_DEMO_CUSTOMER_ID` first.
 
 <!-- roles: user -->
 
-The chat is the first page after you sign in. It has two modes, chosen in the bar under the message box.
+The chat is the first page after you sign in. You just ask; you never choose where the answer comes from.
+Questions about your own orders, refunds, deliveries or account go to the assistant, which uses your account.
+General questions, such as what a billing migration error code means, are answered from the help articles. A small
+line at the top of each answer says which one answered.
 
-### Agent mode (default): questions about your own account
+If no customer account is linked to your sign-in, account questions are answered from the help articles, with a
+note explaining why.
+
+### Questions about your own account
 
 1. Type your question, for example "Can I still get a refund for my last order?", and press **Enter**
    (**Shift+Enter** adds a new line).
@@ -77,22 +88,28 @@ it tells you what the policy says and whether your order is inside the window, a
 ### When the assistant hands you to a person
 
 Some questions always go to a person: anything about legal action, safety, fraud, an unrecognised charge or a
-chargeback, questions outside Tier-1 support, and cases where the help centre has no reliable answer. You will see:
-"I could not answer this safely, so I passed it to our team. A person will follow up." You do not need to ask again.
+chargeback, questions outside Tier-1 support, and cases where the help centre has no reliable answer. You will see a
+message that matches the reason (for example "This is outside what I can help with here, so I passed it to our team.
+A person will follow up."). You do not need to ask again.
 
-When the assistant is very busy, it also passes your question to the team instead of making you wait.
+A plain greeting such as "Hi" is not passed on: the assistant replies and asks what you need. Ordinary questions that
+only share a word with these topics, such as a chargeback fee or fraud protection on payments, are answered normally.
+If an order number cannot be found, the assistant still explains your policy and asks you to check the number.
 
-### Docs mode: general questions about the help centre
+When the assistant is very busy, it also passes your question to the team instead of making you wait. A system error
+is retried once before the question is passed on.
 
-Switch to **Docs** to ask a general question. The answer shows a **Sources** list you can expand. If nothing
-relevant exists, it says so instead of guessing.
+### General questions: the help articles
+
+A general question is answered from the help articles. The answer shows a **Sources** list you can expand. If
+nothing relevant exists, it says so instead of guessing.
 
 ### Telling us an answer was wrong
 
-- In Agent mode, click **Report wrong answer** under a reply, choose a reason (wrong policy, wrong facts, should have
+- Under an assistant answer, click **Report wrong answer** under a reply, choose a reason (wrong policy, wrong facts, should have
   passed to a person, should have answered, tone), add a note if you like, and send. The support team reviews every
   report.
-- In Docs mode, use the thumbs. A thumbs-down asks for a reason.
+- Under a help-articles answer, use the thumbs. A thumbs-down asks for a reason.
 
 ## Customers: plan, billing and invoices
 
@@ -150,7 +167,13 @@ A brand-new account has no orders yet, so questions about a specific order canno
 ### Acting as a customer in the chat
 
 In the chat, admins get an **Act as customer** picker, grouped by refund policy, to see exactly what a given
-customer would get.
+customer would get. Admins also get a mode selector: **Auto** (the default, what customers get), **Agent** or
+**Docs** to force one path while testing. Routing rules and the classifier prompt are in Admin, Settings (Chat
+routing) and Admin, Prompts (Chat router).
+
+Other signed-in customers see a label beside the message box, such as "Answers use your Standard plan", showing
+the account the assistant uses. If no customer account is linked to the sign-in, it reads "Answers use the help
+articles". With **Agent** forced, an admin with no customer chosen cannot send.
 
 ### Try a ticket
 
@@ -215,12 +238,16 @@ The brief requires the judge to agree with a person on at least 85% of at least 
    - **Good** (key **G**), **Not good** (key **N**), or **Skip** (key **S**).
    - **Previous** goes back to change a label.
 5. The judge's verdict is never shown on this page, so it cannot influence you.
-6. After 20 labels, **Check agreement** shows how often each judge agreed with you, and how many times the judge
-   said GOOD where you said NOT GOOD (the dangerous kind of disagreement).
-7. Tell the operator, who refreshes the report with `python -m tier1 eval --rescore <run>`.
+6. After 20 labels, **Check agreement** shows how often each of the three judges agreed with you, and how many times
+   a judge said GOOD where you said NOT GOOD (the dangerous kind of disagreement). The **Primary judge** is the Week 6
+   v1 rubric, the one that agreed with people 24 times out of 25 in Week 6. The two second opinions are the Week 6 v2
+   rubric and the integrated rubric.
+7. Tell the operator, who refreshes the report with `python -m tier1 eval --rescore <run>`. The 85% target counts
+   only for the primary judge.
 
 A label belongs to the exact reply you read. If a later run gives a different reply to the same ticket, that reply
-needs its own label.
+needs its own label. Re-grading a run with new judges (`python -m tier1 eval --rejudge <run>`) does not change the
+replies, so your labels still count.
 
 ## Team leads: users, plans and billing
 
@@ -235,6 +262,7 @@ Open **Admin**.
   what the assistant tells its subscribers); add-ons; subscriptions (set a plan, add a charge); invoices (mark paid or
   void an open invoice).
 - **Documents:** upload a file (.pdf, .md, .txt, .docx, .xlsx, up to 20 MB) to make it searchable in Docs mode.
+  A PDF must contain real text: a scanned, image-only PDF is rejected with a message saying so.
 - **Observability:** trace search and the support drill, user feedback, cost and the 10x calculator, email alerts,
   and evaluation run comparison.
 
@@ -449,10 +477,16 @@ next day with `python -m tier1 eval --tag <run> --resume`.
 
 <!-- roles: admin -->
 
-The help-centre search is exposed as an MCP server with one tool, `search_help_centre`. Follow section 8 of the
-technical README (`README.md`, "MCP servers and outside clients") with your own MCP client, and write down where you
-got stuck in `docs/archive/deliverables/week12/fresh_eyes.md`. Please do not ask the author for help while you try:
-the point is to find what the instructions leave out.
+The help-centre search is exposed as an MCP server with one tool, `search_help_centre`. There are two ways in:
+
+- **Way A, over HTTP:** the author runs `make mcp-http` and sends you the URL and a bearer token separately. Connect
+  with any MCP client that speaks Streamable HTTP (MCP Inspector, Claude Code, or your own code).
+- **Way B, your own clone:** clone the repository, run `make up`, then start `mcp_servers/help_centre_server.py` from
+  your own client over stdio.
+
+The steps for both are in section 8 of the technical README (`README.md`, "MCP servers and outside clients"). Write down where you got stuck, and how long it took to get a first result, in
+`docs/archive/deliverables/week12/fresh_eyes.md`. Please do not ask the author for help while you try: the point is
+to find what the instructions leave out.
 
 ## What is not done yet
 
@@ -460,49 +494,61 @@ the point is to find what the instructions leave out.
 
 ### Needs a person (cannot be done by the code)
 
-1. **Label 20 or more replies** on **Label replies**. Until then, judge agreement is not measured and the 85%
-   requirement cannot be shown.
-2. **Choose the judge rubric.** The stored Week 6 rows give prompt v1 96% and prompt v2 80% agreement. The integrated
-   evaluation's main judge uses v2. Decide whether to switch to v1, or to keep v2 and re-validate it on the new labels.
-3. **Fresh-eyes review** by another squad (`docs/archive/deliverables/week12/fresh_eyes.md`), **adopt and date**
-   `docs/archive/deliverables/week12/weaknesses.md`, and **deliver the live demo**.
+In this order:
+
+1. **Label 20 or more replies** of the newest full run (`fix1` today, `fix2` once it exists) on **Label replies**,
+   ideally by someone who has worked a support queue. Until then, judge agreement is not measured and the 85% requirement cannot be shown. If the primary judge comes in
+   under 85%, do not rewrite its rubric against the same labels: keep half the labels aside, change the rubric using
+   the other half, and report both numbers.
+2. **Adopt the weaknesses list:** read `docs/archive/deliverables/week12/weaknesses.md`, change what you disagree
+   with, and keep your own date.
+3. **Commit and push** the work, so that a fresh clone has everything described here.
+4. **Fresh-eyes review** by another squad: they clone the repository, follow the technical README, and call the
+   help-centre MCP server from their own client (see "Reviewers from another squad" above). They fill in
+   `docs/archive/deliverables/week12/fresh_eyes.md`.
+5. **Rehearse the 10-minute demo against a clock**, including the live loop on ticket TK3147 (case RAN02, still
+   failing) in `docs/archive/deliverables/week12/demo_script.md` Part 3, then deliver it.
 
 ### Capacity and quality
 
-4. **Lift the daily token limit** (paid tier or a second provider). It caps the system at about 60 tickets a day,
+6. **Re-run the whole suite with the response cache off** (run `fix2`, about a full day's token allowance), twice
+   if possible, to measure how much results vary between runs. A cache-off rerun of 10 cases passed 4 where the
+   current report's run passed 7, so today's pass rates are one draw. Label the new run's replies, not the old ones:
+   a label belongs to the exact reply it was given for.
+7. **Lift the daily token limit** (paid tier or a second provider). It caps the system at about 60 tickets a day,
    below today's volume, and stopped full evaluation runs part way.
-5. **Re-run the full suite on the production model** once the limit allows, so the before and after of the source
-   fixes is measured on the whole suite. The held-out comparison so far is inconclusive.
-6. **Retrieval:** the wrong article is picked often enough to matter (weakness 2). Try a re-ranker or better chunking
-   of error-code articles.
-7. **Prove the cheaper path:** the prefetch saved 25% of tokens but scored 7 of 10 against 8 of 10. Run a larger
-   comparison.
-8. **Stronger PII redaction:** it is pattern- and list-based today; a named-entity model would catch first names,
+8. **Retrieval:** the wrong article is picked often enough to matter (weakness 2). Try a re-ranker or better chunking
+   of error-code articles. The source fixes helped on the cases they came from (6 to 3 wrong of 25) but the
+   held-out comparison was inconclusive.
+9. **Prove the cheaper path:** the prefetch saved 25% of tokens but scored 7 of 10 against 8 of 10. A
+   second run with prefetch off (20 tickets, run `traj_off`) passed 16 of 20 at about 6,100 tokens per model ticket,
+   against about 4,200 with prefetch on. Run a larger, repeated comparison on the same tickets.
+10. **Stronger PII redaction:** it is pattern- and list-based today; a named-entity model would catch first names,
    misspellings and unusual addresses.
-9. **Multi-turn and real data:** everything is single-turn and synthetic. Measure re-opens and real help-centre
-   language before trusting the numbers in production.
+11. **Multi-turn and real data:** everything is single-turn and synthetic. Measure re-opens and real help-centre
+    language before trusting the numbers in production.
 
 ### Production hardening
 
-10. **Build and run the Docker images** and **run CI** on a real runner. The files are written and validated, but
+12. **Build and run the Docker images** and **run CI** on a real runner. The files are written and validated, but
     there was no Docker daemon on the development machine.
-11. **Database and queue:** SQLite was kept on purpose for a demo-grade build. For real traffic, move to Postgres and
+13. **Database and queue:** SQLite was kept on purpose for a demo-grade build. For real traffic, move to Postgres and
     put ticket runs on a job queue.
-12. **HTTPS** in front of the API (reverse proxy), and a secret store instead of `.env`.
-13. **Customer identity:** customers are matched to account data by email; a real deployment needs the account
+14. **HTTPS** in front of the API (reverse proxy), and a secret store instead of `.env`.
+15. **Customer identity:** customers are matched to account data by email; a real deployment needs the account
     system's own ID mapping, and `TIER1_DEMO_CUSTOMER_ID` must stay unset.
 
 ### Product and UI
 
-14. **Undo for 5 seconds** after approve or escalate (needs a decision-delete endpoint).
-15. **End-to-end browser tests** (for example Playwright). Behaviour is covered by API tests, component specs and
+16. **Undo for 5 seconds** after approve or escalate (needs a decision-delete endpoint).
+17. **End-to-end browser tests** (for example Playwright). Behaviour is covered by API tests, component specs and
     manual browser checks only.
-16. **Form editor for eval cases:** cases are edited as JSON on the Data page; a field-by-field form would be safer.
-17. **Approval workflow for the Data page:** edits apply at once; a second reviewer for prompt and guard activations
+18. **Form editor for eval cases:** cases are edited as JSON on the Data page; a field-by-field form would be safer.
+19. **Approval workflow for the Data page:** edits apply at once; a second reviewer for prompt and guard activations
     would add a safety step.
-18. **Tidy up:** three chunker tests fail on the committed code (they expect Markdown articles; the folder holds PDFs);
+20. **Tidy up:** three chunker tests fail on the committed code (they expect Markdown articles; the folder holds PDFs);
     the Week 7 `agent-chat` component is no longer routed; a few em dashes remain in older `api/*.py` files.
-19. **Accessibility:** move the hand-written focus trap in the modal and drawer to Angular CDK and run an automated
+21. **Accessibility:** move the hand-written focus trap in the modal and drawer to Angular CDK and run an automated
     accessibility check.
 
 ## Troubleshooting
@@ -511,11 +557,21 @@ the point is to find what the instructions leave out.
 |---|---|---|
 | "This page is for the support team" | Your account does not have the admin role | Ask your team lead to promote your account in Admin, Users |
 | Sent back to the sign-in page | Your session ended (7 days) or your account was disabled | Sign in again; if it fails, contact your team lead |
-| "The assistant is very busy" or a ticket passed to a person right away | The model provider's usage limit was reached | Nothing to do as a customer; operators see Limits you will meet |
+| "The assistant is very busy" or a question passed to a person right away | The assistant is handling many questions | Try again in a few minutes; a question passed to a person still gets an answer. A system error is retried once first, so repeated instant hand-offs point to the provider or MCP servers being down |
 | A source opens without a highlighted passage | The cited passage could not be located in the article text | Read the article; report the answer if it does not support the reply |
+| An error message with "Ref:" and a code | Something went wrong on our side | Try again; if it keeps happening, contact support and quote the Ref code |
+
+## Troubleshooting for the team
+
+<!-- roles: admin -->
+
+| What you see | What it means | What to do |
+|---|---|---|
+| Customers report "very busy" or instant hand-offs | The model provider's usage limit was reached | See Limits you will meet in the operators section |
 | Agreement stays locked on Label replies | Fewer than 20 replies are labelled in that run | Keep labelling |
 | `make up` stops at .env | Values are missing or still the examples | Fill them in as the message says and run it again |
-| `GET /api/ready` returns 503 | Configuration or data problem | Read the `problems` list in the response; each has a fix |
+| `GET /api/ready` returns 503 | Configuration or data problem | Outside production, read the `problems` list in the response; in production send an admin token to see it. Each problem has a fix |
+| A customer quotes a "Ref:" code | The request id of a failed call | Search the API log for that id (`request_id` in the JSON log line) |
 
 ## Glossary
 
@@ -525,6 +581,13 @@ the point is to find what the instructions leave out.
 | Refund policy version | `refund-30d` (current) or `refund-14d` (legacy, still applies to some older accounts) |
 | Escalation, handoff | A ticket passed to a person, with the reason and what was already checked |
 | Deflected ticket | A ticket answered correctly without a person writing the reply |
+
+## Glossary for the team
+
+<!-- roles: admin -->
+
+| Term | Meaning |
+|---|---|
 | Trace | The record of one ticket from question to answer: every step, its time and cost |
 | Regression case | A test created from a reported failure; it runs in every future evaluation |
 | Judge | A second AI model that grades replies; trusted only as far as it agrees with a person |

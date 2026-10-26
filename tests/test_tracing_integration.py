@@ -157,6 +157,9 @@ def test_one_trace_id_across_every_hop_with_cost_and_latency(env, monkeypatch, c
     assert all(s["duration_ms"] >= 0 for s in spans)
     assert sorted(summary["mcp_servers_seen"]) == ["help-centre", "tier1-tools"]
     assert resp.cost_usd == pytest.approx(summary["cost_usd"], abs=1e-6)
+    # cost per span: every span carries one (0.0 when it made no model call), and the root's total is the ticket's cost
+    assert all(s["cost_usd"] is not None for s in spans)
+    assert tracing_store.tree(spans)[0]["cost_usd_total"] == pytest.approx(summary["cost_usd"], abs=1e-8)
 
     # --- the PII line: the ticket carried a real email, address and name; no sink may keep them ---
     secrets = [cust["email"], cust["address"], cust["name"], cust["customer_id"], cust["order_id"]]

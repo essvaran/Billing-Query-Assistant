@@ -29,70 +29,32 @@ def ask_llm(
     system_prompt: str,
     user_prompt: str,
     model: str | None = None,
+    cache: bool = False,
 ) -> tuple[str, int, int]:
     """Returns (text, input_tokens, output_tokens).
 
-    Pass ``model`` to override the default configured model — used by replay
+    Pass ``model`` to override the default configured model -- used by replay
     to ensure the same model that generated the original trace is re-used.
+    Groq calls go through the shared gateway (tokens-per-minute limiter, capped backoff, daily-cap fail fast,
+    circuit breaker). ``cache`` is off by default so Docs answers and replays always reach the model.
     """
     if LLM_PROVIDER == "groq":
-        return _ask_groq(system_prompt, user_prompt, model or default_model())
+        return _ask_groq(system_prompt, user_prompt, model or default_model(), cache)
     return _ask_ollama(system_prompt, user_prompt, model or default_model())
 
 
-def _ask_groq(system_prompt: str, user_prompt: str, model: str) -> tuple[str, int, int]:
-    if not GROQ_API_KEY:
-        raise LLMRequestError(
-            "GROQ_API_KEY is not set. Add it to your .env file."
-        )
-
-    url = f"{GROQ_BASE_URL}/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        "temperature": 0.0,
-    }
-
-    wait = 10
-    for attempt in range(4):
-        try:
-            response = requests.post(url, json=payload, headers=headers, timeout=60)
-        except requests.RequestException as exc:
-            raise LLMRequestError(
-                f"Groq API request failed (model='{model}'). "
-                f"Check your GROQ_API_KEY and network. Original error: {exc}"
-            ) from exc
-
-        if response.status_code == 429:
-            if attempt == 3:
-                break
-            retry_after = int(response.headers.get("Retry-After", wait))
-            print(f"\n  [rate-limit] 429 -- retrying in {retry_after}s (attempt {attempt + 1}/4)...", flush=True)
-            time.sleep(retry_after)
-            wait = min(wait * 2, 60)
-            continue
-
-        try:
-            response.raise_for_status()
-        except requests.RequestException as exc:
-            raise LLMRequestError(
-                f"Groq API request failed (model='{model}'). "
-                f"Check your GROQ_API_KEY and network. Original error: {exc}"
-            ) from exc
-
-        data = response.json()
-        text = data["choices"][0]["message"]["content"].strip()
-        usage = data.get("usage", {})
-        return text, usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0)
-
-    raise LLMRequestError(f"Groq API 429 rate limit: failed after 4 attempts (model='{model}')")
+def _ask_groq(system_prompt: str, user_prompt: str, model: str, cache: bool = False) -> tuple[str, int, int]:
+    from src.generation import gateway
+    if not os.getenv("GROQ_API_KEY", GROQ_API_KEY):
+        raise LLMRequestError("GROQ_API_KEY is not set. Add it to your .env file.")
+    messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
+    try:
+        data = gateway.chat(messages, model=model, temperature=0.0, timeout=60.0, cache=cache)
+    except gateway.GatewayError as exc:
+        raise LLMRequestError(f"Groq API request failed (model='{model}'): {exc}") from exc
+    text = (data["choices"][0]["message"].get("content") or "").strip()
+    usage = data.get("usage") or {}
+    return text, usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0)
 
 
 def _ask_ollama(system_prompt: str, user_prompt: str, model: str) -> tuple[str, int, int]:

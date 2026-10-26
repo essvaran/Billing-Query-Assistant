@@ -38,6 +38,8 @@ A support assistant for billing and Tier-1 customer tickets, built up over Weeks
   a tool before saying anything about refunds or shipping, and escalates to a person instead of guessing.
 - **Docs mode.** Retrieval-augmented answers over the help centre, with citations and a refusal when the corpus has
   no answer (Weeks 4 to 6, observability added in Week 11).
+- **Automatic routing in the chat.** Customers do not pick a mode. A front desk (`POST /api/chat/route`) sends each
+  question to the assistant or to Docs mode; only admins can force a mode, for testing.
 - **Earlier agent experiments**, kept and reachable from the Admin page: the Week 7 ReAct agent, Week 8 prompt
   injection tests, Week 9 MCP billing tools, Week 10 single agent against a workflow and multi-agent (A2A) runs.
 - **Billing and accounts:** sign-up, plans, add-ons, subscriptions and invoices.
@@ -56,7 +58,7 @@ evaluation grades exactly what an agent sees.
 | Auth | Email and password, or Google OAuth; JWT sessions (7 days) |
 | Models | Groq: agent `openai/gpt-oss-120b`, judge `qwen/qwen3.8-27b` (a different family, to avoid self-grading); Ollama optional for Docs mode |
 | Embeddings | `BAAI/bge-base-en-v1.5` via sentence-transformers |
-| Retrieval | Local vector store (numpy and JSON on disk, `chroma_db/`), BM25, Reciprocal Rank Fusion (k = 60) |
+| Retrieval | Local ChromaDB vector store (on disk, `chroma_db/`, cosine distance), BM25, Reciprocal Rank Fusion (k = 60) |
 | Tool protocol | Model Context Protocol (MCP) over stdio, and streamable HTTP for the help-centre server |
 | Databases | SQLite: `data/app.db`, `data/tier1.db`, `data/catalog.db` |
 | Tracing | Own span store (SQLite) and Langfuse (optional) |
@@ -183,26 +185,40 @@ A setting whose environment variable is set uses the environment value; the Data
 
 ### 4.1 How one Tier-1 ticket flows
 
-```
-  Agent (browser)            CLI / eval suite
-  Angular workspace          python -m tier1 answer | demo | eval
-        |  /api/tier1/*  (job + polling)              |
-        v                                              |
-  FastAPI  api/tier1_router.py   (thin, no logic)      |
-        +--------------------+-------------------------+
-                             v
-        tier1/service.py :: handle_ticket()        <-- the single entry point
-          1 mint trace_id, open root span
-          2 PRE-GUARD (no model): legal, safety, fraud, injection text, oversized  --> ESCALATE at zero cost
-          3 PREFETCH (code): check_entitlement, then search_help_centre with a query built from the ticket
-          4 AGENT LOOP  agent/agent_loop.py  (laps, tokens and time budgeted; search capped in code)
-               each lap = one model call --> LLM gateway  src/generation/gateway.py
-               tool calls go over MCP, discovered at runtime, filtered by an allow-list:
-                 +-- tier1-tools   lookup_order, check_entitlement, escalate (the only write tool)
-                 +-- help-centre   search_help_centre(query, policy_version)  <-- exposed to outside clients
-          5 POST-GUARD (no model): entitlement checked? citation valid and retrieved?
-                                   cited policy version matches the customer? window right? no refund promise?
-          6 ANSWER only if every check passes; otherwise ESCALATE with a handoff row and the blocked draft kept
+```mermaid
+flowchart TD
+    UI["Agent (browser)<br/>Angular workspace"]
+    CLI["CLI / eval suite<br/>python -m tier1 answer | demo | eval"]
+    API["FastAPI: api/tier1_router.py<br/>thin, no logic<br/>/api/tier1/* (job + polling)"]
+    UI --> API
+    API --> H
+    CLI --> H
+
+    subgraph SVC["tier1/service.py :: handle_ticket() - the single entry point"]
+        H["1. Mint trace_id, open root span"]
+        PRE{"2. PRE-GUARD (no model)<br/>legal, safety, fraud,<br/>injection text, oversized"}
+        PRE2["3. PREFETCH (code)<br/>check_entitlement, then search_help_centre<br/>with a query built from the ticket"]
+        LOOP["4. AGENT LOOP: agent/agent_loop.py<br/>laps, tokens and time budgeted<br/>search capped in code"]
+        POST{"5. POST-GUARD (no model)<br/>entitlement checked?<br/>citation valid and retrieved?<br/>policy version matches customer?<br/>window right? no refund promise?"}
+        ANS["6. ANSWER<br/>every check passed"]
+        ESC["ESCALATE<br/>handoff row, blocked draft kept"]
+        H --> PRE
+        PRE -->|clear| PRE2
+        PRE -->|flagged| ESC
+        PRE2 --> LOOP
+        LOOP --> POST
+        POST -->|all pass| ANS
+        POST -->|any fail| ESC
+    end
+
+    GW["LLM gateway<br/>src/generation/gateway.py"]
+    MCP["MCP tools: discovered at runtime,<br/>filtered by an allow-list"]
+    T1["tier1-tools<br/>lookup_order, check_entitlement,<br/>escalate (the only write tool)"]
+    HC["help-centre<br/>search_help_centre(query, policy_version)<br/>exposed to outside clients"]
+    LOOP -->|"each lap = one model call"| GW
+    LOOP -->|tool calls| MCP
+    MCP --> T1
+    MCP --> HC
 ```
 
 Principle: code decides anything about money, eligibility, policy version or escalation; the model writes prose and
@@ -217,6 +233,7 @@ No tool can move money. Budgets, limits, prompts and guard patterns come from th
 | Part | How it works |
 |---|---|
 | Docs mode | `POST /api/ask`: hybrid retrieval (BM25 and dense, RRF) over three chunkings (structure-aware default, baseline, semantic), a cited answer or the refusal message; prompt from the catalog |
+| Chat routing | `POST /api/chat/route` (`src/routing/route.py`), cheapest check first: a code in the question goes to the corpus that documents it; then two regex lists (settings `routing.agent_patterns`, `routing.docs_patterns`); only when both or neither match, one classifier call (prompt `router.classify`, can be switched off with `routing.use_llm`). An assistant question from a user with no linked account goes to Docs with a note. `python evaluation/routing_eval.py [--llm]` measures accuracy on the existing Docs and Tier-1 questions plus `evaluation/routing_cases.jsonl` |
 | Week 7 agent | `agent/agent_loop.py` with the billing-tools MCP server (`get_ticket`, `get_order`, `get_customer_tier`, `search_knowledge_base`) on the Week 7 tickets in `data/app.db` |
 | Week 8 | prompt-injection tests and mitigations (`agent/injection_test.py`, `agent/mitigations.py`), shown on the Trajectory page |
 | Week 9 | MCP servers for billing tools and ticket history (`mcp_servers/`) |
@@ -234,6 +251,7 @@ api/                      FastAPI app
   auth.py, config.py      sign-in, JWT, startup validation
   database.py             data/app.db schema, migrations, first seed
   tier1_router.py         Tier-1 queue, jobs, decisions, feedback, escalations, metrics, labels
+  chat_router.py          chat front desk: picks the assistant or Docs mode for a question
   catalog_router.py       /api/catalog (read) and /api/admin/catalog (lists, settings, prices, prompts, guards, changes)
   eval_admin_router.py    eval cases, runs, Week 6 page data
   tier1_admin_router.py   Tier-1 customers, orders, tickets CRUD
@@ -274,7 +292,7 @@ docs/archive/             earlier documentation and deliverables (section 15)
 | `data/app.db` | users, plans, subscriptions, invoices, Week 7 tickets, orders and customers, ticket histories | tracked; migrated on start |
 | `data/tier1.db` | Tier-1 customers, orders, tickets (with evaluation ground truth the API never returns), AI results, decisions, feedback, handoffs, spans, jobs | git-ignored; seeded from the synthetic data |
 | `data/catalog.db` | reference lists, settings, model prices, prompts and versions, guard rule sets and examples, eval cases, runs, results and labels, change log | created from `data/seed/` on first start |
-| `chroma_db/` | vector collections (numpy and JSON) | rebuilt by `make ingest` |
+| `chroma_db/` | ChromaDB vector collections | rebuilt by `make ingest`; an upload creates the collection if it is missing |
 | `.cache/llm/` | model response cache | off in production |
 
 **Synthetic data.** `scripts/generate_synthetic_corpus.py` (seed 1201, frozen as-of date 2026-10-01) writes
@@ -285,18 +303,35 @@ purpose, because that is where the original failure came from. Every record is t
 folder carries a `SYNTHETIC.txt` marker. `scripts/ingest_variant_a.py` builds the index (164 documents, 951 chunks).
 
 Docs mode reads the six billing articles in `data/billing_articles/` (with Markdown copies in `data/markdown/`). A
-file uploaded on the Admin page is added to that index.
+file uploaded on the Admin page is added to that index. If the collection does not exist yet (no `make ingest` run),
+the upload creates it, so it then holds only the uploaded files until you rebuild. A file with no extractable text
+(for example a scanned, image-only PDF; there is no OCR) is rejected with that reason. Other ingestion errors return
+`422 Failed to process document` and the full traceback is written to the server log.
 
 ---
 
 ## 7. API
 
-Interactive documentation: `http://localhost:8000/api/docs`. Every admin route returns 403 for other users.
+Interactive documentation: `http://localhost:8000/api/docs` (turned off when `APP_ENV=production`). Every admin
+route returns 403 for other users.
+
+- **Sessions:** a JWT signed with `JWT_SECRET` (HS256, PyJWT) with `iss`/`aud` claims. The users table decides role
+  and status on every request, and a token whose user row was deleted is refused.
+- **Rate limits:** per client address, from `X-Forwarded-For` set by nginx (uvicorn runs with `--proxy-headers`),
+  and per signed-in user on the endpoints that spend model quota (`/api/tier1/answer`, feedback, admin runs and
+  replays). Five wrong passwords lock that email for 15 minutes.
+- **What a customer sees of a job:** `GET /api/tier1/jobs/{id}` returns the customer-facing result and progress-only
+  steps (`type`, `tool`, `stage`, `blocked`); tool arguments and results, model output, tokens, cost and guard codes
+  are for admins only. A customer can report only answers from their own jobs.
+- **Errors:** every response carries `X-Request-ID`; an unhandled error returns `{detail, request_id}` and is logged
+  with the same id. Logs are JSON lines in production (`LOG_FORMAT=json|text` overrides).
+- **Readiness:** in production `GET /api/ready` returns only `{status}` unless an admin token is sent.
 
 | Prefix | Who | Purpose |
 |---|---|---|
 | `/api/auth` | public | config, sign-up, sign-in, Google sign-in |
 | `/api/ask`, `/api/upload` | user, admin (upload) | Docs mode answers; document upload |
+| `/api/chat/route` | any signed-in user | which mode answers a chat question (30 per minute) |
 | `/api/tier1` | user (own jobs), admin | tickets, `POST /answer` plus `GET /jobs/{id}` (at most 2 runs at once), decisions, feedback and the regression loop, escalations, articles, metrics, traces, eval runs, labels, rules |
 | `/api/catalog` | any signed-in user | reference lists and public settings for the UI |
 | `/api/admin/catalog` | admin | lists, settings, prices, prompts, guards, change log |
@@ -306,7 +341,7 @@ Interactive documentation: `http://localhost:8000/api/docs`. Every admin route r
 | `/api/obs`, `/api/feedback` | admin, user | traces, cost, 10x, alerts, drills, eval runs; answer feedback |
 | `/api/agent`, `/api/race`, `/api/trajectory`, `/api/multiagent`, `/api/traces` | admin | earlier weeks' experiments (they spend model quota) |
 | `/api/help` | any signed-in user | the functional README, filtered by role |
-| `/api/health`, `/api/ready` | public | liveness; readiness with a list of problems and fixes |
+| `/api/health`, `/api/ready` | public | liveness; readiness (the list of problems and fixes only outside production, or to an admin) |
 
 ---
 
@@ -367,6 +402,9 @@ on 2026-10-18). Cost per deflected ticket on run `fix1`: $0.000915. Report: `pyt
 - `src/observability/tracing.py` writes spans (start, duration, tokens, cost, status) for every model call, tool
   call and guard; MCP servers write their own spans under the same trace id. `GET /api/tier1/traces/{id}` and the
   trace page show the waterfall. `scripts/export_trace.py <trace_id>` exports one as JSON.
+- Every span carries a cost: model calls carry their own, every other span (guards, tool calls, MCP server spans,
+  retrieval) records 0.0, and a model call that failed before usage came back stays empty (unknown). The exported tree
+  adds `cost_usd_total` per span, its own cost plus everything under it, so the root's total is the ticket's cost.
 - Langfuse (optional) receives traces through one wrapped client.
 - `src/observability/redact.py` redacts personal data at every sink (spans, Langfuse, alert emails, handoffs, the MCP
   wire log) in three layers: field names, patterns (email, address, phone, Luhn-checked card, SSN-like) and exact
@@ -389,6 +427,7 @@ python -m tier1 eval --tag fix1
 |---|---|
 | `--resume` | continue a run the daily cap stopped (same flags) |
 | `--rescore TAG` | recompute summary, agreement and report from stored rows, no model calls |
+| `--rejudge TAG` | re-run the two Week 6 judges on a stored run's replies, then rescore; the agent is not called and labels stay valid |
 | `--cases regression`, `--case-id REG01` | only cases created from reported failures |
 | `--only SLICE`, `--limit N`, `--no-judge` | subsets and cheaper runs |
 | `--ablate version_filter,policy_guard,macro_filter,error_code_prompt,prefetch` | switch defences off for before and after numbers |
@@ -404,9 +443,11 @@ rebuilds them deterministically.
 1. **Assertions** (`evaluation/integrated/assertions.py`): decision, escalation reason, handoff row, tools called,
    citation valid, policy version named and correct, window and eligibility right, shipping days right, no refund
    promise, no personal data. A case passes only if all pass.
-2. **Judges** (`judge.py`), only on answered replies, both on `qwen/qwen3.8-27b`: primary is the Week 6 rubric
-   (prompt `judge.week6_v2` with the account facts added, rubric id `week6-v2r`), second opinion is the integrated
-   rubric (`v3b-integrated`).
+2. **Judges** (`judge.py`), only on answered replies, all on `qwen/qwen3.8-27b`:
+   - **primary:** the Week 6 v1 rubric (prompt `judge.week6_v1` with the account facts added, rubric id `week6-v1r`);
+     the setting `eval.judge_primary_prompt` chooses it;
+   - **second opinion:** the other Week 6 rubric (`judge.week6_v2`, `week6-v2r`), stored as `judge_week6_alt`;
+   - **second opinion:** the integrated rubric (`v3b-integrated`), stored as `judge_alt`.
 3. **Agreement with people:** a judge is trusted only after it agrees with human labels on at least 85% of at least
    20 replies (both thresholds are settings).
 
@@ -420,10 +461,10 @@ does not cover.
 hidden; each label stores a hash of the reply, so it never grades a different reply from a later run. Until 20 labels
 exist the report says NOT MEASURED.
 
-**Week 6 agreement, corrected.** The stored Week 6 rows give 24/25 (96%) for judge prompt v1 and 20/25 (80%) for
-prompt v2. Earlier documents quoted 24/25 for the v2 rubric the integrated judge uses; that was wrong. The original
-Week 6 model (`llama-3.1-8b-instant`) is no longer available on the key, so neither figure carries over: agreement
-must be measured again on integrated replies. Which rubric to use is an open decision (section 14).
+**Why v1 is the primary judge.** The stored Week 6 rows give 24/25 (96%) for judge prompt v1 and 20/25 (80%) for
+prompt v2, so v1 is the Week 6 judge that cleared the 85% target. (Earlier documents quoted 24/25 for v2; that was
+wrong.) The original Week 6 model (`llama-3.1-8b-instant`) is no longer available on the key, so neither figure
+carries over: agreement must be measured again on integrated replies, and only that number may be quoted.
 
 **Second contact (bonus):** `python -m evaluation.integrated.second_contact` simulates a follow-up and scores whether
 the reply pre-empted it, with a human-reply control.
@@ -463,31 +504,65 @@ check the labels a fresh install shows.
 
 - **Docker:** `docker compose up --build`, then http://localhost:8080. The API runs with `APP_ENV=production` and
   `LLM_CACHE=off` as a non-root user, keeps `app.db`, `tier1.db` and `catalog.db` on the `app-data` volume, and is
-  health-checked on `/api/ready`. nginx (`frontend/nginx.conf`) serves the UI and forwards `/api`. The images have not
-  been built on the development machine (no Docker daemon).
+  health-checked on `/api/ready`. nginx (`frontend/nginx.conf`) serves the UI, forwards `/api` with the client
+  address, compresses responses, caches hashed bundles for a year, never caches `index.html`, and sends a CSP and
+  the usual security headers. The images have not been built on the development machine (no Docker daemon).
+- **Dependencies:** `requirements.txt` is what the API image installs; `requirements-dev.txt` adds pytest, coverage,
+  ruff and pip-audit.
 - **Production mode** refuses to start, naming each fix, on example secrets, a short `JWT_SECRET`, `LLM_CACHE` not
   off, or `TIER1_DEMO_CUSTOMER_ID` set.
-- **CI** (`.github/workflows/ci.yml`): CPU-only torch, generate the corpus, unit tests, integration tests, and the
-  Angular production build. It has not run on a CI runner yet.
+- **CI** (`.github/workflows/ci.yml`): CPU-only torch, ruff (errors only), `pip-audit`, unit tests with coverage,
+  integration tests, `npm audit`, Angular unit tests and the production build. It has not run on a CI runner yet.
 - Kept on purpose for a demo-grade build: SQLite, no job queue, no HTTPS proxy.
 
 ---
 
 ## 14. Results and known limits
 
-- **Integrated eval (`fix1`, production model):** 36 of 39 pass. All refund-policy pair cases pass.
+### 14.1 Week 12 brief: status by requirement
+
+Status as of 2026-10-19. "Needs a person" items cannot be finished by the code; the functional README lists them in
+the order to do them.
+
+| # | Requirement | Status | Evidence | Command |
+|---|---|---|---|---|
+| 1 | RAG behind one entry point, clickable citations that name the refund-policy version | Met | `src/generation/citations.py` (`[slug @ version]`), source buttons with a policy badge in the workspace; `names_policy_version` 11/11 in `report_fix1.md` | `make answer TICKET=TK3001` |
+| 2 | Week 7 agent loop on the integrated retriever; order lookup, entitlement and escalate tools; MCP tools discovered at runtime | Met | `tier1/service.py` runs `agent/agent_loop.py`; tools come from `list_tools()` (`agent/mcp_client.py`), filtered by `mcp_config.tier1.json`. With prefetch on, code makes the entitlement check and first search before the model starts (run `traj_off` shows the model making every call itself) | `make smoke` |
+| 3 | Own MCP server called live by another squad's client | Needs a person | Server `mcp_servers/help_centre_server.py` (stdio and HTTP with a bearer token), section 8; `fresh_eyes.md` is still a blank template | `make mcp-http` |
+| 4 | Eval suite on the integrated system in one command, 25 to 40 cases, assertions before judges, validated judge re-checked, agreement at least 85% | Partly: agreement needs a person | 39 cases; assertions then judges (`run.py`); primary judge is the Week 6 v1 rubric (96% in Week 6), re-graded on `fix1`. Agreement on integrated replies: NOT MEASURED until 20 labels exist. Pass rates are one draw (an uncached rerun of 10 cases passed 4 against 7) | `python -m tier1 eval --tag fix1`, then `--rescore fix1` |
+| 5 | Taxonomy re-scored: 4 to 7 modes, frequency, severity, one trace id each, one new mode from integration | Met | `docs/archive/deliverables/week12/taxonomy.md` (5 modes; mode 4 created by integration). Mode 3 rests on the judge, which is not yet validated | `python scripts/taxonomy_tally.py after fix1` |
+| 6 | Trajectory eval on 10+ cases: tool-choice accuracy and the outcome-vs-trajectory gap | Met | `report_fix1.md` "Trajectory" (n = 27 and 30) and `report_traj_off.md` (prefetch off, the model makes every call: n = 16, tool choice 94%, outcome 75%, gap -18.8 points) | `python -m tier1 eval --tag traj_off --limit 20 --ablate prefetch --no-judge` |
+| 7 | One trace id through the agent and MCP hops, cost and latency per span, no customer email or address in logs | Met | `trace.json`, `trace_escalate.json`: one id, `server:*` spans from both MCP servers, a cost on every span; checked against every customer email and address | `python scripts/export_trace.py <id>` |
+| 8 | Closed failure-to-test loop shown live; cost per deflected ticket; 10x plan with the number | Met in files; the live showing needs a person | `closed_loop.md` (section 7: RAN14 did not go red again in two rehearsals, so the demo shows the loop on RAN02, which is still red; `demo_script.md` Part 3), `cost_and_10x.md` ($0.000915 per deflected ticket; the 200,000-tokens-a-day cap breaks first, 47.6x over in Black Friday week) | `demo_script.md` Part 3 |
+| - | One repo a stranger can clone and run | Needs a person | `make up`; not yet tried by someone else, and the latest work must be committed and pushed first | `make up` |
+| - | Seam list, architecture, eval report with non-coverage, weaknesses, demo script | Met; weaknesses must be adopted; demo must be delivered | `docs/archive/deliverables/week12/` (`seams.md` has been edited since it was written, as its header says) | - |
+
+### 14.2 Results
+
+- **Integrated eval (`fix1`, production model):** 36 of 39 pass. All refund-policy pair cases pass. This is one
+  draw: an uncached rerun of the first 10 cases (`latency10`) passed 4 of 10 where `fix1` passed 7 (RAN05, RAN07 and
+  RAN09 flipped). Variance is not measured; a full rerun with the cache off (`fix2`) is next.
+- **Judges:** `fix1` was re-graded with the Week 6 v1 rubric as primary (`--rejudge`); v1 and v2 gave the same verdict
+  on all 24 answered replies (18 GOOD, 6 NOT GOOD). The integrated rubric said GOOD to 21.
+- **Trajectory with the model choosing every tool** (`traj_off`, prefetch off, cache off, 20 cases): tool choice right
+  on 15 of 16 model tickets (94%), outcome right on 12 (75%), gap -18.8 points; 6,115 tokens per model ticket.
+- **Latency, uncached** (`latency10`): p50 57.1 s and p95 120.1 s back to back. Tickets that did not queue took about
+  3 s; the slow ones spent 52 to 111 s waiting for the 8,000-tokens-a-minute limit (the `queue_wait_s` in each trace).
+  The cached `fix1` figures (p50 6.2 s) are not representative.
 - **Wrong refund policy:** with the version filter and policy guard off, 0 of 10 refund answers cited the wrong
   policy, the same as with them on. Only retrieval exposure moved (78% to 0% of top-3 results containing the wrong
   version, n = 60). The guard is insurance this sample cannot prove is needed.
 - **Closed loop:** wrong-source citations went from 6 to 3 of 25 on the same cases on the production model; the
-  held-out A/B on a second model (6 against 8 of 15, 4 better, 2 worse) is inconclusive.
+  held-out A/B on a second model (6 against 8 of 15, 4 better, 2 worse) is inconclusive. In two cache-off rehearsals
+  RAN14 passed with the two fixes off as well, so it is not shown as a live red-to-green; the demo shows the loop on
+  RAN02, which is still red.
 - **Token cut (prefetch):** 25% fewer tokens per ticket (4,912 against 6,590) on 10 tickets; 7 against 8 of 10 passed,
   so equal quality is not shown.
 - **Integration-created failure mode:** model output contains invisible and lookalike characters in 24 of 39 replies;
   they broke exact-match checks until text was normalised.
 - **Not measured yet:** judge agreement with people (needs 20 labels).
-- **Open decisions and work:** which Week 6 rubric the judge uses; the fresh-eyes review by another squad; the live
-  demo; building Docker and running CI; a paid tier or second provider for capacity; retrieval quality; stronger
+- **Open work:** the full uncached rerun (`fix2`) and a second run to measure variance; the fresh-eyes review by
+  another squad; the live demo; building Docker and running CI; a paid tier or second provider for capacity; retrieval quality; stronger
   redaction; multi-turn and real data; undo after approve; end-to-end browser tests; a form editor for eval cases.
   The functional README lists them in plain words.
 
@@ -499,7 +574,7 @@ Everything else that used to be a separate document is kept, unchanged, in [`doc
 
 | Folder or file | What it is |
 |---|---|
-| `deliverables/week12/` | capstone evidence: architecture, diagrams, seam list (every problem hit, with a status), taxonomy, weaknesses, cost and 10x, closed loop, demo script, fresh-eyes template, the exported trace and every eval report with its data. Scripts and evaluation runs keep writing here |
+| `deliverables/week12/` | capstone evidence: architecture, diagrams, seam list (every problem hit, with a status), taxonomy, weaknesses, cost and 10x, closed loop, demo script, fresh-eyes template, the exported traces and every eval report with its data (tags in its README, including `traj_off`, `latency10` and the `live_*` rehearsals). Scripts and evaluation runs keep writing here |
 | `deliverables/week10/`, `deliverables/week11/`, `deliverables/*.md` | earlier weeks' deliverables. The Multi-Agent page reads `deliverables/week10/` |
 | `WEEK10_*`, `WEEK11_*`, `WEEK12_*` | implementation notes, concepts and the Week 12 plan |
 | `docs/` | Week 4 to 9 notes, MCP guides, demo steps, agent concepts, the previous user and testing guides |

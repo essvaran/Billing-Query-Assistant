@@ -3,6 +3,8 @@
 import json
 import logging
 import sys
+import time
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
@@ -12,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -21,11 +24,33 @@ import re as _re
 # ---------------------------------------------------------------------------
 # Logging — structured, to stdout
 # ---------------------------------------------------------------------------
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s %(message)s",
-    datefmt="%Y-%m-%dT%H:%M:%S",
-)
+class _JsonFormatter(logging.Formatter):
+    """One JSON object per line, so a log shipper can index fields instead of parsing text."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        entry = {"ts": self.formatTime(record, "%Y-%m-%dT%H:%M:%S"), "level": record.levelname,
+                 "logger": record.name, "msg": record.getMessage()}
+        for key in ("request_id", "method", "path", "status", "ms"):
+            if hasattr(record, key):
+                entry[key] = getattr(record, key)
+        if record.exc_info:
+            entry["exc"] = self.formatException(record.exc_info)
+        return json.dumps(entry)
+
+
+def _configure_logging() -> None:
+    """JSON lines in production (or LOG_FORMAT=json), readable text in development."""
+    import os
+    default = "json" if os.getenv("APP_ENV", "").strip().lower() == "production" else "text"
+    handler = logging.StreamHandler()
+    if os.getenv("LOG_FORMAT", default).strip().lower() == "json":
+        handler.setFormatter(_JsonFormatter())
+    else:
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s", "%Y-%m-%dT%H:%M:%S"))
+    logging.basicConfig(level=logging.INFO, handlers=[handler])
+
+
+_configure_logging()
 log = logging.getLogger("api")
 
 # ---------------------------------------------------------------------------
@@ -90,6 +115,16 @@ async def lifespan(app: FastAPI):
     from tier1 import tracing_store
     tracing_store.install()
 
+    # Answer jobs run in threads of this process, so any job still 'running' lost its worker at the last stop.
+    try:
+        from tier1 import db as tier1_db, store as tier1_store
+        tier1_db.init_db()
+        ended = tier1_store.fail_interrupted_jobs()
+        if ended:
+            log.warning("Marked %d interrupted answer job(s) as failed", ended)
+    except Exception as exc:                     # the ticket database is optional until the first ticket
+        log.warning("Could not check for interrupted jobs: %s", type(exc).__name__)
+
     from src.generation.langfuse_client import get_langfuse
     lf = get_langfuse()
     log.info("LangFuse: %s", "enabled" if lf else "disabled (check .env keys)")
@@ -101,14 +136,18 @@ async def lifespan(app: FastAPI):
 # ---------------------------------------------------------------------------
 # Application
 # ---------------------------------------------------------------------------
-from api.limiter import limiter
+from api.limiter import limiter, user_or_ip
+import api.config  # noqa: F401,E402  loads .env before APP_ENV is read below
+from tier1.preflight import is_production as _is_production
 
+# The interactive API docs describe every endpoint, admin ones included, so they are off in production.
+_DOCS = not _is_production()
 app = FastAPI(
     title="Billing Support RAG API",
     version="1.0.0",
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
-    openapi_url="/api/openapi.json",
+    docs_url="/api/docs" if _DOCS else None,
+    redoc_url="/api/redoc" if _DOCS else None,
+    openapi_url="/api/openapi.json" if _DOCS else None,
     lifespan=lifespan,
 )
 app.state.limiter = limiter
@@ -132,6 +171,7 @@ from api.help_router import router as help_router
 from api.catalog_router import router as catalog_router
 from api.tier1_admin_router import router as tier1_admin_router
 from api.eval_admin_router import router as eval_admin_router
+from api.chat_router import router as chat_router
 
 app.include_router(auth_router)
 app.include_router(observability_router)
@@ -148,6 +188,7 @@ app.include_router(help_router)
 app.include_router(catalog_router)
 app.include_router(tier1_admin_router)
 app.include_router(eval_admin_router)
+app.include_router(chat_router)
 
 # ---------------------------------------------------------------------------
 # CORS  —  restrict to configured origins only
@@ -158,18 +199,38 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Accept", "Authorization"],
-    allow_credentials=True,
+    allow_headers=["Content-Type", "Accept", "Authorization", "X-Request-ID"],
+    expose_headers=["X-Request-ID"],
+    allow_credentials=False,          # the session is a bearer token, never a cookie
 )
 
 # ---------------------------------------------------------------------------
 # Request logging middleware
 # ---------------------------------------------------------------------------
 
+_REQUEST_ID = _re.compile(r"^[A-Za-z0-9-]{8,64}$")
+
+
 @app.middleware("http")
 async def _log_requests(request: Request, call_next):
-    response = await call_next(request)
-    log.info("%s %s %s", request.method, request.url.path, response.status_code)
+    """Every response carries X-Request-ID (the caller's, when it sent a sane one) and one access-log line
+    with the same id, so a user quoting the id from an error message leads straight to the log line.
+    An unhandled error becomes {detail, request_id} with no traceback in the body."""
+    incoming = request.headers.get("x-request-id", "")
+    request_id = incoming if _REQUEST_ID.match(incoming) else uuid.uuid4().hex
+    request.state.request_id = request_id
+    start = time.perf_counter()
+    try:
+        response = await call_next(request)
+    except Exception:
+        log.exception("Unhandled error", extra={"request_id": request_id, "method": request.method,
+                                                "path": request.url.path})
+        response = JSONResponse({"detail": "Internal error", "request_id": request_id}, status_code=500)
+    ms = round((time.perf_counter() - start) * 1000, 1)
+    response.headers["X-Request-ID"] = request_id
+    log.info("%s %s %s %sms", request.method, request.url.path, response.status_code, ms,
+             extra={"request_id": request_id, "method": request.method, "path": request.url.path,
+                    "status": response.status_code, "ms": ms})
     return response
 
 # ---------------------------------------------------------------------------
@@ -191,24 +252,39 @@ def health():
 
 
 @app.get("/api/ready", tags=["meta"])
-def ready():
-    """Readiness: configuration valid, databases open, search index built. 503 with the fixes when not ready.
-    Checks only local state (no model call), so a load balancer can poll it cheaply."""
+def ready(request: Request):
+    """Readiness: configuration valid, databases open, search index built. 503 when not ready.
+    Checks only local state (no model call, no writes), so a load balancer can poll it cheaply. In production
+    the list of problems (which secrets are weak or missing) goes only to an admin; everyone else gets the status."""
     from tier1 import db as tier1_db, preflight
     problems = [p for p in preflight.check_env() + preflight.check_data() if p.level == "error"]
     try:
         from api.database import get_db
         with get_db() as conn:
             conn.execute("SELECT 1")
-        tier1_db.init_db()
-        with tier1_db.get_conn() as conn:
-            conn.execute("SELECT 1")
+        if Path(tier1_db.DB_PATH).exists():
+            with tier1_db.get_conn() as conn:
+                conn.execute("SELECT 1")
     except Exception as exc:
         problems.append(preflight.Problem("error", "database", f"A database could not be opened ({type(exc).__name__}).",
                                           "Check that the data/ folder is writable."))
-    body = {"status": "ready" if not problems else "not_ready", "env": preflight.app_env(),
-            "problems": [{"key": p.key, "message": p.message, "fix": p.fix} for p in problems]}
+    body = {"status": "ready" if not problems else "not_ready"}
+    if not preflight.is_production() or _is_admin_request(request):
+        body["env"] = preflight.app_env()
+        body["problems"] = [{"key": p.key, "message": p.message, "fix": p.fix} for p in problems]
     return JSONResponse(body, status_code=200 if not problems else 503)
+
+
+def _is_admin_request(request: Request) -> bool:
+    from fastapi.security import HTTPAuthorizationCredentials
+    header = request.headers.get("authorization", "")
+    if not header.lower().startswith("bearer "):
+        return False
+    try:
+        user = get_current_user(HTTPAuthorizationCredentials(scheme="Bearer", credentials=header[7:]))
+    except HTTPException:
+        return False
+    return user.role == "admin"
 
 # ---------------------------------------------------------------------------
 # RAG ask endpoint (authenticated)
@@ -273,7 +349,8 @@ async def upload_document(
     from src.config import DEFAULT_COLLECTION
     from src.ingestion.ingest_document import ingest_file
 
-    filename = file.filename or "upload"
+    # Only the last path part of the client's name is used, so "../../api/x.py" cannot write outside the folder.
+    filename = Path((file.filename or "").replace("\\", "/")).name.strip() or "upload"
     suffix = Path(filename).suffix.lower()
     if suffix not in _allowed_upload_extensions():
         raise HTTPException(
@@ -283,7 +360,13 @@ async def upload_document(
 
     # Stream to a temp buffer and enforce size limit
     _ARTICLES_DIR.mkdir(parents=True, exist_ok=True)
-    dest = _ARTICLES_DIR / filename
+    base = _ARTICLES_DIR.resolve()
+    dest = (base / filename).resolve()
+    if dest.parent != base:
+        raise HTTPException(status_code=400, detail="Invalid file name")
+    if dest.exists():
+        raise HTTPException(status_code=409,
+                            detail=f"An article named '{filename}' already exists. Rename the file or delete the old one first.")
     bytes_written = 0
     try:
         with dest.open("wb") as out:
@@ -300,10 +383,12 @@ async def upload_document(
         await file.close()
 
     try:
-        chunk_count = ingest_file(dest, DEFAULT_COLLECTION)
+        chunk_count = await run_in_threadpool(ingest_file, dest, DEFAULT_COLLECTION)
     except Exception as exc:
         dest.unlink(missing_ok=True)
-        log.error("Ingestion failed for %s: %s", filename, exc)
+        log.exception("Ingestion failed for %s", filename)
+        if isinstance(exc, ValueError):
+            raise HTTPException(status_code=422, detail=f"Failed to process document: {exc}") from exc
         raise HTTPException(status_code=422, detail="Failed to process document") from exc
 
     log.info("Ingested %s — %d chunks", filename, chunk_count)
@@ -455,7 +540,8 @@ def get_trace_prompt(trace_id: str, _user=Depends(require_admin)) -> TracePrompt
 
 
 @app.get("/api/traces/{trace_id}/replay", response_model=ReplayResult)
-def replay_trace(trace_id: str, _user=Depends(require_admin)) -> ReplayResult:
+@limiter.limit("10/minute", key_func=user_or_ip)
+def replay_trace(request: Request, trace_id: str, _user=Depends(require_admin)) -> ReplayResult:
     from src.generation.citations import extract_citations, validate_citations
     from src.generation.llm_client import LLMRequestError, ask_llm, default_model
     from src.generation.prompts import build_user_prompt, system_prompt
@@ -506,10 +592,15 @@ def replay_trace(trace_id: str, _user=Depends(require_admin)) -> ReplayResult:
         ]
         user_prompt = build_user_prompt(trace["question"], prompt_chunks)
         try:
-            replayed_raw, in_tok, out_tok = ask_llm(system_prompt(), user_prompt, model=original_model)
-        except LLMRequestError:
-            replayed_raw, in_tok, out_tok = ask_llm(system_prompt(), user_prompt)
-            replay_model = env_default
+            try:
+                replayed_raw, in_tok, out_tok = ask_llm(system_prompt(), user_prompt, model=original_model)
+            except LLMRequestError:
+                replayed_raw, in_tok, out_tok = ask_llm(system_prompt(), user_prompt)
+                replay_model = env_default
+        except LLMRequestError as exc:
+            log.error("Replay of %s failed: %s", trace_id, exc)
+            raise HTTPException(status_code=502,
+                                detail="The model service is unavailable. Try the replay again later.") from exc
         retrieved_ids = {c["chunk_id"] for c in chunks_used}
         replayed_citations = extract_citations(replayed_raw)
         replayed_citations_valid = validate_citations(replayed_citations, retrieved_ids)

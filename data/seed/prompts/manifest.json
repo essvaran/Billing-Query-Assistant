@@ -222,6 +222,17 @@
       "required_phrases": [
         "4. "
       ]
+    },
+    {
+      "name": "router.classify",
+      "label": "Chat router",
+      "description": "Picks the assistant or Docs mode for a chat question when the routing rules are unsure.",
+      "used_by": "src/routing/route.py",
+      "file": "router__classify.txt",
+      "placeholders": [],
+      "required_phrases": [
+        "route"
+      ]
     }
   ]
 }

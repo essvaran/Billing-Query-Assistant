@@ -18,9 +18,8 @@ def client(tmp_path, monkeypatch):
 
 
 def _jwt(email, role):
-    from jose import jwt
-    from api.config import JWT_ALGORITHM, JWT_SECRET
-    return {"Authorization": "Bearer " + jwt.encode({"sub": email, "role": role}, JWT_SECRET, algorithm=JWT_ALGORITHM)}
+    from auth_helpers import session_token
+    return {"Authorization": "Bearer " + session_token(email, role)}
 
 
 ADMIN = None
@@ -28,7 +27,7 @@ USER = None
 
 
 @pytest.fixture(autouse=True)
-def _headers():
+def _headers(client):
     global ADMIN, USER
     ADMIN, USER = _jwt("lead@example.com", "admin"), _jwt("cust@example.com", "user")
 
@@ -239,3 +238,18 @@ def test_week6_page_data_is_computed_from_the_stored_run(client):
     assert w["n"] == 26 and w["labelled"] == 25
     assert w["judges"]["judge"]["agreement"]["agree"] == 20 and w["judges"]["judge_alt"]["agreement"]["agree"] == 24
     assert sum(m["n"] for m in w["by_mode"]) == 26 and "Respond with exactly one word" in w["prompts"]["week6-v2"]
+
+
+def test_upgrade_adds_new_application_fixed_codes_but_keeps_labels():
+    """A code the application starts using (here a new judge role) reaches an existing database; labels stay as edited."""
+    from src.catalog import db as catalog_db, ref, seed
+    with catalog_db.connect() as conn:
+        conn.execute("DELETE FROM ref_values WHERE category='judge_role' AND code='judge_week6_alt'")
+        conn.execute("UPDATE ref_values SET label='Edited by admin' WHERE category='judge_role' AND code='judge'")
+    catalog_db.invalidate()
+    assert ref.get("judge_role", "judge_week6_alt") is None
+    with catalog_db.connect() as conn:
+        seed.apply(conn)
+    catalog_db.invalidate()
+    assert ref.get("judge_role", "judge_week6_alt") is not None
+    assert ref.label("judge_role", "judge") == "Edited by admin"

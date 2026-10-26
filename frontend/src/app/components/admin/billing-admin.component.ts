@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Addon, Cycle, Invoice, Plan } from '../../services/account.service';
@@ -8,6 +8,7 @@ import {
 import { KpiTileComponent, EmptyStateComponent } from '../../shared/primitives';
 import { ModalComponent } from '../../shared/modal.component';
 import { ToastService } from '../../shared/toast';
+import { ConfirmService } from '../../shared/confirm';
 import { money } from '../../shared/labels';
 import { publicSetting, refMeta, refValues } from '../../shared/ref-data';
 
@@ -353,7 +354,8 @@ export class BillingAdminComponent implements OnInit, OnDestroy {
       error: e => { this.busy = false; this.fail(e, 'Could not save the plan.'); },
     });
   }
-  archive(p: Plan): void {
+  async archive(p: Plan): Promise<void> {
+    if (!(await this.confirm.ask(`Archive ${p.name}? New customers can no longer choose it; current subscribers keep it.`, { confirmLabel: 'Archive' }))) return;
     this.api.archivePlan(p.id).subscribe({
       next: () => { this.toast.success(`${p.name} archived. Current subscribers keep it.`); this.loadPlans(); },
       error: e => this.fail(e, 'Could not archive the plan.'),
@@ -404,11 +406,19 @@ export class BillingAdminComponent implements OnInit, OnDestroy {
   }
 
   // invoices
-  markPaid(i: Invoice): void { this.api.markPaid(i.id).subscribe({ next: () => this.loadInvoices(), error: e => this.fail(e, 'Could not update the invoice.') }); }
-  voidInvoice(i: Invoice): void { this.api.voidInvoice(i.id).subscribe({ next: () => this.loadInvoices(), error: e => this.fail(e, 'Could not void the invoice.') }); }
+  private readonly confirm = inject(ConfirmService);
+
+  async markPaid(i: Invoice): Promise<void> {
+    if (!(await this.confirm.ask(`Mark invoice ${i.number} (${this.money(i.amount_cents, i.currency)}) as paid?`, { confirmLabel: 'Mark paid' }))) return;
+    this.api.markPaid(i.id).subscribe({ next: () => { this.toast.success(`${i.number} marked paid.`); this.loadInvoices(); }, error: e => this.fail(e, 'Could not update the invoice.') });
+  }
+  async voidInvoice(i: Invoice): Promise<void> {
+    if (!(await this.confirm.ask(`Void invoice ${i.number}? The customer will no longer owe it, and this cannot be undone.`, { danger: true, confirmLabel: 'Void invoice' }))) return;
+    this.api.voidInvoice(i.id).subscribe({ next: () => { this.toast.success(`${i.number} voided.`); this.loadInvoices(); }, error: e => this.fail(e, 'Could not void the invoice.') });
+  }
 
   private fail(err: any, fallback: string): void {
     const d = err?.error?.detail;
-    this.toast.error(typeof d === 'string' ? d : (Array.isArray(d) && d[0]?.msg) || fallback);
+    this.toast.error(typeof d === 'string' ? d : (Array.isArray(d) && d[0]?.msg) || fallback, err);
   }
 }

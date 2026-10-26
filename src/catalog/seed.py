@@ -2,7 +2,10 @@
 
 Rules, so an admin's edits survive restarts and upgrades:
 - reference values are written only when their category is created; category metadata (label, description, form
-  schema) is refreshed from the seed because it describes the code, not the data;
+  schema) is refreshed from the seed because it describes the code, not the data. One exception: in a category whose
+  codes are fixed by the application (codes_editable false), a code the seed has and the database lacks is added,
+  because the application now uses it. Admins cannot add or delete codes there, so no edit is undone; an existing
+  value's label is never touched;
 - a setting is added when its key is missing; its value is never overwritten, its metadata is refreshed;
 - model prices, prompts, guard rules and eval data are imported once (a flag in catalog_meta records it).
 """
@@ -39,7 +42,7 @@ def _reference(conn: sqlite3.Connection) -> None:
             "meta_schema=excluded.meta_schema, default_meta=excluded.default_meta",
             (cat["category"], cat["label"], cat.get("description", ""), int(cat.get("codes_editable", True)),
              json.dumps(cat.get("meta_schema", {})), json.dumps(cat.get("default_meta", {}))))
-        if exists:
+        if exists and cat.get("codes_editable", True):
             continue
         for i, v in enumerate(cat["values"]):
             conn.execute(

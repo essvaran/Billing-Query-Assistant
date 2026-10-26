@@ -1,3 +1,4 @@
+import { ConfirmService } from '../../shared/confirm';
 import { ChangeDetectionStrategy, Component, Input, OnChanges, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CatalogService } from '../../services/catalog.service';
@@ -105,6 +106,7 @@ const ID: Record<Kind, string> = { customers: 'customer_id', orders: 'order_id',
   styles: [DATA_STYLES],
 })
 export class Tier1DataComponent implements OnChanges {
+  private readonly confirm = inject(ConfirmService);
   @Input({ required: true }) kind!: Kind;
   private api = inject(CatalogService);
   private toast = inject(ToastService);
@@ -162,9 +164,9 @@ export class Tier1DataComponent implements OnChanges {
     });
   }
 
-  remove(r: Record<string, unknown>): void {
+  async remove(r: Record<string, unknown>): Promise<void> {
     const id = String(r[this.idKey()]);
-    if (!window.confirm(`Delete ${id}?`)) return;
+    if (!(await this.confirm.ask(`Delete ${id}?`, { danger: true, confirmLabel: 'Delete' }))) return;
     this.api.tier1Delete(this.kind, id).subscribe({ next: () => { this.toast.success('Deleted.'); this.load(); }, error: err => this.toast.error(apiMessage(err)) });
   }
 }

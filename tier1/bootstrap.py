@@ -72,9 +72,9 @@ def main(argv: list[str] | None = None) -> int:
     if missing:
         if args.no_install:
             return _fail("packages", [preflight.Problem("error", "packages", f"Missing: {', '.join(missing)}",
-                                                        "Run: python -m pip install -r requirements.txt")])
+                                                        "Run: python -m pip install -r requirements-dev.txt")])
         _say("....", "packages", f"installing (missing {', '.join(missing)}); this takes a few minutes the first time")
-        if not _run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"]):
+        if not _run([sys.executable, "-m", "pip", "install", "-r", "requirements-dev.txt"]):
             return _fail("packages", [preflight.Problem("error", "packages", "pip install failed (see its output above).",
                                                         "Fix the pip error, then run this command again.")])
         _say("OK", "packages", "installed")

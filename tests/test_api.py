@@ -28,9 +28,8 @@ def _temp_db(tmp_path, monkeypatch):
 
 
 def _make_jwt(email: str, role: str = "user") -> str:
-    from jose import jwt
-    from api.config import JWT_SECRET, JWT_ALGORITHM
-    return jwt.encode({"sub": email, "role": role}, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    from auth_helpers import session_token
+    return session_token(email, role)
 
 
 def test_health():

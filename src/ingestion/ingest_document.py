@@ -18,6 +18,10 @@ def ingest_file(file_path: Path, collection_name: str = DEFAULT_COLLECTION) -> i
     Returns the number of chunks indexed.
     """
     article = load_article(file_path)
+    if not article.content.strip():
+        raise ValueError(
+            "No text could be extracted (scanned/image-only PDFs are not supported without OCR)."
+        )
     chunks = structure_aware_chunk_article(article)
     if not chunks:
         chunks = baseline_chunk_article(article)

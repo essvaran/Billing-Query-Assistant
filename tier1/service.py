@@ -41,6 +41,10 @@ def _escalate_locally(req: TicketRequest, trace_id: str, reason: str, summary: s
     return tools.escalate(ref, reason, summary, trace_id=trace_id)["handoff_id"]
 
 
+_GREETING = re.compile(r"^\s*(hi|hello|hey|hiya|good (morning|afternoon|evening)|thanks|thank you|ok|okay)\b[\s!.,?]*$", re.I)
+_GREETING_REPLY = ("how can I help? I can answer questions about refunds and returns, delivery, payments, "
+                   "your plan and your account settings.")
+
 _ERROR_CODE = re.compile(r"\b[A-Z]{2,5}-\d{3,5}\b")
 
 
@@ -68,6 +72,10 @@ def _prefetcher(req: TicketRequest):
             if req.order_id:
                 args["order_id"] = req.order_id
             ent = call("check_entitlement", args)
+            if "error" in ent and req.order_id:
+                # An order we cannot find must not take the customer's policy with it: the reply can still
+                # say what the policy is and ask for the right order number.
+                ent = call("check_entitlement", {"customer_id": req.customer_id})
             if "error" not in ent:
                 version = ent.get("policy_version") or ""
         call("search_help_centre", {"query": _search_query(req.subject, req.body), "policy_version": version})
@@ -135,35 +143,45 @@ def _handle(req: TicketRequest, trace_id: str, on_step=None) -> TicketResponse:
         return done(TicketResponse("ESCALATE", "", trace_id, reason=block.reason, handoff_id=handoff,
                                    violations=[{"code": block.category, "detail": block.detail}]))
 
+    if _GREETING.match(req.body or "") and not req.subject.strip():
+        first_name = ((db.get_customer(req.customer_id) or {}).get("name") or "").split(" ")[0]
+        reply = (f"Hi {first_name}, " if first_name else "Hi, ") + _GREETING_REPLY
+        return done(TicketResponse("ANSWER", reply, trace_id, customer_reply=reply))
+
     # 3. agent loop
     steps: list[dict] = []
-    try:
-        with tracing.span("mcp_connect", "setup") as cs:
-            # Near zero once the process is warm; about 13 s on the first ticket of a cold process,
-            # because the help-centre server loads its embedding model before it serves.
-            mcp = agent_loop._get_mcp(MCP_CONFIG, _setting("tool_timeout_s"), _setting("connect_timeout_s"))
-            cs.set(tools=len(mcp.get_tool_schemas()), blocked=len(mcp.blocked_tools()))
-        result = agent_loop.run_agent(
-            ticket_id=req.ticket_id,
-            user_message=prompts.user_message(req.subject, req.body, req.customer_id, req.order_id, req.ticket_id),
-            system_prompt_override=prompts.system_prompt(mcp.get_tool_schemas(), prefetched=not ablated("prefetch")),
-            on_step=lambda step: (steps.append(step), emit(step)),
-            mcp_config=MCP_CONFIG,
-            request_trace_id=trace_id,
-            tool_timeout=_setting("tool_timeout_s"),
-            connect_timeout=_setting("connect_timeout_s"),
-            max_iters=_setting("max_laps"),
-            max_tokens=_setting("max_tokens"),
-            max_wall=_setting("max_wall_s"),
-            max_cost=1e9,                      # the Tier-1 budget is laps, tokens and time; cost follows from tokens
-            tool_call_caps={"search_help_centre": _setting("max_searches")},
-            prefetch=_prefetcher(req),
-        )
-    except Exception as exc:  # MCP down, provider down: the customer still gets a human
-        reason = "rate_limited" if str(exc).startswith("rate_limited") else "tool_error"
-        handoff = _escalate_locally(req, trace_id, reason, f"agent could not run: {type(exc).__name__}")
-        return done(TicketResponse("ESCALATE", "", trace_id, reason=reason, handoff_id=handoff,
-                                   error=f"{type(exc).__name__}: {str(exc)[:150]}"))
+    for attempt in (1, 2):   # one retry: a provider or MCP hiccup should not cost a customer a human handoff
+        steps.clear()
+        try:
+            with tracing.span("mcp_connect", "setup") as cs:
+                # Near zero once the process is warm; about 13 s on the first ticket of a cold process,
+                # because the help-centre server loads its embedding model before it serves.
+                mcp = agent_loop._get_mcp(MCP_CONFIG, _setting("tool_timeout_s"), _setting("connect_timeout_s"))
+                cs.set(tools=len(mcp.get_tool_schemas()), blocked=len(mcp.blocked_tools()))
+            result = agent_loop.run_agent(
+                ticket_id=req.ticket_id,
+                user_message=prompts.user_message(req.subject, req.body, req.customer_id, req.order_id, req.ticket_id),
+                system_prompt_override=prompts.system_prompt(mcp.get_tool_schemas(), prefetched=not ablated("prefetch")),
+                on_step=lambda step: (steps.append(step), emit(step)),
+                mcp_config=MCP_CONFIG,
+                request_trace_id=trace_id,
+                tool_timeout=_setting("tool_timeout_s"),
+                connect_timeout=_setting("connect_timeout_s"),
+                max_iters=_setting("max_laps"),
+                max_tokens=_setting("max_tokens"),
+                max_wall=_setting("max_wall_s"),
+                max_cost=1e9,                      # the Tier-1 budget is laps, tokens and time; cost follows from tokens
+                tool_call_caps={"search_help_centre": _setting("max_searches")},
+                prefetch=_prefetcher(req),
+            )
+            break
+        except Exception as exc:  # MCP down, provider down: the customer still gets a human
+            if attempt == 1 and not str(exc).startswith("rate_limited"):
+                continue
+            reason = "rate_limited" if str(exc).startswith("rate_limited") else "tool_error"
+            handoff = _escalate_locally(req, trace_id, reason, f"agent could not run: {type(exc).__name__}")
+            return done(TicketResponse("ESCALATE", "", trace_id, reason=reason, handoff_id=handoff,
+                                       error=f"{type(exc).__name__}: {str(exc)[:150]}"))
 
     events = _events_from_steps(steps)
     try:  # cost from the recorded spans (per-model price), not the loop's flat estimate

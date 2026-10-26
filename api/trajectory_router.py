@@ -8,11 +8,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from api.auth import UserOut, require_admin  # research tools: admin only (they spend model quota)
+from api.limiter import limiter, user_or_ip
 
 log = logging.getLogger("api.trajectory")
 router = APIRouter(prefix="/api/trajectory", tags=["trajectory"])
@@ -50,7 +51,8 @@ def get_expected_sequences(_user: UserOut = Depends(require_admin)):
 
 
 @router.post("/run")
-def start_eval(_user: UserOut = Depends(require_admin)):
+@limiter.limit("5/minute", key_func=user_or_ip)
+def start_eval(request: Request, _user: UserOut = Depends(require_admin)):
     """Start trajectory eval in a background thread."""
     with _eval_lock:
         if _eval_status["status"] == "running":
@@ -107,7 +109,8 @@ def get_eval_results(_user: UserOut = Depends(require_admin)):
 # --- Mitigation endpoints ---
 
 @router.post("/mitigate")
-def start_mitigation(_user: UserOut = Depends(require_admin)):
+@limiter.limit("5/minute", key_func=user_or_ip)
+def start_mitigation(request: Request, _user: UserOut = Depends(require_admin)):
     """Run eval with argument validation mitigation, compare before/after."""
     with _mitigation_lock:
         if _mitigation_status["status"] == "running":
@@ -165,7 +168,8 @@ def get_mitigation_results(_user: UserOut = Depends(require_admin)):
 # --- Injection test endpoints ---
 
 @router.post("/injection/run")
-def start_injection_test(_user: UserOut = Depends(require_admin)):
+@limiter.limit("5/minute", key_func=user_or_ip)
+def start_injection_test(request: Request, _user: UserOut = Depends(require_admin)):
     """Run injection tests (undefended and defended)."""
     with _injection_lock:
         if _injection_status["status"] == "running":

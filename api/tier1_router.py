@@ -17,10 +17,11 @@ import uuid
 from pathlib import Path
 
 import yaml
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
 from api.auth import UserOut, get_current_user, require_admin
+from api.limiter import limiter, user_or_ip
 from src.config import PROJECT_ROOT, VARIANT_A_CORPUS_DIR
 from src.observability.redact import redact
 from src.catalog import eval_store, ref
@@ -132,7 +133,8 @@ class AnswerRequest(BaseModel):
 
 
 @router.post("/answer")
-def answer(req: AnswerRequest, user: UserOut = Depends(get_current_user)):
+@limiter.limit("6/minute", key_func=user_or_ip)
+def answer(request: Request, req: AnswerRequest, user: UserOut = Depends(get_current_user)):
     _ready()
     ticket_id = ""
     if req.ticket_id:
@@ -205,6 +207,34 @@ def _public_result(result: dict | None) -> dict | None:
     return {k: result.get(k) for k in _USER_RESULT_KEYS}
 
 
+_USER_STEP_TYPES = ("guard", "tool_call", "tool_result", "budget_hit")
+_USER_JOB_ERROR = "We could not answer this one automatically, so we have passed it to our team."
+
+
+def _public_steps(steps: list[dict] | None) -> list[dict]:
+    """Progress only for a non-admin: which stage ran and whether it passed. Never tool arguments or
+    results, model output, token counts, cost, guard categories or violation codes."""
+    out = []
+    for s in steps or []:
+        kind = s.get("type")
+        if kind not in _USER_STEP_TYPES:
+            continue
+        step = {"type": kind}
+        if kind in ("tool_call", "tool_result"):
+            step["lap"] = s.get("lap")
+            step["tool"] = s.get("tool")
+            if kind == "tool_result":
+                result = s.get("result")
+                step["failed"] = bool(isinstance(result, dict) and result.get("error"))
+        elif kind == "guard":
+            step["stage"] = s.get("stage")
+            step["blocked"] = bool(s.get("blocked") or s.get("violations"))
+            if s.get("stage") == "post":
+                step["citations"] = s.get("citations")
+        out.append(step)
+    return out
+
+
 @router.get("/jobs/{job_id}")
 def job(job_id: str, user: UserOut = Depends(get_current_user)):
     found = store.get_job(job_id)
@@ -213,7 +243,11 @@ def job(job_id: str, user: UserOut = Depends(get_current_user)):
     if user.role != "admin":
         if found.get("owner") != user.email:
             raise HTTPException(404, "Job not found")
-        found = {**found, "result": _public_result(found["result"])}
+        found = {k: v for k, v in found.items() if k != "owner"}
+        found["result"] = _public_result(found.get("result"))
+        found["steps"] = _public_steps(found.get("steps"))
+        if found.get("error"):
+            found["error"] = _USER_JOB_ERROR
     return found
 
 
@@ -243,10 +277,13 @@ class FeedbackRequest(BaseModel):
 
 
 @router.post("/feedback")
-def feedback(req: FeedbackRequest, user: UserOut = Depends(get_current_user)):
+@limiter.limit("20/minute", key_func=user_or_ip)
+def feedback(request: Request, req: FeedbackRequest, user: UserOut = Depends(get_current_user)):
     _ready()
     if req.reason not in eval_cases.reasons():
         raise HTTPException(400, f"reason must be one of {eval_cases.reasons()}")
+    if user.role != "admin" and not store.owns_trace(req.trace_id, user.email):
+        raise HTTPException(404, "Answer not found")
     return {"id": store.add_feedback(req.ticket_id, req.trace_id, req.reason, req.comment, user.email)}
 
 
@@ -440,7 +477,7 @@ def label_agreement(tag: str, _admin: UserOut = Depends(require_admin)):
     if labelled < human_labels.min_labels():
         return {**out, "status": "locked"}
     judges = {}
-    for key in ("judge", "judge_alt"):
+    for key in ("judge", "judge_week6_alt", "judge_alt"):
         if any(r.get(key) for r in rows):
             first = next(r[key] for r in rows if r.get(key))
             judges[key] = {"version": first.get("version", "v3b-integrated"), "model": first.get("model"),
@@ -456,7 +493,8 @@ class EvalRunRequest(BaseModel):
 
 
 @router.post("/eval/run")
-def eval_run(req: EvalRunRequest, _admin: UserOut = Depends(require_admin)):
+@limiter.limit("3/minute", key_func=user_or_ip)
+def eval_run(request: Request, req: EvalRunRequest, _admin: UserOut = Depends(require_admin)):
     """Run the integrated eval suite in a separate process and report red or green when it ends."""
     if not _TAG.match(req.tag):
         raise HTTPException(400, "Invalid tag")

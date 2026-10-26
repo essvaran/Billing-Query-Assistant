@@ -53,6 +53,7 @@ def get_spans(trace_id: str) -> list[dict]:
     for r in rows:
         d = dict(r)
         d["attrs"] = json.loads(d["attrs"] or "{}")
+        d["cost_usd"] = tracing.own_cost(d["kind"], d["cost_usd"])     # spans stored before every span had a cost
         out.append(d)
     return out
 
@@ -89,4 +90,12 @@ def tree(spans: list[dict]) -> list[dict]:
         node = by_id[s["span_id"]]
         parent = by_id.get(s["parent_id"]) if s["parent_id"] else None
         (parent["children"] if parent else roots).append(node)
+    for root in roots:
+        _roll_up(root)
     return roots
+
+
+def _roll_up(node: dict) -> float:
+    """cost_usd_total: the span's own cost plus everything under it (the root's total is the ticket's cost)."""
+    node["cost_usd_total"] = round((node["cost_usd"] or 0) + sum(_roll_up(c) for c in node["children"]), 8)
+    return node["cost_usd_total"]

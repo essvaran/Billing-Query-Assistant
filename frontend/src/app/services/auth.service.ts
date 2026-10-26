@@ -100,6 +100,17 @@ export class AuthService {
     this._user$.next(res.user);
   }
 
+  /** The server decides the role; a role kept in the browser can be stale after a promotion or demotion. */
+  refreshUser(): Observable<AuthUser> {
+    return this.http.get<AuthUser>('/api/auth/me').pipe(tap(me => {
+      const current = this._user$.value;
+      if (!current || current.role === me.role) return;
+      const user: AuthUser = { email: current.email, role: me.role };
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      this._user$.next(user);
+    }));
+  }
+
   logout(): void {
     this._clearStorage();
     this._user$.next(null);

@@ -29,3 +29,11 @@ def isolated_catalog(_catalog_template, tmp_path, monkeypatch):
     catalog_db.use_path(path)
     monkeypatch.setenv("CATALOG_DB_PATH", str(path))   # inherited by MCP server subprocesses started in a test
     yield path
+
+
+@pytest.fixture(autouse=True)
+def _no_request_rate_limits(monkeypatch):
+    """slowapi keeps its counters in process memory, so limits would leak from one test into the next.
+    Tests that check a limit turn it back on themselves."""
+    from api.limiter import limiter
+    monkeypatch.setattr(limiter, "enabled", False)

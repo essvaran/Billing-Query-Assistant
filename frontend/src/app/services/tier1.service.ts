@@ -100,6 +100,7 @@ export interface Step {
   category?: string | null;
   violations?: string[];
   citations?: number;
+  failed?: boolean;      // customer view of a tool_result: the result itself is admin-only
   lap_tokens?: number;
   budget?: string;
 }

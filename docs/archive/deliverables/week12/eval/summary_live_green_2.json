@@ -1,0 +1,132 @@
+{
+  "tag": "live_green_2",
+  "ablate": null,
+  "n": 1,
+  "passed": 1,
+  "pass_rate": 1.0,
+  "by_slice": {
+    "random": {
+      "passed": 1,
+      "n": 1,
+      "rate": 1.0
+    }
+  },
+  "by_check": {
+    "cites_gold_source": {
+      "passed": 1,
+      "n": 1
+    },
+    "decision_matches": {
+      "passed": 1,
+      "n": 1
+    },
+    "expected_tools_called": {
+      "passed": 1,
+      "n": 1
+    },
+    "has_valid_citation": {
+      "passed": 1,
+      "n": 1
+    },
+    "no_money_claim": {
+      "passed": 1,
+      "n": 1
+    },
+    "no_pii_in_reply": {
+      "passed": 1,
+      "n": 1
+    },
+    "no_superseded_citation": {
+      "passed": 1,
+      "n": 1
+    }
+  },
+  "both_versions": {
+    "n": 0,
+    "passed": 0,
+    "legacy_14d": {
+      "n": 0,
+      "passed": 0
+    },
+    "current_30d": {
+      "n": 0,
+      "passed": 0
+    },
+    "pairs_both_correct": 0,
+    "pairs": 0
+  },
+  "superseded_policy": {
+    "refund_cases": 0,
+    "answered": 0,
+    "final_answers_citing_wrong_version": 0,
+    "final_rate": null,
+    "drafts_blocked_by_guard": 0,
+    "attempted_rate": null
+  },
+  "failure_modes": {},
+  "trajectory": {
+    "n": 1,
+    "tool_choice_accuracy": 1.0,
+    "outcome_accuracy": 1.0,
+    "gap_points": 0.0,
+    "right_answer_wrong_path": 0,
+    "right_path_wrong_answer": 0,
+    "both_right": 1,
+    "both_wrong": 0,
+    "wasted_search_calls": 0,
+    "model_choice": {
+      "n": 1,
+      "prefetched_cases": 1,
+      "accuracy": 1.0,
+      "outcome_accuracy": 1.0,
+      "gap_points": 0.0,
+      "right_answer_wrong_path": 0,
+      "right_path_wrong_answer": 0,
+      "mean_model_calls": 0
+    }
+  },
+  "cost_latency": {
+    "total_cost_usd": 0.000501,
+    "mean_cost_per_ticket_usd": 0.000501,
+    "deflected_assertions_only": 1,
+    "cost_per_deflected_usd": 0.000501,
+    "deflected_assertions_and_judge": 0,
+    "cost_per_deflected_judge_usd": null,
+    "llm_tickets": 1,
+    "tickets_with_no_model_call": 0,
+    "mean_tokens_per_llm_ticket": 2473,
+    "p50_latency_s": 0.0,
+    "p95_latency_s": 0.0,
+    "first_ticket_latency_s": 16.5,
+    "tpm_ceiling_tickets_per_min": 3.23
+  },
+  "judge": {
+    "model": null,
+    "version": "v3b-integrated",
+    "n": 0,
+    "good": 0,
+    "not_good": 0,
+    "error": 0,
+    "agreement": {
+      "status": "no labelled cases matched judged cases",
+      "labeler": "",
+      "n": 0
+    }
+  },
+  "llm_cache": {
+    "hits": 0,
+    "misses": 1
+  },
+  "wall_seconds": 17,
+  "resumed_from_partial": 0,
+  "settings": {
+    "ablate": "",
+    "cases": "main",
+    "only": null,
+    "limit": null,
+    "case_id": [
+      "RAN14"
+    ],
+    "judge": false
+  }
+}

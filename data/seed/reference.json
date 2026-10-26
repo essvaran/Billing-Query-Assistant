@@ -16,42 +16,66 @@
         {
           "code": "not_tier1",
           "label": "This is not a Tier-1 question",
-          "system": true
+          "system": true,
+          "meta": {
+            "customer_message": "This is outside what I can help with here, so I passed it to our team. A person will follow up."
+          }
         },
         {
           "code": "legal_or_safety",
           "label": "Mentions legal action, safety or a chargeback",
-          "system": true
+          "system": true,
+          "meta": {
+            "customer_message": "This needs a person to look at it, so I passed it to our team. Someone will contact you as soon as possible."
+          }
         },
         {
           "code": "fraud_or_security",
           "label": "Possible fraud or account-security issue",
-          "system": true
+          "system": true,
+          "meta": {
+            "customer_message": "For your account's safety, a person needs to review this. I passed it to our team and they will follow up. You do not need to ask again."
+          }
         },
         {
           "code": "entitlement_unavailable",
           "label": "Could not confirm what this customer is entitled to",
-          "system": true
+          "system": true,
+          "meta": {
+            "customer_message": "I could not confirm your account details or that order, so I passed it to our team. Please check the order number; a person will follow up."
+          }
         },
         {
           "code": "no_reliable_source",
           "label": "No reliable help-centre source was found",
-          "system": true
+          "system": true,
+          "meta": {
+            "customer_message": "I could not find a reliable answer in the help centre, so I passed it to our team. A person will follow up."
+          }
         },
         {
           "code": "injection_suspected",
           "label": "The ticket contains instructions aimed at the assistant",
-          "system": true
+          "system": true,
+          "meta": {
+            "customer_message": "I could not process that message, so I passed it to our team. A person will follow up."
+          }
         },
         {
           "code": "budget_exceeded",
           "label": "The assistant ran out of time or budget",
-          "system": true
+          "system": true,
+          "meta": {
+            "customer_message": "That took longer than expected, so I passed your question to our team. A person will follow up."
+          }
         },
         {
           "code": "tool_error",
           "label": "A system the assistant needs was unavailable",
-          "system": true
+          "system": true,
+          "meta": {
+            "customer_message": "I could not reach the systems I need right now, so I passed your question to our team. A person will follow up."
+          }
         },
         {
           "code": "rate_limited",
@@ -1341,6 +1365,10 @@
         {
           "code": "judge",
           "label": "Primary judge"
+        },
+        {
+          "code": "judge_week6_alt",
+          "label": "Second opinion (other Week 6 rubric)"
         },
         {
           "code": "judge_alt",

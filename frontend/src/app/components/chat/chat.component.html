@@ -6,20 +6,20 @@
       <span class="logo-icon">⚡</span>
       <span class="logo-text">Billing Support</span>
     </div>
-    <p class="sidebar-hint">Ask a billing question as a customer. Agent mode checks the account, cites the help centre and hands off to our team when unsure.</p>
+    <p class="sidebar-hint">Ask a billing question as a customer. Questions about your orders use your account; general questions use the help articles. When unsure, we hand off to our team.</p>
   </aside>
 
   <!-- Main area -->
   <div class="main">
 
     <!-- Messages -->
-    <div class="messages-area">
+    <div class="messages-area" (scroll)="onMessagesScroll($event)">
 
       @if (messages.length === 0) {
         <div class="empty-state">
           <div class="empty-icon">💬</div>
           <h2>How can I help you today?</h2>
-          <p>Ask in <strong>Agent</strong> mode (it uses your own account), or switch to <strong>Docs</strong> to search the help centre.</p>
+          <p>Ask about your orders, refunds and deliveries, or about billing migration. We look in the right place for you.</p>
         </div>
       }
 
@@ -36,6 +36,12 @@
           <!-- RAG assistant bubble -->
           @if (msg.role === 'assistant' && !msg.agentTurn) {
             <div class="bubble assistant-bubble">
+              @if (msg.routedTo) {
+                <p class="routed-from">Answered from the help articles</p>
+              }
+              @if (msg.note) {
+                <p class="routed-note" role="note">{{ msg.note }}</p>
+              }
               <p class="bubble-text">{{ msg.text || 'No answer available. Please try again.' }}</p>
 
               @if (msg.response && msg.response.chunks.length > 0) {
@@ -51,9 +57,9 @@
                       <div class="chunk-card">
                         <div class="chunk-meta">
                           @if (chunk.section) {
-                            <span>{{ chunk.article_id }} › {{ chunk.section }}</span>
+                            <span>{{ articleTitle(chunk.article_id) }} › {{ chunk.section }}</span>
                           } @else {
-                            <span>{{ chunk.article_id }}</span>
+                            <span>{{ articleTitle(chunk.article_id) }}</span>
                           }
                         </div>
                         <p class="chunk-excerpt">{{ chunk.text | slice:0:200 }}{{ chunk.text.length > 200 ? '…' : '' }}</p>
@@ -123,9 +129,13 @@
           <!-- Agent assistant bubble (Tier-1 assistant) -->
           @if (msg.role === 'assistant' && msg.agentTurn) {
             <div class="bubble assistant-bubble agent-bubble">
+              @if (msg.routedTo) {
+                <p class="routed-from">Answered using your account</p>
+              }
 
               @if (msg.agentTurn.status === 'running' || msg.agentTurn.steps.length > 0) {
-                <app-step-timeline [steps]="msg.agentTurn.steps" [running]="msg.agentTurn.status === 'running'" />
+                <app-step-timeline [steps]="msg.agentTurn.steps" [running]="msg.agentTurn.status === 'running'"
+                                   [audience]="canChoose ? 'admin' : 'customer'" />
               }
 
               @if (msg.agentTurn.status === 'done' && msg.agentTurn.result) {
@@ -141,7 +151,7 @@
                       <span class="chat-sources__label">Sources</span>
                       @for (src of sourceList(msg.agentTurn); track src.n) {
                         <button type="button" class="chat-source" (click)="openSource(msg.agentTurn, src.slug)">
-                          [{{ src.n }}] {{ src.slug }}
+                          [{{ src.n }}] {{ articleTitle(src.slug) }}
                         </button>
                       }
                     </div>
@@ -199,8 +209,8 @@
         </div>
       }
 
-      <!-- Typing indicator (RAG mode) -->
-      @if (loading && chatMode === 'rag') {
+      <!-- Typing indicator (routing, or a Docs answer on its way) -->
+      @if (showTyping) {
         <div class="message-row">
           <div class="bubble assistant-bubble typing">
             <span></span><span></span><span></span>
@@ -213,15 +223,18 @@
 
     <!-- Input bar -->
     <div class="input-bar">
-      <!-- Mode selector -->
-      <div class="mode-selector">
-        <select [(ngModel)]="chatMode" class="mode-select" [disabled]="loading" aria-label="Mode">
-          <option value="agent">Agent</option>
-          <option value="rag">Docs</option>
-        </select>
-      </div>
+      <!-- Mode override: admins only, for testing. Customers always get Auto. -->
+      @if (canChoose) {
+        <div class="mode-selector">
+          <select [(ngModel)]="chatMode" class="mode-select" [disabled]="loading" aria-label="Mode (admin)">
+            <option value="auto">Auto</option>
+            <option value="agent">Agent</option>
+            <option value="rag">Docs</option>
+          </select>
+        </div>
+      }
 
-      @if (chatMode === 'agent') {
+      @if (chatMode !== 'rag') {
         <div class="mode-selector customer-pick">
           @if (customersFailed) {
             <button type="button" class="chat-action" (click)="loadCustomers()">Reload account</button>
@@ -238,9 +251,11 @@
               }
             </select>
           } @else if (ownAccount) {
-            <span class="chat-account" title="The assistant answers using this account">Your account {{ ownAccount.customer_id }}</span>
-          } @else if (accountLoaded) {
+            <span class="chat-account" title="The assistant answers using your own account">Answers use your {{ planName(ownAccount.plan) }} plan</span>
+          } @else if (accountLoaded && chatMode === 'agent') {
             <span class="chat-account chat-account--none" role="status">No customer account is linked to your sign-in</span>
+          } @else if (accountLoaded) {
+            <span class="chat-account" title="No customer account is linked to your sign-in">Answers use the help articles</span>
           }
         </div>
       }

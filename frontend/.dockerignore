@@ -1,0 +1,6 @@
+# The image runs npm ci itself; a host node_modules (often built for Windows) must never overwrite it.
+node_modules
+dist
+.angular
+coverage
+*.log

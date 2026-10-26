@@ -2,53 +2,12 @@
 
   <!-- Page header -->
   <div class="admin-header">
-    <h2 class="admin-title">Tool Data Management</h2>
-    <p class="admin-sub">Manage tickets, orders, and customers used by agent tools. Changes take effect immediately.</p>
+    <h2 class="admin-title">Admin</h2>
+    <p class="admin-sub">Manage users, billing and help-centre documents. Labs holds the earlier course experiments.</p>
   </div>
-
-  <!-- Toast notifications -->
-  <div class="toast-stack" aria-live="polite">
-    @for (t of toasts; track t.id) {
-      <div class="toast" [class.toast--success]="t.kind === 'success'" [class.toast--error]="t.kind === 'error'">
-        <span>{{ t.message }}</span>
-        <button class="toast__close" (click)="dismissToast(t.id)" aria-label="Dismiss">✕</button>
-      </div>
-    }
-  </div>
-
-  <!-- Confirm modal -->
-  @if (confirmModal) {
-    <div class="modal-backdrop" (click)="dismissModal()" role="dialog" aria-modal="true">
-      <div class="modal-card" (click)="$event.stopPropagation()">
-        <p class="modal-msg">{{ confirmModal.message }}</p>
-        <div class="modal-actions">
-          <button class="btn btn--danger" (click)="executeModal()" [disabled]="saving">
-            @if (saving) { <span class="spinner spinner--sm"></span> } Delete
-          </button>
-          <button class="btn btn--ghost" (click)="dismissModal()">Cancel</button>
-        </div>
-      </div>
-    </div>
-  }
 
   <!-- Tabs -->
-  <div class="tabs" role="tablist">
-    <button class="tab-btn" role="tab" [class.active]="activeTab === 'tickets'"
-            (click)="setTab('tickets')" [attr.aria-selected]="activeTab === 'tickets'">
-      Tickets <span class="tab-count">{{ tickets.length }}</span>
-    </button>
-    <button class="tab-btn" role="tab" [class.active]="activeTab === 'orders'"
-            (click)="setTab('orders')" [attr.aria-selected]="activeTab === 'orders'">
-      Orders <span class="tab-count">{{ orders.length }}</span>
-    </button>
-    <button class="tab-btn" role="tab" [class.active]="activeTab === 'customers'"
-            (click)="setTab('customers')" [attr.aria-selected]="activeTab === 'customers'">
-      Customers <span class="tab-count">{{ customers.length }}</span>
-    </button>
-    <button class="tab-btn" role="tab" [class.active]="activeTab === 'documents'"
-            (click)="setTab('documents')" [attr.aria-selected]="activeTab === 'documents'">
-      Documents
-    </button>
+  <div class="tabs" role="tablist" aria-label="Admin sections">
     <button class="tab-btn" role="tab" [class.active]="activeTab === 'users'"
             (click)="setTab('users')" [attr.aria-selected]="activeTab === 'users'">
       Users <span class="tab-count">{{ users.length }}</span>
@@ -57,42 +16,66 @@
             (click)="setTab('billing')" [attr.aria-selected]="activeTab === 'billing'">
       Billing
     </button>
+    <button class="tab-btn" role="tab" [class.active]="activeTab === 'documents'"
+            (click)="setTab('documents')" [attr.aria-selected]="activeTab === 'documents'">
+      Documents
+    </button>
 
     <span class="tab-divider" aria-hidden="true"></span>
-
-    <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'observability'"
-            (click)="setTab('observability')" [attr.aria-selected]="activeTab === 'observability'">
-      Observability
-    </button>
-    <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'traces'"
-            (click)="setTab('traces')" [attr.aria-selected]="activeTab === 'traces'">
-      Traces
-    </button>
-    <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'sample'"
-            (click)="setTab('sample')" [attr.aria-selected]="activeTab === 'sample'">
-      Sample
-    </button>
-    <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'taxonomy'"
-            (click)="setTab('taxonomy')" [attr.aria-selected]="activeTab === 'taxonomy'">
-      Taxonomy
-    </button>
-    <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'eval'"
-            (click)="setTab('eval')" [attr.aria-selected]="activeTab === 'eval'">
-      Eval
-    </button>
-    <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'race'"
-            (click)="setTab('race')" [attr.aria-selected]="activeTab === 'race'">
-      Race
-    </button>
-    <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'trajectory'"
-            (click)="setTab('trajectory')" [attr.aria-selected]="activeTab === 'trajectory'">
-      Trajectory
-    </button>
-    <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'multiagent'"
-            (click)="setTab('multiagent')" [attr.aria-selected]="activeTab === 'multiagent'">
-      Multi-Agent
+    <button type="button" class="tab-btn tab-btn--dev tab-btn--labs" (click)="toggleLabs()"
+            [attr.aria-expanded]="labsOpen" aria-controls="labs-tabs">
+      Labs {{ labsOpen ? '(hide)' : '(show)' }}
     </button>
   </div>
+
+  @if (labsOpen) {
+    <div class="tabs tabs--labs" role="tablist" id="labs-tabs" aria-label="Labs: earlier experiments">
+      <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'observability'"
+              (click)="setTab('observability')" [attr.aria-selected]="activeTab === 'observability'">
+        Observability
+      </button>
+      <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'traces'"
+              (click)="setTab('traces')" [attr.aria-selected]="activeTab === 'traces'">
+        Traces
+      </button>
+      <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'sample'"
+              (click)="setTab('sample')" [attr.aria-selected]="activeTab === 'sample'">
+        Sample
+      </button>
+      <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'taxonomy'"
+              (click)="setTab('taxonomy')" [attr.aria-selected]="activeTab === 'taxonomy'">
+        Taxonomy
+      </button>
+      <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'eval'"
+              (click)="setTab('eval')" [attr.aria-selected]="activeTab === 'eval'">
+        Eval
+      </button>
+      <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'race'"
+              (click)="setTab('race')" [attr.aria-selected]="activeTab === 'race'">
+        Race
+      </button>
+      <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'trajectory'"
+              (click)="setTab('trajectory')" [attr.aria-selected]="activeTab === 'trajectory'">
+        Trajectory
+      </button>
+      <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'multiagent'"
+              (click)="setTab('multiagent')" [attr.aria-selected]="activeTab === 'multiagent'">
+        Multi-Agent
+      </button>
+      <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'tickets'"
+              (click)="setTab('tickets')" [attr.aria-selected]="activeTab === 'tickets'">
+        Week 7 tickets <span class="tab-count">{{ tickets.length }}</span>
+      </button>
+      <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'orders'"
+              (click)="setTab('orders')" [attr.aria-selected]="activeTab === 'orders'">
+        Week 7 orders <span class="tab-count">{{ orders.length }}</span>
+      </button>
+      <button class="tab-btn tab-btn--dev" role="tab" [class.active]="activeTab === 'customers'"
+              (click)="setTab('customers')" [attr.aria-selected]="activeTab === 'customers'">
+        Week 7 customers <span class="tab-count">{{ customers.length }}</span>
+      </button>
+    </div>
+  }
 
   <!-- ===== TICKETS ===== -->
   @if (activeTab === 'tickets') {

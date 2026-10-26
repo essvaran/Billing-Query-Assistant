@@ -25,7 +25,8 @@ def list_reasons(_user: UserOut = Depends(get_current_user)):
 @router.post("", status_code=201)
 def create_feedback(body: FeedbackIn, user: UserOut = Depends(get_current_user)):
     try:
-        result = submit_and_notify(body.trace_id, user.email, body.rating, body.reason_code, body.comment)
+        result = submit_and_notify(body.trace_id, user.email, body.rating, body.reason_code, body.comment,
+                                   is_admin=user.role == "admin")
     except FeedbackError as exc:
         raise HTTPException(status_code=exc.status, detail=exc.message)
     return {"saved": True, "rating": result["rating"]}

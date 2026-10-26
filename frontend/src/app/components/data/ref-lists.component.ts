@@ -1,3 +1,4 @@
+import { ConfirmService } from '../../shared/confirm';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CatalogService } from '../../services/catalog.service';
@@ -88,6 +89,7 @@ interface Draft { creating: boolean; code: string; label: string; description: s
   styles: [DATA_STYLES + `.check { display: flex !important; align-items: center; gap: .4rem; }`],
 })
 export class RefListsComponent {
+  private readonly confirm = inject(ConfirmService);
   private api = inject(CatalogService);
   private refData = inject(RefDataService);
   private toast = inject(ToastService);
@@ -160,8 +162,8 @@ export class RefListsComponent {
     });
   }
 
-  remove(v: RefValue): void {
-    if (!window.confirm(`Delete ${v.code}? Records that already use it keep the code but lose its label.`)) return;
+  async remove(v: RefValue): Promise<void> {
+    if (!(await this.confirm.ask(`Delete ${v.code}? Records that already use it keep the code but lose its label.`, { danger: true, confirmLabel: 'Delete' }))) return;
     this.api.deleteValue(this.selected(), v.code).subscribe({
       next: () => { this.toast.success('Deleted.'); this.refData.load().subscribe(); },
       error: err => this.toast.error(apiMessage(err, 'Could not delete it.')),

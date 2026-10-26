@@ -8,10 +8,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from api.auth import UserOut, require_admin
+from api.limiter import limiter, user_or_ip
 
 log = logging.getLogger("api.multiagent")
 router = APIRouter(prefix="/api/multiagent", tags=["multiagent"])
@@ -79,7 +80,8 @@ def get_status(_user: UserOut = Depends(require_admin)):
 
 
 @router.post("/run")
-def run_race_endpoint(_user: UserOut = Depends(require_admin)):
+@limiter.limit("5/minute", key_func=user_or_ip)
+def run_race_endpoint(request: Request, _user: UserOut = Depends(require_admin)):
     with _status_lock:
         if _status["status"] == "running":
             return {"status": "already_running"}
@@ -110,7 +112,8 @@ def run_race_endpoint(_user: UserOut = Depends(require_admin)):
 
 
 @router.post("/ask")
-def ask_both(body: AskBody, _user: UserOut = Depends(require_admin)):
+@limiter.limit("5/minute", key_func=user_or_ip)
+def ask_both(request: Request, body: AskBody, _user: UserOut = Depends(require_admin)):
     """Run one question through the single agent and the orchestrator side by side."""
     from evaluation.assertions import run_assertions
     from evaluation.week10_multi_agent import run_multi_agent

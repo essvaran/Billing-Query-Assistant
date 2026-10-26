@@ -1,35 +1,37 @@
 {
   "summary": {
-    "trace_id": "5a3189088df04645a1271c60de2accbc",
-    "spans": 12,
-    "total_ms": 17688.66,
-    "cost_usd": 0.00092205,
-    "input_tokens": 4539,
-    "output_tokens": 402,
+    "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+    "spans": 16,
+    "total_ms": 64185.96,
+    "cost_usd": 0.001644,
+    "input_tokens": 7004,
+    "output_tokens": 989,
     "llm_calls": 3,
-    "llm_ms": 3272.1,
-    "queue_wait_s": 0,
-    "tool_calls": 2,
-    "tool_ms": 296.5,
-    "mcp_server_spans": 2,
+    "llm_ms": 61453.0,
+    "queue_wait_s": 56.73,
+    "tool_calls": 4,
+    "tool_ms": 687.3,
+    "mcp_server_spans": 3,
     "mcp_servers_seen": [
       "help-centre",
       "tier1-tools"
     ],
-    "errors": []
+    "errors": [
+      "tool:search_help_centre"
+    ]
   },
   "spans": [
     {
-      "span_id": "7506286f9bd44d17",
-      "trace_id": "5a3189088df04645a1271c60de2accbc",
-      "parent_id": "ce4c333e2e7b4c72",
+      "span_id": "7133dd8c89424235",
+      "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+      "parent_id": "eb4fe11b5e184d3e",
       "name": "pre_guard",
       "kind": "guard",
-      "started_at": "2026-10-16T05:55:26.705254+00:00",
+      "started_at": "2026-10-18T05:15:44.884839+00:00",
       "duration_ms": 0.05,
       "input_tokens": null,
       "output_tokens": null,
-      "cost_usd": null,
+      "cost_usd": 0.0,
       "status": "ok",
       "attrs": {
         "blocked": false,
@@ -37,42 +39,44 @@
       }
     },
     {
-      "span_id": "ce4c333e2e7b4c72",
-      "trace_id": "5a3189088df04645a1271c60de2accbc",
+      "span_id": "eb4fe11b5e184d3e",
+      "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
       "parent_id": null,
       "name": "ticket",
       "kind": "request",
-      "started_at": "2026-10-16T05:55:26.705254+00:00",
-      "duration_ms": 17688.66,
+      "started_at": "2026-10-18T05:15:44.884839+00:00",
+      "duration_ms": 64185.96,
       "input_tokens": null,
       "output_tokens": null,
-      "cost_usd": null,
+      "cost_usd": 0.0,
       "status": "ok",
       "attrs": {
-        "ticket_id": "TK3042",
-        "customer_id": "cust_6c6c76887c",
+        "ticket_id": "TK3291",
+        "customer_id": "cust_a613adf8ae",
         "body_chars": 56,
         "decision": "ANSWER",
         "reason": null,
         "laps": 3,
         "tools": [
           "check_entitlement",
+          "search_help_centre",
+          "search_help_centre",
           "search_help_centre"
         ],
         "violations": []
       }
     },
     {
-      "span_id": "b3c5acc7091048ac",
-      "trace_id": "5a3189088df04645a1271c60de2accbc",
-      "parent_id": "ce4c333e2e7b4c72",
+      "span_id": "40d57beda87e41f7",
+      "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+      "parent_id": "eb4fe11b5e184d3e",
       "name": "mcp_connect",
       "kind": "setup",
-      "started_at": "2026-10-16T05:55:26.787208+00:00",
-      "duration_ms": 12191.57,
+      "started_at": "2026-10-18T05:15:44.977267+00:00",
+      "duration_ms": 0.03,
       "input_tokens": null,
       "output_tokens": null,
-      "cost_usd": null,
+      "cost_usd": 0.0,
       "status": "ok",
       "attrs": {
         "tools": 4,
@@ -80,55 +84,35 @@
       }
     },
     {
-      "span_id": "dc6e8b83d4434d28",
-      "trace_id": "5a3189088df04645a1271c60de2accbc",
-      "parent_id": "ce4c333e2e7b4c72",
-      "name": "llm_call",
-      "kind": "llm",
-      "started_at": "2026-10-16T05:55:40.119184+00:00",
-      "duration_ms": 1166.62,
-      "input_tokens": 1273,
-      "output_tokens": 142,
-      "cost_usd": 0.00027615,
-      "status": "ok",
-      "attrs": {
-        "model": "openai/gpt-oss-120b",
-        "lap": 1,
-        "cache": "miss",
-        "waited_s": 0.0,
-        "attempts": 1,
-        "finish_reason": "tool_calls"
-      }
-    },
-    {
-      "span_id": "2f76ce19dc1f43ce",
-      "trace_id": "5a3189088df04645a1271c60de2accbc",
-      "parent_id": "ce4c333e2e7b4c72",
+      "span_id": "8c2bc9900aab4a59",
+      "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+      "parent_id": "eb4fe11b5e184d3e",
       "name": "tool:check_entitlement",
       "kind": "tool",
-      "started_at": "2026-10-16T05:55:41.365607+00:00",
-      "duration_ms": 117.03,
+      "started_at": "2026-10-18T05:15:45.081563+00:00",
+      "duration_ms": 111.33,
       "input_tokens": null,
       "output_tokens": null,
-      "cost_usd": null,
+      "cost_usd": 0.0,
       "status": "ok",
       "attrs": {
         "server": "tier1-tools",
-        "lap": 1,
+        "lap": 0,
+        "origin": "code",
         "ok": true
       }
     },
     {
-      "span_id": "545c0549ad3d4efd",
-      "trace_id": "5a3189088df04645a1271c60de2accbc",
-      "parent_id": "2f76ce19dc1f43ce",
+      "span_id": "4be403d61f344901",
+      "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+      "parent_id": "8c2bc9900aab4a59",
       "name": "server:check_entitlement",
       "kind": "mcp_server",
-      "started_at": "2026-10-16T05:55:41.368609+00:00",
-      "duration_ms": 16.84,
+      "started_at": "2026-10-18T05:15:45.085529+00:00",
+      "duration_ms": 4.97,
       "input_tokens": null,
       "output_tokens": null,
-      "cost_usd": null,
+      "cost_usd": 0.0,
       "status": "ok",
       "attrs": {
         "server": "tier1-tools",
@@ -137,52 +121,32 @@
       }
     },
     {
-      "span_id": "e3b492d1edfd4e6d",
-      "trace_id": "5a3189088df04645a1271c60de2accbc",
-      "parent_id": "ce4c333e2e7b4c72",
-      "name": "llm_call",
-      "kind": "llm",
-      "started_at": "2026-10-16T05:55:41.555248+00:00",
-      "duration_ms": 797.24,
-      "input_tokens": 1400,
-      "output_tokens": 79,
-      "cost_usd": 0.0002574,
-      "status": "ok",
-      "attrs": {
-        "model": "openai/gpt-oss-120b",
-        "lap": 2,
-        "cache": "miss",
-        "waited_s": 0.0,
-        "attempts": 1,
-        "finish_reason": "tool_calls"
-      }
-    },
-    {
-      "span_id": "6739a85e0b134f06",
-      "trace_id": "5a3189088df04645a1271c60de2accbc",
-      "parent_id": "ce4c333e2e7b4c72",
+      "span_id": "be468870cd6845eb",
+      "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+      "parent_id": "eb4fe11b5e184d3e",
       "name": "tool:search_help_centre",
       "kind": "tool",
-      "started_at": "2026-10-16T05:55:42.467794+00:00",
-      "duration_ms": 179.51,
+      "started_at": "2026-10-18T05:15:45.306228+00:00",
+      "duration_ms": 290.85,
       "input_tokens": null,
       "output_tokens": null,
-      "cost_usd": null,
+      "cost_usd": 0.0,
       "status": "ok",
       "attrs": {
         "server": "help-centre",
-        "lap": 2,
+        "lap": 0,
+        "origin": "code",
         "ok": true
       }
     },
     {
-      "span_id": "0dcb86373fa64d2a",
-      "trace_id": "5a3189088df04645a1271c60de2accbc",
-      "parent_id": "e05f0ee8de754961",
+      "span_id": "6125f534480f4aea",
+      "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+      "parent_id": "c6ef5434dffb40d3",
       "name": "retrieval",
       "kind": "retrieval",
-      "started_at": "2026-10-16T05:55:42.470794+00:00",
-      "duration_ms": 36.59,
+      "started_at": "2026-10-18T05:15:45.308228+00:00",
+      "duration_ms": 51.55,
       "input_tokens": null,
       "output_tokens": null,
       "cost_usd": 0.0,
@@ -194,259 +158,342 @@
       }
     },
     {
-      "span_id": "e05f0ee8de754961",
-      "trace_id": "5a3189088df04645a1271c60de2accbc",
-      "parent_id": "6739a85e0b134f06",
+      "span_id": "c6ef5434dffb40d3",
+      "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+      "parent_id": "be468870cd6845eb",
       "name": "server:search_help_centre",
       "kind": "mcp_server",
-      "started_at": "2026-10-16T05:55:42.470794+00:00",
-      "duration_ms": 106.44,
+      "started_at": "2026-10-18T05:15:45.308228+00:00",
+      "duration_ms": 148.0,
       "input_tokens": null,
       "output_tokens": null,
-      "cost_usd": null,
+      "cost_usd": 0.0,
       "status": "ok",
       "attrs": {
         "server": "help-centre",
         "tool": "search_help_centre",
-        "query_chars": 33,
+        "query_chars": 71,
         "policy_filter": "refund-30d",
         "ok": true,
         "results": 3
       }
     },
     {
-      "span_id": "fc35bafa0bb14826",
-      "trace_id": "5a3189088df04645a1271c60de2accbc",
-      "parent_id": "ce4c333e2e7b4c72",
+      "span_id": "f4a40d8829f548dd",
+      "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+      "parent_id": "eb4fe11b5e184d3e",
       "name": "llm_call",
       "kind": "llm",
-      "started_at": "2026-10-16T05:55:42.696266+00:00",
-      "duration_ms": 1308.28,
-      "input_tokens": 1866,
-      "output_tokens": 181,
-      "cost_usd": 0.0003885,
+      "started_at": "2026-10-18T05:15:45.733775+00:00",
+      "duration_ms": 1251.57,
+      "input_tokens": 2019,
+      "output_tokens": 153,
+      "cost_usd": 0.00039465,
+      "status": "ok",
+      "attrs": {
+        "model": "openai/gpt-oss-120b",
+        "lap": 1,
+        "cache": "miss",
+        "waited_s": 0.0,
+        "attempts": 1,
+        "finish_reason": "tool_calls"
+      }
+    },
+    {
+      "span_id": "ba64b696b1824ac7",
+      "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+      "parent_id": "eb4fe11b5e184d3e",
+      "name": "tool:search_help_centre",
+      "kind": "tool",
+      "started_at": "2026-10-18T05:15:47.107676+00:00",
+      "duration_ms": 285.12,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": 0.0,
+      "status": "ok",
+      "attrs": {
+        "server": "help-centre",
+        "lap": 1,
+        "origin": "model",
+        "ok": true
+      }
+    },
+    {
+      "span_id": "074ebdae897342b9",
+      "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+      "parent_id": "43d907a529db43ad",
+      "name": "retrieval",
+      "kind": "retrieval",
+      "started_at": "2026-10-18T05:15:47.111815+00:00",
+      "duration_ms": 51.65,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": 0.0,
+      "status": "ok",
+      "attrs": {
+        "embedding_model": "BAAI/bge-base-en-v1.5",
+        "cost_note": "local, no API cost",
+        "results": 3
+      }
+    },
+    {
+      "span_id": "43d907a529db43ad",
+      "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+      "parent_id": "ba64b696b1824ac7",
+      "name": "server:search_help_centre",
+      "kind": "mcp_server",
+      "started_at": "2026-10-18T05:15:47.111815+00:00",
+      "duration_ms": 170.32,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": 0.0,
+      "status": "ok",
+      "attrs": {
+        "server": "help-centre",
+        "tool": "search_help_centre",
+        "query_chars": 25,
+        "policy_filter": "refund-30d",
+        "ok": true,
+        "results": 3
+      }
+    },
+    {
+      "span_id": "243717a5428b4382",
+      "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+      "parent_id": "eb4fe11b5e184d3e",
+      "name": "llm_call",
+      "kind": "llm",
+      "started_at": "2026-10-18T05:15:47.495472+00:00",
+      "duration_ms": 52579.64,
+      "input_tokens": 2449,
+      "output_tokens": 183,
+      "cost_usd": 0.00047715,
+      "status": "ok",
+      "attrs": {
+        "model": "openai/gpt-oss-120b",
+        "lap": 2,
+        "cache": "miss",
+        "waited_s": 51.11,
+        "attempts": 1,
+        "finish_reason": "tool_calls"
+      }
+    },
+    {
+      "span_id": "5d3f6715017f41d7",
+      "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+      "parent_id": "eb4fe11b5e184d3e",
+      "name": "tool:search_help_centre",
+      "kind": "tool",
+      "started_at": "2026-10-18T05:16:40.234754+00:00",
+      "duration_ms": 0.04,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": 0.0,
+      "status": "error",
+      "attrs": {
+        "server": "help-centre",
+        "lap": 2,
+        "origin": "model",
+        "ok": false
+      }
+    },
+    {
+      "span_id": "b56fae667f14444b",
+      "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+      "parent_id": "eb4fe11b5e184d3e",
+      "name": "llm_call",
+      "kind": "llm",
+      "started_at": "2026-10-18T05:16:40.366222+00:00",
+      "duration_ms": 7621.83,
+      "input_tokens": 2536,
+      "output_tokens": 653,
+      "cost_usd": 0.0007722,
       "status": "ok",
       "attrs": {
         "model": "openai/gpt-oss-120b",
         "lap": 3,
         "cache": "miss",
-        "waited_s": 0.0,
+        "waited_s": 5.62,
         "attempts": 1,
         "finish_reason": "stop"
       }
     },
     {
-      "span_id": "e0687cbf1f554ccb",
-      "trace_id": "5a3189088df04645a1271c60de2accbc",
-      "parent_id": "ce4c333e2e7b4c72",
+      "span_id": "3501340649cb47c2",
+      "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+      "parent_id": "eb4fe11b5e184d3e",
       "name": "post_guard",
       "kind": "guard",
-      "started_at": "2026-10-16T05:55:44.335506+00:00",
-      "duration_ms": 0.23,
+      "started_at": "2026-10-18T05:16:48.957121+00:00",
+      "duration_ms": 0.5,
       "input_tokens": null,
       "output_tokens": null,
-      "cost_usd": null,
+      "cost_usd": 0.0,
       "status": "ok",
       "attrs": {
         "violations": [],
         "citations": 2,
-        "reply_chars": 430
+        "reply_chars": 512
       }
     }
   ],
   "tree": [
     {
-      "span_id": "ce4c333e2e7b4c72",
-      "trace_id": "5a3189088df04645a1271c60de2accbc",
+      "span_id": "eb4fe11b5e184d3e",
+      "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
       "parent_id": null,
       "name": "ticket",
       "kind": "request",
-      "started_at": "2026-10-16T05:55:26.705254+00:00",
-      "duration_ms": 17688.66,
+      "started_at": "2026-10-18T05:15:44.884839+00:00",
+      "duration_ms": 64185.96,
       "input_tokens": null,
       "output_tokens": null,
-      "cost_usd": null,
+      "cost_usd": 0.0,
       "status": "ok",
       "attrs": {
-        "ticket_id": "TK3042",
-        "customer_id": "cust_6c6c76887c",
+        "ticket_id": "TK3291",
+        "customer_id": "cust_a613adf8ae",
         "body_chars": 56,
         "decision": "ANSWER",
         "reason": null,
         "laps": 3,
         "tools": [
           "check_entitlement",
+          "search_help_centre",
+          "search_help_centre",
           "search_help_centre"
         ],
         "violations": []
       },
       "children": [
         {
-          "span_id": "7506286f9bd44d17",
-          "trace_id": "5a3189088df04645a1271c60de2accbc",
-          "parent_id": "ce4c333e2e7b4c72",
+          "span_id": "7133dd8c89424235",
+          "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+          "parent_id": "eb4fe11b5e184d3e",
           "name": "pre_guard",
           "kind": "guard",
-          "started_at": "2026-10-16T05:55:26.705254+00:00",
+          "started_at": "2026-10-18T05:15:44.884839+00:00",
           "duration_ms": 0.05,
           "input_tokens": null,
           "output_tokens": null,
-          "cost_usd": null,
+          "cost_usd": 0.0,
           "status": "ok",
           "attrs": {
             "blocked": false,
             "category": null
           },
-          "children": []
+          "children": [],
+          "cost_usd_total": 0
         },
         {
-          "span_id": "b3c5acc7091048ac",
-          "trace_id": "5a3189088df04645a1271c60de2accbc",
-          "parent_id": "ce4c333e2e7b4c72",
+          "span_id": "40d57beda87e41f7",
+          "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+          "parent_id": "eb4fe11b5e184d3e",
           "name": "mcp_connect",
           "kind": "setup",
-          "started_at": "2026-10-16T05:55:26.787208+00:00",
-          "duration_ms": 12191.57,
+          "started_at": "2026-10-18T05:15:44.977267+00:00",
+          "duration_ms": 0.03,
           "input_tokens": null,
           "output_tokens": null,
-          "cost_usd": null,
+          "cost_usd": 0.0,
           "status": "ok",
           "attrs": {
             "tools": 4,
             "blocked": 0
           },
-          "children": []
+          "children": [],
+          "cost_usd_total": 0
         },
         {
-          "span_id": "dc6e8b83d4434d28",
-          "trace_id": "5a3189088df04645a1271c60de2accbc",
-          "parent_id": "ce4c333e2e7b4c72",
-          "name": "llm_call",
-          "kind": "llm",
-          "started_at": "2026-10-16T05:55:40.119184+00:00",
-          "duration_ms": 1166.62,
-          "input_tokens": 1273,
-          "output_tokens": 142,
-          "cost_usd": 0.00027615,
-          "status": "ok",
-          "attrs": {
-            "model": "openai/gpt-oss-120b",
-            "lap": 1,
-            "cache": "miss",
-            "waited_s": 0.0,
-            "attempts": 1,
-            "finish_reason": "tool_calls"
-          },
-          "children": []
-        },
-        {
-          "span_id": "2f76ce19dc1f43ce",
-          "trace_id": "5a3189088df04645a1271c60de2accbc",
-          "parent_id": "ce4c333e2e7b4c72",
+          "span_id": "8c2bc9900aab4a59",
+          "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+          "parent_id": "eb4fe11b5e184d3e",
           "name": "tool:check_entitlement",
           "kind": "tool",
-          "started_at": "2026-10-16T05:55:41.365607+00:00",
-          "duration_ms": 117.03,
+          "started_at": "2026-10-18T05:15:45.081563+00:00",
+          "duration_ms": 111.33,
           "input_tokens": null,
           "output_tokens": null,
-          "cost_usd": null,
+          "cost_usd": 0.0,
           "status": "ok",
           "attrs": {
             "server": "tier1-tools",
-            "lap": 1,
+            "lap": 0,
+            "origin": "code",
             "ok": true
           },
           "children": [
             {
-              "span_id": "545c0549ad3d4efd",
-              "trace_id": "5a3189088df04645a1271c60de2accbc",
-              "parent_id": "2f76ce19dc1f43ce",
+              "span_id": "4be403d61f344901",
+              "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+              "parent_id": "8c2bc9900aab4a59",
               "name": "server:check_entitlement",
               "kind": "mcp_server",
-              "started_at": "2026-10-16T05:55:41.368609+00:00",
-              "duration_ms": 16.84,
+              "started_at": "2026-10-18T05:15:45.085529+00:00",
+              "duration_ms": 4.97,
               "input_tokens": null,
               "output_tokens": null,
-              "cost_usd": null,
+              "cost_usd": 0.0,
               "status": "ok",
               "attrs": {
                 "server": "tier1-tools",
                 "tool": "check_entitlement",
                 "ok": true
               },
-              "children": []
+              "children": [],
+              "cost_usd_total": 0
             }
-          ]
+          ],
+          "cost_usd_total": 0
         },
         {
-          "span_id": "e3b492d1edfd4e6d",
-          "trace_id": "5a3189088df04645a1271c60de2accbc",
-          "parent_id": "ce4c333e2e7b4c72",
-          "name": "llm_call",
-          "kind": "llm",
-          "started_at": "2026-10-16T05:55:41.555248+00:00",
-          "duration_ms": 797.24,
-          "input_tokens": 1400,
-          "output_tokens": 79,
-          "cost_usd": 0.0002574,
-          "status": "ok",
-          "attrs": {
-            "model": "openai/gpt-oss-120b",
-            "lap": 2,
-            "cache": "miss",
-            "waited_s": 0.0,
-            "attempts": 1,
-            "finish_reason": "tool_calls"
-          },
-          "children": []
-        },
-        {
-          "span_id": "6739a85e0b134f06",
-          "trace_id": "5a3189088df04645a1271c60de2accbc",
-          "parent_id": "ce4c333e2e7b4c72",
+          "span_id": "be468870cd6845eb",
+          "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+          "parent_id": "eb4fe11b5e184d3e",
           "name": "tool:search_help_centre",
           "kind": "tool",
-          "started_at": "2026-10-16T05:55:42.467794+00:00",
-          "duration_ms": 179.51,
+          "started_at": "2026-10-18T05:15:45.306228+00:00",
+          "duration_ms": 290.85,
           "input_tokens": null,
           "output_tokens": null,
-          "cost_usd": null,
+          "cost_usd": 0.0,
           "status": "ok",
           "attrs": {
             "server": "help-centre",
-            "lap": 2,
+            "lap": 0,
+            "origin": "code",
             "ok": true
           },
           "children": [
             {
-              "span_id": "e05f0ee8de754961",
-              "trace_id": "5a3189088df04645a1271c60de2accbc",
-              "parent_id": "6739a85e0b134f06",
+              "span_id": "c6ef5434dffb40d3",
+              "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+              "parent_id": "be468870cd6845eb",
               "name": "server:search_help_centre",
               "kind": "mcp_server",
-              "started_at": "2026-10-16T05:55:42.470794+00:00",
-              "duration_ms": 106.44,
+              "started_at": "2026-10-18T05:15:45.308228+00:00",
+              "duration_ms": 148.0,
               "input_tokens": null,
               "output_tokens": null,
-              "cost_usd": null,
+              "cost_usd": 0.0,
               "status": "ok",
               "attrs": {
                 "server": "help-centre",
                 "tool": "search_help_centre",
-                "query_chars": 33,
+                "query_chars": 71,
                 "policy_filter": "refund-30d",
                 "ok": true,
                 "results": 3
               },
               "children": [
                 {
-                  "span_id": "0dcb86373fa64d2a",
-                  "trace_id": "5a3189088df04645a1271c60de2accbc",
-                  "parent_id": "e05f0ee8de754961",
+                  "span_id": "6125f534480f4aea",
+                  "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+                  "parent_id": "c6ef5434dffb40d3",
                   "name": "retrieval",
                   "kind": "retrieval",
-                  "started_at": "2026-10-16T05:55:42.470794+00:00",
-                  "duration_ms": 36.59,
+                  "started_at": "2026-10-18T05:15:45.308228+00:00",
+                  "duration_ms": 51.55,
                   "input_tokens": null,
                   "output_tokens": null,
                   "cost_usd": 0.0,
@@ -456,54 +503,193 @@
                     "cost_note": "local, no API cost",
                     "results": 3
                   },
-                  "children": []
+                  "children": [],
+                  "cost_usd_total": 0
                 }
-              ]
+              ],
+              "cost_usd_total": 0
             }
-          ]
+          ],
+          "cost_usd_total": 0
         },
         {
-          "span_id": "fc35bafa0bb14826",
-          "trace_id": "5a3189088df04645a1271c60de2accbc",
-          "parent_id": "ce4c333e2e7b4c72",
+          "span_id": "f4a40d8829f548dd",
+          "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+          "parent_id": "eb4fe11b5e184d3e",
           "name": "llm_call",
           "kind": "llm",
-          "started_at": "2026-10-16T05:55:42.696266+00:00",
-          "duration_ms": 1308.28,
-          "input_tokens": 1866,
-          "output_tokens": 181,
-          "cost_usd": 0.0003885,
+          "started_at": "2026-10-18T05:15:45.733775+00:00",
+          "duration_ms": 1251.57,
+          "input_tokens": 2019,
+          "output_tokens": 153,
+          "cost_usd": 0.00039465,
+          "status": "ok",
+          "attrs": {
+            "model": "openai/gpt-oss-120b",
+            "lap": 1,
+            "cache": "miss",
+            "waited_s": 0.0,
+            "attempts": 1,
+            "finish_reason": "tool_calls"
+          },
+          "children": [],
+          "cost_usd_total": 0.00039465
+        },
+        {
+          "span_id": "ba64b696b1824ac7",
+          "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+          "parent_id": "eb4fe11b5e184d3e",
+          "name": "tool:search_help_centre",
+          "kind": "tool",
+          "started_at": "2026-10-18T05:15:47.107676+00:00",
+          "duration_ms": 285.12,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": 0.0,
+          "status": "ok",
+          "attrs": {
+            "server": "help-centre",
+            "lap": 1,
+            "origin": "model",
+            "ok": true
+          },
+          "children": [
+            {
+              "span_id": "43d907a529db43ad",
+              "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+              "parent_id": "ba64b696b1824ac7",
+              "name": "server:search_help_centre",
+              "kind": "mcp_server",
+              "started_at": "2026-10-18T05:15:47.111815+00:00",
+              "duration_ms": 170.32,
+              "input_tokens": null,
+              "output_tokens": null,
+              "cost_usd": 0.0,
+              "status": "ok",
+              "attrs": {
+                "server": "help-centre",
+                "tool": "search_help_centre",
+                "query_chars": 25,
+                "policy_filter": "refund-30d",
+                "ok": true,
+                "results": 3
+              },
+              "children": [
+                {
+                  "span_id": "074ebdae897342b9",
+                  "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+                  "parent_id": "43d907a529db43ad",
+                  "name": "retrieval",
+                  "kind": "retrieval",
+                  "started_at": "2026-10-18T05:15:47.111815+00:00",
+                  "duration_ms": 51.65,
+                  "input_tokens": null,
+                  "output_tokens": null,
+                  "cost_usd": 0.0,
+                  "status": "ok",
+                  "attrs": {
+                    "embedding_model": "BAAI/bge-base-en-v1.5",
+                    "cost_note": "local, no API cost",
+                    "results": 3
+                  },
+                  "children": [],
+                  "cost_usd_total": 0
+                }
+              ],
+              "cost_usd_total": 0
+            }
+          ],
+          "cost_usd_total": 0
+        },
+        {
+          "span_id": "243717a5428b4382",
+          "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+          "parent_id": "eb4fe11b5e184d3e",
+          "name": "llm_call",
+          "kind": "llm",
+          "started_at": "2026-10-18T05:15:47.495472+00:00",
+          "duration_ms": 52579.64,
+          "input_tokens": 2449,
+          "output_tokens": 183,
+          "cost_usd": 0.00047715,
+          "status": "ok",
+          "attrs": {
+            "model": "openai/gpt-oss-120b",
+            "lap": 2,
+            "cache": "miss",
+            "waited_s": 51.11,
+            "attempts": 1,
+            "finish_reason": "tool_calls"
+          },
+          "children": [],
+          "cost_usd_total": 0.00047715
+        },
+        {
+          "span_id": "5d3f6715017f41d7",
+          "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+          "parent_id": "eb4fe11b5e184d3e",
+          "name": "tool:search_help_centre",
+          "kind": "tool",
+          "started_at": "2026-10-18T05:16:40.234754+00:00",
+          "duration_ms": 0.04,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": 0.0,
+          "status": "error",
+          "attrs": {
+            "server": "help-centre",
+            "lap": 2,
+            "origin": "model",
+            "ok": false
+          },
+          "children": [],
+          "cost_usd_total": 0
+        },
+        {
+          "span_id": "b56fae667f14444b",
+          "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+          "parent_id": "eb4fe11b5e184d3e",
+          "name": "llm_call",
+          "kind": "llm",
+          "started_at": "2026-10-18T05:16:40.366222+00:00",
+          "duration_ms": 7621.83,
+          "input_tokens": 2536,
+          "output_tokens": 653,
+          "cost_usd": 0.0007722,
           "status": "ok",
           "attrs": {
             "model": "openai/gpt-oss-120b",
             "lap": 3,
             "cache": "miss",
-            "waited_s": 0.0,
+            "waited_s": 5.62,
             "attempts": 1,
             "finish_reason": "stop"
           },
-          "children": []
+          "children": [],
+          "cost_usd_total": 0.0007722
         },
         {
-          "span_id": "e0687cbf1f554ccb",
-          "trace_id": "5a3189088df04645a1271c60de2accbc",
-          "parent_id": "ce4c333e2e7b4c72",
+          "span_id": "3501340649cb47c2",
+          "trace_id": "3146e8f3a3c949b4ba3324e68782f408",
+          "parent_id": "eb4fe11b5e184d3e",
           "name": "post_guard",
           "kind": "guard",
-          "started_at": "2026-10-16T05:55:44.335506+00:00",
-          "duration_ms": 0.23,
+          "started_at": "2026-10-18T05:16:48.957121+00:00",
+          "duration_ms": 0.5,
           "input_tokens": null,
           "output_tokens": null,
-          "cost_usd": null,
+          "cost_usd": 0.0,
           "status": "ok",
           "attrs": {
             "violations": [],
             "citations": 2,
-            "reply_chars": 430
+            "reply_chars": 512
           },
-          "children": []
+          "children": [],
+          "cost_usd_total": 0
         }
-      ]
+      ],
+      "cost_usd_total": 0.001644
     }
   ]
 }

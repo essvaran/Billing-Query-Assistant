@@ -47,12 +47,18 @@ export function usd(value: number | null | undefined): string {
   return value < 0.01 ? `$${value.toFixed(5)}` : `$${value.toFixed(3)}`;
 }
 
+/** A readable title from an article slug or id ("refund-policy-30d" -> "Refund policy 30d"); customers never see raw slugs. */
+export function articleTitle(slug: string | null | undefined): string {
+  const words = (slug ?? '').replace(/\.[a-z0-9]+$/i, '').replace(/[-_]+/g, ' ').trim();
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : 'Help centre article';
+}
+
 /** Money in cents; the currency defaults to the billing currency setting. */
 export function money(cents: number | null | undefined, currency?: string): string {
   if (cents === null || cents === undefined) return 'Not measured';
   const cur = currency || publicSetting<string>('billing.currency', '');
   return cur
-    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: cur }).format(cents / 100)
+    ? new Intl.NumberFormat(undefined, { style: 'currency', currency: cur }).format(cents / 100)
     : (cents / 100).toFixed(2);
 }
 

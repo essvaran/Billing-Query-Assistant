@@ -1,3 +1,4 @@
+import { ConfirmService } from '../../shared/confirm';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, HostListener, ViewChild, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -159,7 +160,9 @@ export function numberedSources(text: string, citations: Citation[]): { n: numbe
               }
             </article>
             @if (result(); as r) {
-              <article class="card facts">
+              <!-- run metrics matter when something looks wrong, not on every ticket: collapsed by default -->
+              <details class="card facts">
+                <summary>Technical details</summary>
                 <dl>
                   <div><dt>Trace</dt><dd><code>{{ r.trace_id }}</code>
                     <button type="button" class="link" (click)="copyTrace(r.trace_id)">Copy</button></dd></div>
@@ -168,7 +171,7 @@ export function numberedSources(text: string, citations: Citation[]): { n: numbe
                   <div><dt>Cost</dt><dd>{{ cost(r.cost_usd) }}</dd></div>
                 </dl>
                 @if (auth.isAdmin) { <a class="link" [routerLink]="['/trace', r.trace_id]">Open full trace</a> }
-              </article>
+              </details>
             }
           </section>
         </div>
@@ -205,6 +208,8 @@ export function numberedSources(text: string, citations: Citation[]): { n: numbe
     }
   `,
   styles: [`
+    .facts summary { cursor: pointer; font-weight: 600; font-size: .85rem; color: var(--text-secondary); }
+    .facts[open] summary { margin-bottom: .6rem; }
     .ws { padding-top: 1rem; }
     .crumbs { font-size: .8rem; color: var(--text-muted); margin-bottom: .75rem; }
     .seed { font-size: .8rem; color: var(--text-secondary); background: rgba(137,180,250,.08); border: 1px solid rgba(137,180,250,.3); padding: .5rem .75rem; border-radius: var(--radius-md); margin-bottom: .75rem; }
@@ -250,6 +255,7 @@ export function numberedSources(text: string, citations: Citation[]): { n: numbe
   `],
 })
 export class TicketWorkspaceComponent {
+  private readonly confirm = inject(ConfirmService);
   private api = inject(Tier1Service);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -358,8 +364,8 @@ export class TicketWorkspaceComponent {
 
   cancel(): void { this.job?.unsubscribe(); this.running.set(false); this.toast.show('Stopped waiting. The assistant may still finish in the background.'); }
 
-  regenerate(): void {
-    if (this.dirty() && !window.confirm('You have edited the draft. Running the assistant again will replace your edits. Continue?')) return;
+  async regenerate(): Promise<void> {
+    if (this.dirty() && !(await this.confirm.ask('You have edited the draft. Running the assistant again will replace your edits. Continue?'))) return;
     this.run();
   }
 

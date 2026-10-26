@@ -13,7 +13,8 @@ import { ChatService, AskResponse, FeedbackReason } from '../../services/chat.se
 import { CustomerOption, PolicyVersion, Step, TicketAnswer, Tier1Service } from '../../services/tier1.service';
 import { StepTimelineComponent } from '../../shared/step-timeline.component';
 import { SourceDrawerComponent } from '../../shared/source-drawer.component';
-import { currentPolicy, customerEscalationMessage, feedbackReasons, groupByPolicy, policyLabel } from '../../shared/labels';
+import { articleTitle, currentPolicy, customerEscalationMessage, feedbackReasons, groupByPolicy, policyLabel } from '../../shared/labels';
+import { refLabel } from '../../shared/ref-data';
 import { ToastService } from '../../shared/toast';
 import { numberedSources } from '../tier1/ticket-workspace.component';
 
@@ -41,7 +42,12 @@ interface ChatMessage {
   response?: AskResponse;
   agentTurn?: AgentTurn;
   feedback?: FeedbackState;
+  /** Set when the front desk picked the route (Auto mode), so the answer can say where it came from. */
+  routedTo?: 'agent' | 'docs';
+  note?: string;
 }
+
+const NEEDS_ACCOUNT_NOTE = 'This looks like a question about your own orders or account. No customer account is linked to your sign-in, so this answer comes from the help articles only.';
 
 const DEFAULT_REASONS: FeedbackReason[] = [
   { code: 'wrong_answer', label: 'The answer is wrong' },
@@ -67,7 +73,8 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   inputText = '';
   loading = false;
   expandedChunks: Set<number> = new Set();
-  chatMode: 'rag' | 'agent' = 'agent';
+  /** Auto lets the front desk pick. Only admins see the selector, to force a mode while testing. */
+  chatMode: 'auto' | 'rag' | 'agent' = 'auto';
   customers: CustomerOption[] = [];
   customerId = '';
   customersFailed = false;
@@ -228,8 +235,23 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     return { rating: null, formOpen: false, reason: '', comment: '', busy: false, error: null };
   }
 
+  readonly articleTitle = articleTitle;
+  planName(code: string | null | undefined): string { return refLabel('plan_tier', code, code ?? ''); }
+
+  /** Follow new content only while the reader is at the bottom, so scrolling up to read is never yanked back. */
+  private stickToBottom = true;
+  private lastContentKey = '';
+
+  onMessagesScroll(event: Event): void {
+    const el = event.target as HTMLElement;
+    this.stickToBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+  }
+
   ngAfterViewChecked(): void {
-    this.scrollToBottom();
+    const key = this.messages.map(m => `${m.role}:${m.agentTurn?.steps.length ?? 0}:${m.agentTurn?.status ?? ''}:${m.text.length}`).join('|');
+    if (key === this.lastContentKey) return;
+    this.lastContentKey = key;
+    if (this.stickToBottom) this.scrollToBottom();
   }
 
   // ------------------------------------------------------------ agent answers (Tier-1 assistant)
@@ -266,19 +288,42 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   sendMessage(): void {
     const question = this.inputText.trim();
     if (!question || this.loading) return;
-    this.inputText = '';
-
-    if (this.chatMode === 'agent') {
-      this._sendAgentMessage(question);
-    } else {
-      this._sendRagMessage(question);
+    if (this.chatMode === 'agent' && !this.hasAccount) {
+      this.toast.error(this.canChoose ? 'Choose a customer first.' : 'No customer account is linked to your sign-in.');
+      return;
     }
-  }
-
-  private _sendRagMessage(question: string): void {
+    this.inputText = '';
+    this.stickToBottom = true;
     this.messages.push({ role: 'user', text: question });
     this.loading = true;
 
+    if (this.chatMode === 'agent') {
+      this._sendAgentMessage(question);
+    } else if (this.chatMode === 'rag') {
+      this._sendRagMessage(question);
+    } else {
+      this._routeAndSend(question);
+    }
+  }
+
+  /** Typing dots while routing or waiting for a Docs answer; a running assistant turn shows its own steps. */
+  get showTyping(): boolean {
+    return this.loading && !this.messages.some(m => m.agentTurn?.status === 'running');
+  }
+
+  private _routeAndSend(question: string): void {
+    const customerId = this.canChoose ? this.customerId || undefined : undefined;
+    this.chatService.route(question, customerId).subscribe({
+      next: d => {
+        if (d.route === 'agent') this._sendAgentMessage(question, 'agent');
+        else this._sendRagMessage(question, 'docs', d.needs_account ? NEEDS_ACCOUNT_NOTE : undefined);
+      },
+      // Routing is a convenience: if it fails, the help articles still answer.
+      error: () => this._sendRagMessage(question, 'docs'),
+    });
+  }
+
+  private _sendRagMessage(question: string, routedTo?: 'docs', note?: string): void {
     this.chatService.ask(question, true).subscribe({
       next: (response: AskResponse) => {
         this.messages.push({
@@ -286,6 +331,8 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
           text: response.answer,
           response,
           feedback: response.trace_id ? this.newFeedbackState() : undefined,
+          routedTo,
+          note,
         });
         this.loading = false;
       },
@@ -296,19 +343,12 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     });
   }
 
-  private _sendAgentMessage(msg: string): void {
-    if (!this.hasAccount) {
-      this.toast.error(this.canChoose ? 'Choose a customer first.' : 'No customer account is linked to your sign-in.');
-      this.inputText = msg;
-      return;
-    }
+  private _sendAgentMessage(msg: string, routedTo?: 'agent'): void {
     const turn: AgentTurn = {
       steps: [], result: null, status: 'running', error: null,
       report: { open: false, reason: '', comment: '', busy: false, sent: false },
     };
-    this.messages.push({ role: 'user', text: msg });
-    this.messages.push({ role: 'assistant', text: '', agentTurn: turn });
-    this.loading = true;
+    this.messages.push({ role: 'assistant', text: '', agentTurn: turn, routedTo });
 
     this.tier1.answer({ text: msg, customer_id: this.canChoose ? this.customerId : undefined }).subscribe({
       next: ({ job_id }) => {

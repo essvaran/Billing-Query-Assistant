@@ -11,7 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import api.database as database
-from api.auth import _make_jwt
+from auth_helpers import session_token as _make_jwt
 from api.main import app
 from src.generation import langfuse_client
 from src.observability import alerting, demo, email_template, eval_runner, trace_store
@@ -444,7 +444,9 @@ def test_one_vote_per_user_and_email_only_for_a_new_thumbs_down(fclient):
     assert fclient.calls[-1][5] is True
     inbox = fclient.get("/api/obs/feedback", headers=admin()).json()
     assert inbox["total"] == 1 and inbox["items"][0]["rating"] == "down"
-    assert vote(fclient, "down", reason="wrong_answer", headers=member("bob@example.com")).status_code == 201
+    # a user may only rate their own answers; someone else's trace looks the same as a missing one
+    assert vote(fclient, "down", reason="wrong_answer", headers=member("bob@example.com")).status_code == 404
+    assert vote(fclient, "down", reason="wrong_answer", trace=OK_ID, headers=member("bob@example.com")).status_code == 201
     assert fclient.get("/api/obs/feedback", headers=admin()).json()["total"] == 2
 
 
@@ -738,3 +740,27 @@ def test_old_traces_with_tokens_but_no_cost_are_priced_from_their_tokens():
     item = trace_store.normalize(old)
     assert item["cost_usd"] == pytest.approx(0.00027, rel=0.01)
     assert item["prompt_version"] == "unknown" and item["generation_ms"] is None
+
+
+def test_every_span_has_a_cost_and_totals_roll_up():
+    from src.observability import tracing
+    from tier1 import tracing_store
+    rows = []
+    tracing.set_sink(rows.append)
+    try:
+        with tracing.span("ticket", "request", trace_id="t-cost"):
+            with tracing.span("tool:search", "tool"):
+                pass
+            with tracing.span("llm_call", "llm") as sp:
+                sp.set(cost_usd=0.0004)
+            with tracing.span("llm_call", "llm"):        # failed before usage came back: cost unknown
+                pass
+    finally:
+        tracing.set_sink(None)
+    by = {(r["name"], r["kind"]): r for r in rows}
+    assert by[("tool:search", "tool")]["cost_usd"] == 0.0
+    assert by[("ticket", "request")]["cost_usd"] == 0.0
+    assert [r["cost_usd"] for r in rows if r["kind"] == "llm"] == [0.0004, None]
+    for r in rows:
+        r["attrs"] = r["attrs"] or {}
+    assert tracing_store.tree(rows)[0]["cost_usd_total"] == pytest.approx(0.0004)

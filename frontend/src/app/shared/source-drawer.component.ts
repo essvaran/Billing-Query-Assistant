@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, HostListe
 import { Article, Tier1Service } from '../services/tier1.service';
 import { ErrorStateComponent, PolicyBadgeComponent } from './primitives';
 import { refMeta } from './ref-data';
+import { AuthService } from '../services/auth.service';
+import { articleTitle } from './labels';
 
 export interface PassageSplit { before: string; passage: string; after: string }
 
@@ -30,13 +32,13 @@ export function splitAtPassage(body: string, chunkText: string): PassageSplit | 
       <aside #panel class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1">
         <header class="drawer__head">
           <div>
-            <h2 id="drawer-title">{{ article()?.title ?? slug }}</h2>
+            <h2 id="drawer-title">{{ article()?.title ?? articleTitle(slug) }}</h2>
             <div class="drawer__meta">
-              <code>{{ slug }}</code>
+              @if (isAdmin) { <code>{{ slug }}</code> }
               @if (article(); as a) {
                 <app-policy-badge [version]="a.policy_version" />
                 <span>Updated {{ a.last_updated }}</span>
-                @if (a.synthetic) { <span class="synthetic" title="Generated for this project, not real client content">Synthetic</span> }
+                @if (a.synthetic && isAdmin) { <span class="synthetic" title="Generated for this project, not real client content">Synthetic</span> }
               }
             </div>
           </div>
@@ -78,6 +80,9 @@ export function splitAtPassage(body: string, chunkText: string): PassageSplit | 
   `],
 })
 export class SourceDrawerComponent implements OnChanges, OnDestroy {
+  /** Customers see the article title only; the slug and the synthetic-data badge are for admins. */
+  readonly isAdmin = inject(AuthService).isAdmin;
+  readonly articleTitle = articleTitle;
   retiredBanner(code: string | null): string { return refMeta<string>('policy_version', code, 'retired_banner') ?? ''; }
   @Input({ required: true }) slug!: string;
   @Input() chunkText = '';

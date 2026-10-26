@@ -32,6 +32,14 @@ _warned = False
 _COLUMNS = ("input_tokens", "output_tokens", "cost_usd")
 
 
+def own_cost(kind: str, cost_usd: float | None) -> float | None:
+    """A span's own cost. Only model calls spend money, so any other span costs 0.0 rather than "unknown".
+    A model call that recorded no cost (it failed before usage came back) stays None: unknown is the truth there."""
+    if cost_usd is not None or kind == "llm":
+        return cost_usd
+    return 0.0
+
+
 def set_sink(sink: Callable[[dict], None] | None) -> None:
     global _sink
     _sink = sink
@@ -110,7 +118,7 @@ def span(name: str, kind: str, trace_id: str | None = None, parent_id: str | Non
             "duration_ms": round((time.perf_counter() - t0) * 1000, 2),
             "input_tokens": sp.input_tokens,
             "output_tokens": sp.output_tokens,
-            "cost_usd": sp.cost_usd,
+            "cost_usd": own_cost(kind, sp.cost_usd),
             "status": sp.status,
             "attrs": redact(sp.attrs),
         })
